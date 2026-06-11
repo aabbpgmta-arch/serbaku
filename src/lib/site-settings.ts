@@ -16,6 +16,9 @@ export type HeroSettings = {
   cta_text: string;
   cta_link: string;
   image_url: string | null;
+  image_url_2: string | null;
+  image_url_3: string | null;
+  image_url_4: string | null;
 };
 export type FooterSettings = { description: string; copyright: string };
 export type ThemeSettings = { primary: string; accent: string; background: string; foreground: string };
