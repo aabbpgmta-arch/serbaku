@@ -269,3 +269,59 @@ function HomePage() {
     </div>
   );
 }
+
+function HeroSlider({ images }: { images: string[] }) {
+  const autoplay = useRef(Autoplay({ delay: 4000, stopOnInteraction: false }));
+  const [emblaRef, embla] = useEmblaCarousel({ loop: true }, images.length > 1 ? [autoplay.current] : []);
+  const [selected, setSelected] = useState(0);
+
+  useEffect(() => {
+    if (!embla) return;
+    const onSel = () => setSelected(embla.selectedScrollSnap());
+    embla.on("select", onSel);
+    onSel();
+    return () => { embla.off("select", onSel); };
+  }, [embla]);
+
+  if (images.length === 0) {
+    return (
+      <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft via-accent to-cream p-10 text-center">
+        <div>
+          <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-white/70 backdrop-blur">
+            <Sparkles className="h-9 w-9 text-primary" />
+          </div>
+          <div className="font-display text-3xl font-bold text-foreground">Serba 35</div>
+          <div className="font-display text-3xl font-bold text-primary">& Serba 75</div>
+          <p className="mt-4 text-sm text-foreground/70">Produk grosir berkualitas untuk reseller di seluruh Indonesia.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full w-full">
+      <div ref={emblaRef} className="h-full overflow-hidden">
+        <div className="flex h-full">
+          {images.map((src, i) => (
+            <div key={i} className="relative h-full min-w-0 flex-[0_0_100%]">
+              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      </div>
+      {images.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => embla?.scrollTo(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${i === selected ? "w-6 bg-white" : "w-1.5 bg-white/60"}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
