@@ -16,6 +16,9 @@ export type HeroSettings = {
   cta_text: string;
   cta_link: string;
   image_url: string | null;
+  image_url_2: string | null;
+  image_url_3: string | null;
+  image_url_4: string | null;
 };
 export type FooterSettings = { description: string; copyright: string };
 export type ThemeSettings = { primary: string; accent: string; background: string; foreground: string };
@@ -41,6 +44,9 @@ const DEFAULTS: SiteSettings = {
     cta_text: "Lihat Katalog",
     cta_link: "/katalog",
     image_url: null,
+    image_url_2: null,
+    image_url_3: null,
+    image_url_4: null,
   },
   footer: {
     description: "Toko Serba — supplier grosir produk Serba 35 & Serba 75 untuk reseller di seluruh Indonesia.",
