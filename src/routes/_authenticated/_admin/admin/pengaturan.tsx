@@ -162,11 +162,15 @@ function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sect
   });
 
   async function save() {
-    const payload = { ...form, is_active: initial?.is_active ?? true };
+    const payload = { ...form, is_active: (initial?.is_active as boolean | undefined) ?? true } as Record<string, unknown>;
+    const client = supabase.from(table) as unknown as {
+      update: (p: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<unknown> };
+      insert: (p: Record<string, unknown>) => Promise<unknown>;
+    };
     if (initial?.id) {
-      await supabase.from(table).update(payload).eq("id", initial.id as string);
+      await client.update(payload).eq("id", initial.id as string);
     } else {
-      await supabase.from(table).insert(payload);
+      await client.insert(payload);
     }
     toast.success("Tersimpan");
     qc.invalidateQueries({ queryKey: ["cms", table] });
