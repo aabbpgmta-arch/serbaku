@@ -103,24 +103,15 @@ function HomePage() {
           <div className="relative">
             <div className="absolute inset-0 -z-10 translate-x-6 translate-y-6 rounded-3xl bg-primary-soft/60" />
             <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-card shadow-elegant">
-              {hero?.image_url ? (
-                <img src={hero.image_url} alt="Toko Serba" className="h-full w-full object-cover" />
-              ) : (
-                <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft via-accent to-cream p-10 text-center">
-                  <div>
-                    <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-white/70 backdrop-blur">
-                      <Sparkles className="h-9 w-9 text-primary" />
-                    </div>
-                    <div className="font-display text-3xl font-bold text-foreground">Serba 35</div>
-                    <div className="font-display text-3xl font-bold text-primary">& Serba 75</div>
-                    <p className="mt-4 text-sm text-foreground/70">Produk grosir berkualitas untuk reseller di seluruh Indonesia.</p>
-                  </div>
-                </div>
-              )}
+            <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-card shadow-elegant">
+              <HeroSlider
+                images={[hero?.image_url, hero?.image_url_2, hero?.image_url_3, hero?.image_url_4].filter((u): u is string => !!u)}
+              />
             </div>
           </div>
         </div>
       </section>
+
 
       {/* KEUNGGULAN */}
       <section className="container-page py-14 md:py-20">
