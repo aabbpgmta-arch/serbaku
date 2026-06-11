@@ -42,7 +42,8 @@ function OrderDetail() {
     const { error } = await supabase.storage.from("payment-proofs").upload(path, file, { upsert: true });
     if (error) { toast.error("Upload gagal"); setUploading(false); return; }
     const { data: signed } = await supabase.storage.from("payment-proofs").createSignedUrl(path, 60 * 60 * 24 * 365);
-    await supabase.from("orders").update({ payment_proof_url: signed?.signedUrl ?? path }).eq("id", id);
+    const { error: rpcErr } = await supabase.rpc("set_order_payment_proof", { _order_id: id, _url: signed?.signedUrl ?? path });
+    if (rpcErr) { toast.error(rpcErr.message); setUploading(false); return; }
     toast.success("Bukti transfer terkirim");
     qc.invalidateQueries({ queryKey: ["order", id] });
     setUploading(false);
