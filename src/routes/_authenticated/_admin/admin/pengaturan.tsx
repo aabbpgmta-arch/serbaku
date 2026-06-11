@@ -33,7 +33,7 @@ function AdminSettings() {
           <TabsTrigger value="testimonials">Testimoni</TabsTrigger>
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
-        <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url"]} multiline={["headline","subheadline"]} /></TabsContent>
+        <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
         <TabsContent value="contact"><SettingForm settingKey="contact" fields={["whatsapp", "email", "address", "instagram", "tiktok", "shopee"]} /></TabsContent>
         <TabsContent value="footer"><SettingForm settingKey="footer" fields={["description", "copyright"]} multiline={["description"]} /></TabsContent>
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
