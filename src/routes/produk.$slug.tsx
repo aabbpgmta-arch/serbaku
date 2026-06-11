@@ -32,9 +32,11 @@ export const Route = createFileRoute("/produk/$slug")({
   notFoundComponent: () => <div className="container-page py-20 text-center text-muted-foreground">Produk tidak ditemukan.</div>,
 });
 
+type Img = { id: string; url: string; is_cover: boolean; sort_order: number };
+
 function ProductPage() {
   const { product } = Route.useLoaderData();
-  const images = (product.product_images ?? []).sort((a, b) =>
+  const images = ((product.product_images ?? []) as Img[]).sort((a, b) =>
     a.is_cover && !b.is_cover ? -1 : !a.is_cover && b.is_cover ? 1 : a.sort_order - b.sort_order,
   );
   const [active, setActive] = useState(0);
