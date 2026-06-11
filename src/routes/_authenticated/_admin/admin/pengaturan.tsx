@@ -27,6 +27,7 @@ function AdminSettings() {
           <TabsTrigger value="brand">Brand</TabsTrigger>
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
+          <TabsTrigger value="payment">Pembayaran</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
           <TabsTrigger value="sections">Keunggulan</TabsTrigger>
           <TabsTrigger value="categories">Kategori</TabsTrigger>
@@ -35,6 +36,7 @@ function AdminSettings() {
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
         <TabsContent value="contact"><SettingForm settingKey="contact" fields={["whatsapp", "email", "address", "instagram", "tiktok", "shopee"]} /></TabsContent>
+        <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
         <TabsContent value="footer"><SettingForm settingKey="footer" fields={["description", "copyright"]} multiline={["description"]} /></TabsContent>
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
         <TabsContent value="categories"><CategoriesEditor /></TabsContent>
