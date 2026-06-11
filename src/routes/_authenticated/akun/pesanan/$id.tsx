@@ -21,6 +21,8 @@ function OrderDetail() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const { data: settings } = useSiteSettings();
+  const payment = settings?.payment;
 
   const { data, isLoading } = useQuery({
     queryKey: ["order", id],
