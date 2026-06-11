@@ -11,8 +11,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
-  --font-display: "Playfair Display", "Cormorant Garamond", serif;
-  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "Montserrat", system-ui, sans-serif;
+  --font-sans: "Poppins", system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -109,12 +109,29 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, .font-display {
+  h1, h2, h3, h4, h5, h6, .font-display {
     font-family: var(--font-display);
+    line-height: 1.1;
     letter-spacing: -0.01em;
   }
+  h1 { font-size: 42px; font-weight: 800; }
+  h2 { font-size: 34px; font-weight: 700; }
+  h3 { font-size: 28px; font-weight: 600; }
+  h4 { font-size: 22px; font-weight: 600; }
+  small, .text-small { font-size: 14px; }
+  @media (min-width: 768px) {
+    h1 { font-size: 64px; }
+    h2 { font-size: 48px; }
+    h3 { font-size: 36px; }
+    h4 { font-size: 24px; }
+  }
+  button, .btn-hero { font-family: var(--font-sans); font-weight: 600; }
+  label { font-weight: 500; }
 }
 
 @utility container-page {
