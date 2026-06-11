@@ -103,7 +103,6 @@ function HomePage() {
           <div className="relative">
             <div className="absolute inset-0 -z-10 translate-x-6 translate-y-6 rounded-3xl bg-primary-soft/60" />
             <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-card shadow-elegant">
-            <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-card shadow-elegant">
               <HeroSlider
                 images={[hero?.image_url, hero?.image_url_2, hero?.image_url_3, hero?.image_url_4].filter((u): u is string => !!u)}
               />
