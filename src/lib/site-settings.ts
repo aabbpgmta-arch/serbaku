@@ -22,6 +22,12 @@ export type HeroSettings = {
 };
 export type FooterSettings = { description: string; copyright: string };
 export type ThemeSettings = { primary: string; accent: string; background: string; foreground: string };
+export type PaymentSettings = {
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  bank_logo_url: string;
+};
 
 export type SiteSettings = {
   brand: BrandSettings;
@@ -29,6 +35,7 @@ export type SiteSettings = {
   hero: HeroSettings;
   footer: FooterSettings;
   theme: ThemeSettings;
+  payment: PaymentSettings;
 };
 
 const DEFAULTS: SiteSettings = {
