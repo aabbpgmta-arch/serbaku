@@ -111,20 +111,117 @@ function OrderDetail() {
             </div>
           </div>
 
-          {data.status === "menunggu_pembayaran" && (
-            <div className="rounded-2xl border border-border/60 bg-card p-5">
-              <h2 className="font-display text-base font-semibold">Bukti Transfer</h2>
-              {data.payment_proof_url ? (
-                <div className="mt-3">
-                  <a href={data.payment_proof_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Lihat bukti terkirim</a>
+          {data.status === "menunggu_pembayaran" && payment && (
+            <>
+              <div className="overflow-hidden rounded-2xl border-2 border-primary/20 bg-white shadow-elegant">
+                <div className="bg-gradient-to-br from-primary/10 to-accent/40 p-5">
+                  <h2 className="font-display text-lg font-bold text-foreground">Informasi Pembayaran</h2>
+                  <p className="text-xs text-muted-foreground">Silakan transfer ke rekening di bawah</p>
                 </div>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">Upload bukti pembayaran agar pesanan diproses.</p>
-              )}
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadProof(e.target.files[0])} />
-              <Button type="button" variant="outline" className="mt-3 w-full gap-2" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4" /> {uploading ? "Mengupload..." : "Upload Bukti"}
-              </Button>
+                <div className="space-y-4 p-5">
+                  <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-white p-3">
+                    {payment.bank_logo_url ? (
+                      <img src={payment.bank_logo_url} alt={payment.bank_name} className="h-10 w-auto max-w-[80px] object-contain" />
+                    ) : (
+                      <div className="grid h-10 w-16 place-items-center rounded bg-muted text-xs font-bold">{payment.bank_name.slice(0,3).toUpperCase()}</div>
+                    )}
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Bank</p>
+                      <p className="text-sm font-bold">{payment.bank_name}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Atas Nama</p>
+                    <p className="font-semibold">{payment.account_holder}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">No. Rekening</p>
+                    <p className="font-mono text-lg font-bold tracking-wider text-primary">{payment.account_number}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(payment.account_number);
+                      toast.success("Nomor rekening berhasil disalin");
+                    }}
+                  >
+                    <Copy className="h-4 w-4" /> Salin Nomor Rekening
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-primary/15 bg-white p-5 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-primary" />
+                  <h3 className="font-display text-base font-semibold">Panduan Pembayaran</h3>
+                </div>
+                <ol className="mt-3 space-y-1.5 pl-5 text-sm text-muted-foreground [&>li]:list-decimal">
+                  <li>Transfer sesuai total pembayaran yang tertera.</li>
+                  <li>Transfer ke rekening {payment.bank_name} yang tersedia di atas.</li>
+                  <li>Setelah transfer, upload bukti pembayaran.</li>
+                  <li>Admin akan memverifikasi pembayaran.</li>
+                  <li>Setelah pembayaran dikonfirmasi, pesanan akan diproses.</li>
+                </ol>
+              </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <h3 className="font-display text-base font-semibold text-amber-900">Penting</h3>
+                </div>
+                <p className="mt-2 text-xs text-amber-900">Transfer hanya ke:</p>
+                <div className="mt-1 rounded-lg bg-white/70 p-2 text-xs">
+                  <p className="font-semibold">{payment.bank_name}</p>
+                  <p>A/N {payment.account_holder}</p>
+                  <p className="font-mono">No. Rek {payment.account_number}</p>
+                </div>
+                <ul className="mt-2 space-y-1 text-xs text-amber-900">
+                  <li>• Pastikan nominal transfer sesuai dengan total pesanan.</li>
+                  <li>• Kesalahan transfer bukan tanggung jawab pihak toko.</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-card p-5">
+                <h2 className="font-display text-base font-semibold">Bukti Transfer</h2>
+                {data.payment_proof_url ? (
+                  <div className="mt-3">
+                    <a href={data.payment_proof_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Lihat bukti terkirim</a>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">Upload bukti pembayaran agar pesanan diproses.</p>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadProof(e.target.files[0])} />
+                <Button type="button" variant="outline" className="mt-3 w-full gap-2" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4" /> {uploading ? "Mengupload..." : "Upload Bukti"}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {data.status === "diproses" && (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-blue-600" /><h3 className="font-semibold text-blue-900">Pembayaran Diterima</h3></div>
+              <p className="mt-2 text-sm text-blue-900">Pembayaran telah diterima dan pesanan sedang diproses.</p>
+            </div>
+          )}
+
+          {data.status === "dikirim" && (
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
+              <div className="flex items-center gap-2"><Truck className="h-5 w-5 text-indigo-600" /><h3 className="font-semibold text-indigo-900">Pesanan Dikirim</h3></div>
+              {data.tracking_number ? (
+                <div className="mt-3 rounded-lg bg-white p-3">
+                  <p className="text-xs text-muted-foreground">No. Resi</p>
+                  <p className="font-mono text-sm font-bold">{data.tracking_number}</p>
+                </div>
+              ) : <p className="mt-2 text-sm text-indigo-900">Pesanan dalam perjalanan ke alamat Anda.</p>}
+            </div>
+          )}
+
+          {data.status === "selesai" && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-emerald-600" /><h3 className="font-semibold text-emerald-900">Selesai</h3></div>
+              <p className="mt-2 text-sm text-emerald-900">Pesanan telah selesai. Terima kasih atas kepercayaan Anda!</p>
             </div>
           )}
         </aside>
