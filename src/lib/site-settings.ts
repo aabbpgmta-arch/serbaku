@@ -34,7 +34,7 @@ export type SiteSettings = {
 const DEFAULTS: SiteSettings = {
   brand: { name: "Toko Serba", logo_url: null, favicon_url: null },
   contact: {
-    whatsapp: "6281234567890",
+    whatsapp: "6282130007881",
     email: "halo@tokoserba.id",
     address: "Indonesia",
   },
