@@ -9,12 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdukSlugRouteImport } from './routes/produk.$slug'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
+import { Route as AuthenticatedAkunPesananIndexRouteImport } from './routes/_authenticated/akun/pesanan/index'
+import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated/_admin/admin/index'
+import { Route as AuthenticatedAkunPesananIdRouteImport } from './routes/_authenticated/akun/pesanan/$id'
+import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_authenticated/_admin/admin/produk'
+import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
+import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
+import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KeranjangRoute = KeranjangRouteImport.update({
   id: '/keranjang',
   path: '/keranjang',
@@ -25,9 +41,18 @@ const KatalogRoute = KatalogRouteImport.update({
   path: '/katalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -40,47 +65,177 @@ const ProdukSlugRoute = ProdukSlugRouteImport.update({
   path: '/produk/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAkunPesananIndexRoute =
+  AuthenticatedAkunPesananIndexRouteImport.update({
+    id: '/akun/pesanan/',
+    path: '/akun/pesanan/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminIndexRoute =
+  AuthenticatedAdminAdminIndexRouteImport.update({
+    id: '/admin/',
+    path: '/admin/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAkunPesananIdRoute =
+  AuthenticatedAkunPesananIdRouteImport.update({
+    id: '/akun/pesanan/$id',
+    path: '/akun/pesanan/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminProdukRoute =
+  AuthenticatedAdminAdminProdukRouteImport.update({
+    id: '/admin/produk',
+    path: '/admin/produk',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPesananRoute =
+  AuthenticatedAdminAdminPesananRouteImport.update({
+    id: '/admin/pesanan',
+    path: '/admin/pesanan',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPengaturanRoute =
+  AuthenticatedAdminAdminPengaturanRouteImport.update({
+    id: '/admin/pengaturan',
+    path: '/admin/pengaturan',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPelangganRoute =
+  AuthenticatedAdminAdminPelangganRouteImport.update({
+    id: '/admin/pelanggan',
+    path: '/admin/pelanggan',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
+  '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
+  '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
+  '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
+  '/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
+  '/admin/': typeof AuthenticatedAdminAdminIndexRoute
+  '/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
+  '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
+  '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
+  '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
+  '/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
+  '/admin': typeof AuthenticatedAdminAdminIndexRoute
+  '/akun/pesanan': typeof AuthenticatedAkunPesananIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/produk/$slug': typeof ProdukSlugRoute
+  '/_authenticated/_admin/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
+  '/_authenticated/_admin/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
+  '/_authenticated/_admin/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
+  '/_authenticated/_admin/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/_authenticated/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
+  '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
+  '/_authenticated/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/katalog' | '/keranjang' | '/produk/$slug'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/katalog'
+    | '/keranjang'
+    | '/sitemap.xml'
+    | '/produk/$slug'
+    | '/admin/pelanggan'
+    | '/admin/pengaturan'
+    | '/admin/pesanan'
+    | '/admin/produk'
+    | '/akun/pesanan/$id'
+    | '/admin/'
+    | '/akun/pesanan/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/katalog' | '/keranjang' | '/produk/$slug'
-  id: '__root__' | '/' | '/auth' | '/katalog' | '/keranjang' | '/produk/$slug'
+  to:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/katalog'
+    | '/keranjang'
+    | '/sitemap.xml'
+    | '/produk/$slug'
+    | '/admin/pelanggan'
+    | '/admin/pengaturan'
+    | '/admin/pesanan'
+    | '/admin/produk'
+    | '/akun/pesanan/$id'
+    | '/admin'
+    | '/akun/pesanan'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/checkout'
+    | '/katalog'
+    | '/keranjang'
+    | '/sitemap.xml'
+    | '/_authenticated/_admin'
+    | '/produk/$slug'
+    | '/_authenticated/_admin/admin/pelanggan'
+    | '/_authenticated/_admin/admin/pengaturan'
+    | '/_authenticated/_admin/admin/pesanan'
+    | '/_authenticated/_admin/admin/produk'
+    | '/_authenticated/akun/pesanan/$id'
+    | '/_authenticated/_admin/admin/'
+    | '/_authenticated/akun/pesanan/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ProdukSlugRoute: typeof ProdukSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/keranjang': {
       id: '/keranjang'
       path: '/keranjang'
@@ -95,11 +250,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -116,16 +285,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdukSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_admin': {
+      id: '/_authenticated/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/akun/pesanan/': {
+      id: '/_authenticated/akun/pesanan/'
+      path: '/akun/pesanan'
+      fullPath: '/akun/pesanan/'
+      preLoaderRoute: typeof AuthenticatedAkunPesananIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_admin/admin/': {
+      id: '/_authenticated/_admin/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/akun/pesanan/$id': {
+      id: '/_authenticated/akun/pesanan/$id'
+      path: '/akun/pesanan/$id'
+      fullPath: '/akun/pesanan/$id'
+      preLoaderRoute: typeof AuthenticatedAkunPesananIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_admin/admin/produk': {
+      id: '/_authenticated/_admin/admin/produk'
+      path: '/admin/produk'
+      fullPath: '/admin/produk'
+      preLoaderRoute: typeof AuthenticatedAdminAdminProdukRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/pesanan': {
+      id: '/_authenticated/_admin/admin/pesanan'
+      path: '/admin/pesanan'
+      fullPath: '/admin/pesanan'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPesananRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/pengaturan': {
+      id: '/_authenticated/_admin/admin/pengaturan'
+      path: '/admin/pengaturan'
+      fullPath: '/admin/pengaturan'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPengaturanRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/pelanggan': {
+      id: '/_authenticated/_admin/admin/pelanggan'
+      path: '/admin/pelanggan'
+      fullPath: '/admin/pelanggan'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPelangganRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAdminPelangganRoute: typeof AuthenticatedAdminAdminPelangganRoute
+  AuthenticatedAdminAdminPengaturanRoute: typeof AuthenticatedAdminAdminPengaturanRoute
+  AuthenticatedAdminAdminPesananRoute: typeof AuthenticatedAdminAdminPesananRoute
+  AuthenticatedAdminAdminProdukRoute: typeof AuthenticatedAdminAdminProdukRoute
+  AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminAdminPelangganRoute:
+      AuthenticatedAdminAdminPelangganRoute,
+    AuthenticatedAdminAdminPengaturanRoute:
+      AuthenticatedAdminAdminPengaturanRoute,
+    AuthenticatedAdminAdminPesananRoute: AuthenticatedAdminAdminPesananRoute,
+    AuthenticatedAdminAdminProdukRoute: AuthenticatedAdminAdminProdukRoute,
+    AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAkunPesananIdRoute: typeof AuthenticatedAkunPesananIdRoute
+  AuthenticatedAkunPesananIndexRoute: typeof AuthenticatedAkunPesananIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedAkunPesananIdRoute: AuthenticatedAkunPesananIdRoute,
+  AuthenticatedAkunPesananIndexRoute: AuthenticatedAkunPesananIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ProdukSlugRoute: ProdukSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
