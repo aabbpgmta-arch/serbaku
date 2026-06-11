@@ -442,6 +442,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      set_order_payment_proof: {
+        Args: { _order_id: string; _url: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "customer"
