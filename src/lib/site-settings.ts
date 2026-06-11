@@ -22,6 +22,12 @@ export type HeroSettings = {
 };
 export type FooterSettings = { description: string; copyright: string };
 export type ThemeSettings = { primary: string; accent: string; background: string; foreground: string };
+export type PaymentSettings = {
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  bank_logo_url: string;
+};
 
 export type SiteSettings = {
   brand: BrandSettings;
@@ -29,6 +35,7 @@ export type SiteSettings = {
   hero: HeroSettings;
   footer: FooterSettings;
   theme: ThemeSettings;
+  payment: PaymentSettings;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -53,6 +60,12 @@ const DEFAULTS: SiteSettings = {
     copyright: "© 2026 Toko Serba",
   },
   theme: { primary: "#D96C9F", accent: "#F8BBD9", background: "#FFF7F0", foreground: "#1F1F1F" },
+  payment: {
+    bank_name: "Bank BCA",
+    account_holder: "Nurma Marufag",
+    account_number: "5860498792",
+    bank_logo_url: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg",
+  },
 };
 
 export function useSiteSettings() {
@@ -67,6 +80,7 @@ export function useSiteSettings() {
         hero: { ...DEFAULTS.hero, ...(map.get("hero") as object | undefined) } as HeroSettings,
         footer: { ...DEFAULTS.footer, ...(map.get("footer") as object | undefined) } as FooterSettings,
         theme: { ...DEFAULTS.theme, ...(map.get("theme") as object | undefined) } as ThemeSettings,
+        payment: { ...DEFAULTS.payment, ...(map.get("payment") as object | undefined) } as PaymentSettings,
       };
     },
     staleTime: 60_000,
