@@ -2,11 +2,12 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
+import { useSiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/akun/pesanan/$id")({
