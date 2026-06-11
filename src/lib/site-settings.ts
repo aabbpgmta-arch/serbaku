@@ -60,6 +60,12 @@ const DEFAULTS: SiteSettings = {
     copyright: "© 2026 Toko Serba",
   },
   theme: { primary: "#D96C9F", accent: "#F8BBD9", background: "#FFF7F0", foreground: "#1F1F1F" },
+  payment: {
+    bank_name: "Bank BCA",
+    account_holder: "Nurma Marufag",
+    account_number: "5860498792",
+    bank_logo_url: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg",
+  },
 };
 
 export function useSiteSettings() {
@@ -74,6 +80,7 @@ export function useSiteSettings() {
         hero: { ...DEFAULTS.hero, ...(map.get("hero") as object | undefined) } as HeroSettings,
         footer: { ...DEFAULTS.footer, ...(map.get("footer") as object | undefined) } as FooterSettings,
         theme: { ...DEFAULTS.theme, ...(map.get("theme") as object | undefined) } as ThemeSettings,
+        payment: { ...DEFAULTS.payment, ...(map.get("payment") as object | undefined) } as PaymentSettings,
       };
     },
     staleTime: 60_000,
