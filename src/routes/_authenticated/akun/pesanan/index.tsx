@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
@@ -12,15 +13,39 @@ export const Route = createFileRoute("/_authenticated/akun/pesanan/")({
 
 function OrdersPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const { data: orders, isLoading } = useQuery({
     queryKey: ["my_orders", user?.id],
     enabled: !!user,
+    refetchInterval: 10_000,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("orders").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+      if (error) throw error;
       return data ?? [];
     },
   });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`customer-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        () => qc.invalidateQueries({ queryKey: ["my_orders", user.id] }),
+      )
+      .subscribe((status, error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Realtime riwayat pesanan gagal, fallback refresh 10 detik aktif", error);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc, user]);
 
   return (
     <div className="container-page py-10">
