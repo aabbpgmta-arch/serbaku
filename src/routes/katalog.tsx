@@ -40,13 +40,14 @@ function KatalogPage() {
   const search = useSearch({ from: "/katalog" });
   const [q, setQ] = useState(search.q ?? "");
 
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading, error } = useQuery({
     queryKey: ["products", search.cat, search.q],
     queryFn: async () => {
       let query = supabase
         .from("products")
         .select("id, name, slug, price, category, stock, is_bestseller, is_new, product_images(url, is_cover, sort_order)")
         .eq("is_active", true)
+        .gt("stock", 0)
         .order("created_at", { ascending: false });
 
       if (search.cat === "serba_35") query = query.eq("category", "serba_35");
@@ -57,10 +58,16 @@ function KatalogPage() {
 
       if (search.q) query = query.ilike("name", `%${search.q}%`);
 
-      const { data } = await query;
+      const { data, error } = await query;
+      if (error) {
+        console.error("[katalog] gagal memuat produk", error);
+        throw error;
+      }
+      console.info("[katalog] produk dimuat", { count: data?.length ?? 0, filter: search });
       return data ?? [];
     },
   });
+
 
   return (
     <div className="container-page py-10">
