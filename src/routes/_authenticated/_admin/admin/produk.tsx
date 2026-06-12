@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah, slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -37,6 +39,7 @@ function AdminProduk() {
 
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [openForm, setOpenForm] = useState(false);
+  const [openBulk, setOpenBulk] = useState(false);
 
   async function toggleActive(p: ProductRow) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
@@ -53,7 +56,15 @@ function AdminProduk() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Produk</h1>
-        <Button onClick={() => { setEditing(null); setOpenForm(true); }} className="gap-1.5"><Plus className="h-4 w-4" /> Tambah Produk</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-1.5"><Plus className="h-4 w-4" /> Tambah Produk <ChevronDown className="h-3.5 w-3.5" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => { setEditing(null); setOpenForm(true); }}>Tambah Produk Satuan</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setOpenBulk(true)}>Tambah Produk Massal</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card">
@@ -91,7 +102,12 @@ function AdminProduk() {
                     </td>
                     <td className="px-4 py-3 text-xs">{p.category === "serba_35" ? "Serba 35" : p.category === "serba_75" ? "Serba 75" : "Lainnya"}</td>
                     <td className="px-4 py-3 text-right font-semibold">{formatRupiah(p.price)}</td>
-                    <td className="px-4 py-3 text-right">{p.stock}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className={p.stock <= 0 ? "text-destructive font-semibold" : ""}>{p.stock}</span>
+                        {p.stock <= 0 && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">Stok Habis</span>}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-center"><Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} /></td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
@@ -107,6 +123,7 @@ function AdminProduk() {
       </div>
 
       <ProductFormDialog open={openForm} onOpenChange={setOpenForm} product={editing} />
+      <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
     </div>
   );
 }
