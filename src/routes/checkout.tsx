@@ -68,6 +68,29 @@ function CheckoutPage() {
       return;
     }
     setSubmitting(true);
+
+    // Validate latest stock from Supabase
+    const ids = items.map((i) => i.productId);
+    const { data: stockRows, error: stockErr } = await supabase
+      .from("products").select("id,stock,name,is_active").in("id", ids);
+    if (stockErr) {
+      toast.error("Gagal mengecek stok: " + stockErr.message);
+      setSubmitting(false);
+      return;
+    }
+    for (const i of items) {
+      const row = stockRows?.find((r) => r.id === i.productId);
+      if (!row || !row.is_active) {
+        toast.error(`Produk "${i.name}" tidak tersedia`);
+        setSubmitting(false);
+        return;
+      }
+      if (row.stock < i.qty) {
+        toast.error(`Stok produk tidak mencukupi untuk "${row.name}" (sisa ${row.stock})`);
+        setSubmitting(false);
+        return;
+      }
+    }
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
