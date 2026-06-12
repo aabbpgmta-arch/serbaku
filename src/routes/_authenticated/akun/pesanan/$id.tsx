@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,21 @@ import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
 import { useSiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
+
+const TIMELINE_STEPS = [
+  { status: "menunggu_pembayaran", label: "Menunggu Pembayaran" },
+  { status: "diproses", label: "Diproses" },
+  { status: "dikirim", label: "Dikirim" },
+  { status: "selesai", label: "Selesai" },
+] as const;
+
+const ACTIVE_STEP_INDEX: Record<string, number> = {
+  menunggu_pembayaran: 0,
+  diproses: 1,
+  dikirim: 2,
+  selesai: 3,
+  dibatalkan: -1,
+};
 
 export const Route = createFileRoute("/_authenticated/akun/pesanan/$id")({
   head: () => ({ meta: [{ title: "Detail Pesanan — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -26,6 +41,7 @@ function OrderDetail() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["order", id],
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders").select("*, order_items(*)").eq("id", id).maybeSingle();
@@ -34,8 +50,32 @@ function OrderDetail() {
     },
   });
 
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`customer-order-detail-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `id=eq.${id}` }, (payload) => {
+        qc.setQueryData(["order", id], (current: typeof data | undefined) =>
+          current ? { ...current, ...(payload.new as Partial<typeof current>) } : current,
+        );
+        qc.invalidateQueries({ queryKey: ["order", id] });
+      })
+      .subscribe((status, error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Realtime detail pesanan gagal, fallback refresh 10 detik aktif", error);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [data, id, qc, user]);
+
   if (isLoading) return <div className="container-page py-20 text-center text-muted-foreground">Memuat...</div>;
   if (!data) return null;
+
+  const activeStepIndex = ACTIVE_STEP_INDEX[data.status] ?? 0;
 
   async function uploadProof(file: File) {
     if (!user) return;
