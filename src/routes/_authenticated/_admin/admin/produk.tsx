@@ -56,7 +56,7 @@ function AdminProduk() {
     setSelected(on ? new Set(allIds) : new Set());
   }
   function refresh() {
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
     qc.invalidateQueries({ queryKey: ["products"] });
   }
 
@@ -248,7 +248,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       toast.success("Produk dibuat");
     }
     setSaving(false);
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
     onOpenChange(false);
   }
 
@@ -270,7 +270,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       if (img) setImages((prev) => [...prev, img]);
     }
     setUploading(false);
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   async function setCover(imgId: string) {
@@ -278,13 +278,13 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     await supabase.from("product_images").update({ is_cover: false }).eq("product_id", product.id);
     await supabase.from("product_images").update({ is_cover: true }).eq("id", imgId);
     setImages((prev) => prev.map((i) => ({ ...i, is_cover: i.id === imgId })));
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   async function removeImg(imgId: string) {
     await supabase.from("product_images").delete().eq("id", imgId);
     setImages((prev) => prev.filter((i) => i.id !== imgId));
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   return (
