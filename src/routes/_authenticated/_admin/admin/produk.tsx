@@ -102,7 +102,12 @@ function AdminProduk() {
                     </td>
                     <td className="px-4 py-3 text-xs">{p.category === "serba_35" ? "Serba 35" : p.category === "serba_75" ? "Serba 75" : "Lainnya"}</td>
                     <td className="px-4 py-3 text-right font-semibold">{formatRupiah(p.price)}</td>
-                    <td className="px-4 py-3 text-right">{p.stock}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className={p.stock <= 0 ? "text-destructive font-semibold" : ""}>{p.stock}</span>
+                        {p.stock <= 0 && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">Stok Habis</span>}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-center"><Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} /></td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
