@@ -39,6 +39,7 @@ function AdminProduk() {
 
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [openForm, setOpenForm] = useState(false);
+  const [openBulk, setOpenBulk] = useState(false);
 
   async function toggleActive(p: ProductRow) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
