@@ -123,6 +123,7 @@ function AdminProduk() {
       </div>
 
       <ProductFormDialog open={openForm} onOpenChange={setOpenForm} product={editing} />
+      <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
     </div>
   );
 }
