@@ -50,7 +50,7 @@ function AdminPesanan() {
           qc.setQueryData<Order[]>(["admin_orders"], (current) =>
             current?.map((order) => (order.id === nextOrder.id ? { ...order, ...nextOrder } : order)),
           );
-          setDetail((current) => (current?.id === nextOrder.id ? { ...current, ...nextOrder } : current));
+          setDetail((current) => (current?.id === nextOrder.id ? ({ ...current, ...nextOrder } as Order) : current));
         }
         qc.invalidateQueries({ queryKey: ["admin_orders"] });
       })
