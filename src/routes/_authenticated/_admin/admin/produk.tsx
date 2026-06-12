@@ -122,10 +122,29 @@ function AdminProduk() {
         </DropdownMenu>
       </div>
 
+      {selected.size > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
+          <span className="text-sm font-semibold">{selected.size} Produk Dipilih</span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Aktifkan Terpilih</Button>
+            <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Nonaktifkan Terpilih</Button>
+            <Button size="sm" variant="destructive" disabled={bulkBusy} onClick={bulkDelete} className="gap-1.5">
+              <Trash2 className="h-3.5 w-3.5" /> {bulkBusy ? "Memproses..." : "Hapus Terpilih"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Batal</Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
             <tr>
+              <th className="px-3 py-3">
+                <button type="button" onClick={() => toggleAll(!allSelected)} title={allSelected ? "Batalkan pilih semua" : "Pilih semua"} className="grid place-content-center">
+                  {allSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : someSelected ? <CheckSquare className="h-4 w-4 text-primary/60" /> : <Square className="h-4 w-4" />}
+                </button>
+              </th>
               <th className="px-4 py-3 text-left">Produk</th>
               <th className="px-4 py-3 text-left">Kategori</th>
               <th className="px-4 py-3 text-right">Harga</th>
@@ -135,12 +154,16 @@ function AdminProduk() {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
-              : (products ?? []).length === 0 ? <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Belum ada produk.</td></tr>
+            {isLoading ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
+              : (products ?? []).length === 0 ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Belum ada produk.</td></tr>
               : products!.map((p) => {
                 const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
+                const checked = selected.has(p.id);
                 return (
-                  <tr key={p.id} className="border-t border-border/60">
+                  <tr key={p.id} className={`border-t border-border/60 ${checked ? "bg-primary/5" : ""}`}>
+                    <td className="px-3 py-3">
+                      <Checkbox checked={checked} onCheckedChange={(v) => toggleOne(p.id, Boolean(v))} />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded-lg bg-muted">
@@ -176,6 +199,7 @@ function AdminProduk() {
           </tbody>
         </table>
       </div>
+
 
       <ProductFormDialog open={openForm} onOpenChange={setOpenForm} product={editing} />
       <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
