@@ -11,7 +11,7 @@ export const STATUS_COLOR: Record<string, string> = {
   diproses: "bg-blue-100 text-blue-800",
   dikirim: "bg-indigo-100 text-indigo-800",
   selesai: "bg-emerald-100 text-emerald-800",
-  dibatalkan: "bg-rose-100 text-rose-800",
+  dibatalkan: "bg-red-100 text-red-800",
 };
 
 export const STATUS_ORDER = ["menunggu_pembayaran", "diproses", "dikirim", "selesai", "dibatalkan"] as const;

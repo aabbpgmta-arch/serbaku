@@ -1,14 +1,31 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
+import { setOrderPaymentProof } from "@/lib/orders.functions";
 import { useSiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
+
+const TIMELINE_STEPS = [
+  { status: "menunggu_pembayaran", label: "Menunggu Pembayaran" },
+  { status: "diproses", label: "Diproses" },
+  { status: "dikirim", label: "Dikirim" },
+  { status: "selesai", label: "Selesai" },
+] as const;
+
+const ACTIVE_STEP_INDEX: Record<string, number> = {
+  menunggu_pembayaran: 0,
+  diproses: 1,
+  dikirim: 2,
+  selesai: 3,
+  dibatalkan: -1,
+};
 
 export const Route = createFileRoute("/_authenticated/akun/pesanan/$id")({
   head: () => ({ meta: [{ title: "Detail Pesanan — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -21,11 +38,13 @@ function OrderDetail() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const savePaymentProof = useServerFn(setOrderPaymentProof);
   const { data: settings } = useSiteSettings();
   const payment = settings?.payment;
 
   const { data, isLoading } = useQuery({
     queryKey: ["order", id],
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders").select("*, order_items(*)").eq("id", id).maybeSingle();
@@ -34,8 +53,32 @@ function OrderDetail() {
     },
   });
 
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`customer-order-detail-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `id=eq.${id}` }, (payload) => {
+        qc.setQueryData(["order", id], (current: typeof data | undefined) =>
+          current ? { ...current, ...(payload.new as Partial<typeof current>) } : current,
+        );
+        qc.invalidateQueries({ queryKey: ["order", id] });
+      })
+      .subscribe((status, error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Realtime detail pesanan gagal, fallback refresh 10 detik aktif", error);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, qc, user]);
+
   if (isLoading) return <div className="container-page py-20 text-center text-muted-foreground">Memuat...</div>;
   if (!data) return null;
+
+  const activeStepIndex = ACTIVE_STEP_INDEX[data.status] ?? 0;
 
   async function uploadProof(file: File) {
     if (!user) return;
@@ -45,8 +88,14 @@ function OrderDetail() {
     const { error } = await supabase.storage.from("payment-proofs").upload(path, file, { upsert: true });
     if (error) { toast.error("Upload gagal"); setUploading(false); return; }
     const { data: signed } = await supabase.storage.from("payment-proofs").createSignedUrl(path, 60 * 60 * 24 * 365);
-    const { error: rpcErr } = await supabase.rpc("set_order_payment_proof", { _order_id: id, _url: signed?.signedUrl ?? path });
-    if (rpcErr) { toast.error(rpcErr.message); setUploading(false); return; }
+    try {
+      await savePaymentProof({ data: { orderId: id, url: signed?.signedUrl ?? path } });
+    } catch (saveError) {
+      console.error("Gagal menyimpan bukti transfer", saveError);
+      toast.error(saveError instanceof Error ? saveError.message : "Bukti transfer gagal disimpan");
+      setUploading(false);
+      return;
+    }
     toast.success("Bukti transfer terkirim");
     qc.invalidateQueries({ queryKey: ["order", id] });
     setUploading(false);
@@ -62,8 +111,40 @@ function OrderDetail() {
           <h1 className="font-mono text-xl font-bold">{data.order_number}</h1>
           <p className="text-sm text-muted-foreground">{new Date(data.created_at).toLocaleString("id-ID")}</p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLOR[data.status]}`}>{STATUS_LABEL[data.status]}</span>
+        <div className="text-right">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">Status Pesanan</p>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLOR[data.status]}`}>{STATUS_LABEL[data.status]}</span>
+        </div>
       </div>
+
+      <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
+        {data.status === "dibatalkan" ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold">Timeline Status</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Pesanan ini tidak dilanjutkan.</p>
+            </div>
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">Pesanan Dibatalkan</span>
+          </div>
+        ) : (
+          <>
+            <h2 className="font-display text-lg font-semibold">Timeline Status</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              {TIMELINE_STEPS.map((step, index) => {
+                const active = index <= activeStepIndex;
+                return (
+                  <div key={step.status} className="flex items-center gap-3 sm:block">
+                    <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                      {index + 1}
+                    </div>
+                    <p className={`text-sm font-semibold sm:mt-2 ${active ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
