@@ -119,11 +119,17 @@ function KatalogPage() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-12 text-center">
+          <p className="text-sm font-medium text-destructive">Gagal memuat produk.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{(error as Error).message}</p>
+        </div>
       ) : (products ?? []).length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
           <Package className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">Belum ada produk pada kategori ini.</p>
         </div>
+
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products!.map((p) => {
