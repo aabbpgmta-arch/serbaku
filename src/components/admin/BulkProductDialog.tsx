@@ -136,8 +136,24 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
   async function saveAll() {
     const valid = rows.filter((r) => r.name.trim());
     if (!valid.length) { toast.error("Tambah minimal 1 produk dengan nama"); return; }
+
+    // Validation: name, price, category, image (file or URL) required
+    const invalid: string[] = [];
+    valid.forEach((r, idx) => {
+      const errs: string[] = [];
+      if (!r.name.trim()) errs.push("nama");
+      if (!r.price || r.price <= 0) errs.push("harga");
+      if (!r.category) errs.push("kategori");
+      if (!r.file && !r.imageUrl.trim()) errs.push("gambar");
+      if (errs.length) invalid.push(`Baris ${idx + 1} (${r.name || "tanpa nama"}): ${errs.join(", ")}`);
+    });
+    if (invalid.length) {
+      toast.error(`Lengkapi data wajib:\n${invalid.slice(0, 3).join("\n")}${invalid.length > 3 ? `\n+${invalid.length - 3} lainnya` : ""}`);
+      return;
+    }
+
     setSaving(true);
-    let ok = 0, fail = 0;
+    let ok = 0; const failures: string[] = [];
     for (const r of valid) {
       const slug = `${slugify(r.name)}-${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(-3)}`;
       const { data: prod, error } = await supabase.from("products").insert({
@@ -145,14 +161,21 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
         category: r.category, description: r.description || null,
         is_active: r.isActive, is_bestseller: r.label === "terlaris", is_new: r.label === "baru",
       }).select("id").single();
-      if (error || !prod) { fail++; console.error("Gagal simpan produk", r.name, error); continue; }
+      if (error || !prod) {
+        failures.push(`${r.name}: ${error?.message ?? "gagal"}`);
+        console.error("[bulk] gagal simpan produk", r.name, error);
+        continue;
+      }
 
       let finalUrl = r.imageUrl.trim() || null;
       if (r.file) {
         const ext = r.file.name.split(".").pop();
         const path = `${prod.id}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("product-images").upload(path, r.file);
-        if (!upErr) {
+        if (upErr) {
+          failures.push(`${r.name} (upload foto): ${upErr.message}`);
+          console.error("[bulk] gagal upload", r.name, upErr);
+        } else {
           const { data: signed } = await supabase.storage.from("product-images")
             .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
           finalUrl = signed?.signedUrl ?? null;
@@ -167,10 +190,12 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
     }
     setSaving(false);
     qc.invalidateQueries({ queryKey: ["admin_products"] });
-    if (fail) toast.error(`${ok} berhasil, ${fail} gagal`);
+    qc.invalidateQueries({ queryKey: ["products"] });
+    if (failures.length) toast.error(`${ok} berhasil, ${failures.length} gagal:\n${failures.slice(0, 3).join("\n")}`);
     else toast.success(`${ok} produk berhasil disimpan`);
-    if (!fail) { setRows([emptyRow()]); onOpenChange(false); }
+    if (!failures.length) { setRows([emptyRow()]); onOpenChange(false); }
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

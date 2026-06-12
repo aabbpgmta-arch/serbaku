@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah, slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -32,7 +33,8 @@ function AdminProduk() {
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin_products"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*, product_images(*)").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("products").select("*, product_images(*)").order("created_at", { ascending: false });
+      if (error) { console.error("[admin produk] gagal memuat", error); throw error; }
       return (data ?? []) as ProductRow[];
     },
   });
@@ -40,17 +42,70 @@ function AdminProduk() {
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [openForm, setOpenForm] = useState(false);
   const [openBulk, setOpenBulk] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const allIds = useMemo(() => (products ?? []).map((p) => p.id), [products]);
+  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  const someSelected = selected.size > 0 && !allSelected;
+
+  function toggleOne(id: string, on: boolean) {
+    setSelected((s) => { const n = new Set(s); if (on) n.add(id); else n.delete(id); return n; });
+  }
+  function toggleAll(on: boolean) {
+    setSelected(on ? new Set(allIds) : new Set());
+  }
+  function refresh() {
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
+  }
 
   async function toggleActive(p: ProductRow) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
-    if (error) toast.error(error.message); else { toast.success("Status diperbarui"); qc.invalidateQueries({ queryKey: ["admin_products"] }); }
+    if (error) toast.error(error.message); else { toast.success("Status diperbarui"); refresh(); }
   }
 
   async function deleteProduct(p: ProductRow) {
     if (!confirm(`Hapus produk "${p.name}"?`)) return;
-    const { error } = await supabase.from("products").delete().eq("id", p.id);
-    if (error) toast.error(error.message); else { toast.success("Produk dihapus"); qc.invalidateQueries({ queryKey: ["admin_products"] }); }
+    await deleteProductsWithImages([p.id]);
   }
+
+  async function deleteProductsWithImages(ids: string[]) {
+    const { data: imgs } = await supabase.from("product_images").select("url").in("product_id", ids);
+    const paths: string[] = [];
+    for (const r of imgs ?? []) {
+      const m = r.url?.match(/\/product-images\/([^?]+)/);
+      if (m?.[1]) paths.push(decodeURIComponent(m[1]));
+    }
+    if (paths.length) {
+      const { error: sErr } = await supabase.storage.from("product-images").remove(paths);
+      if (sErr) console.warn("[admin produk] gagal hapus beberapa foto", sErr);
+    }
+    const { error } = await supabase.from("products").delete().in("id", ids);
+    if (error) { toast.error(error.message); return false; }
+    return true;
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    if (!confirm(`Yakin ingin menghapus ${ids.length} produk?`)) return;
+    setBulkBusy(true);
+    const ok = await deleteProductsWithImages(ids);
+    setBulkBusy(false);
+    if (ok) { toast.success(`${ids.length} produk berhasil dihapus`); setSelected(new Set()); refresh(); }
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from("products").update({ is_active: active }).in("id", ids);
+    setBulkBusy(false);
+    if (error) toast.error(error.message);
+    else { toast.success(`${ids.length} produk ${active ? "diaktifkan" : "dinonaktifkan"}`); setSelected(new Set()); refresh(); }
+  }
+
 
   return (
     <div>
@@ -67,10 +122,29 @@ function AdminProduk() {
         </DropdownMenu>
       </div>
 
+      {selected.size > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3">
+          <span className="text-sm font-semibold">{selected.size} Produk Dipilih</span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>Aktifkan Terpilih</Button>
+            <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>Nonaktifkan Terpilih</Button>
+            <Button size="sm" variant="destructive" disabled={bulkBusy} onClick={bulkDelete} className="gap-1.5">
+              <Trash2 className="h-3.5 w-3.5" /> {bulkBusy ? "Memproses..." : "Hapus Terpilih"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Batal</Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
             <tr>
+              <th className="px-3 py-3">
+                <button type="button" onClick={() => toggleAll(!allSelected)} title={allSelected ? "Batalkan pilih semua" : "Pilih semua"} className="grid place-content-center">
+                  {allSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : someSelected ? <CheckSquare className="h-4 w-4 text-primary/60" /> : <Square className="h-4 w-4" />}
+                </button>
+              </th>
               <th className="px-4 py-3 text-left">Produk</th>
               <th className="px-4 py-3 text-left">Kategori</th>
               <th className="px-4 py-3 text-right">Harga</th>
@@ -80,12 +154,16 @@ function AdminProduk() {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
-              : (products ?? []).length === 0 ? <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Belum ada produk.</td></tr>
+            {isLoading ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
+              : (products ?? []).length === 0 ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Belum ada produk.</td></tr>
               : products!.map((p) => {
                 const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
+                const checked = selected.has(p.id);
                 return (
-                  <tr key={p.id} className="border-t border-border/60">
+                  <tr key={p.id} className={`border-t border-border/60 ${checked ? "bg-primary/5" : ""}`}>
+                    <td className="px-3 py-3">
+                      <Checkbox checked={checked} onCheckedChange={(v) => toggleOne(p.id, Boolean(v))} />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded-lg bg-muted">
@@ -121,6 +199,7 @@ function AdminProduk() {
           </tbody>
         </table>
       </div>
+
 
       <ProductFormDialog open={openForm} onOpenChange={setOpenForm} product={editing} />
       <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
@@ -169,7 +248,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       toast.success("Produk dibuat");
     }
     setSaving(false);
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
     onOpenChange(false);
   }
 
@@ -191,7 +270,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       if (img) setImages((prev) => [...prev, img]);
     }
     setUploading(false);
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   async function setCover(imgId: string) {
@@ -199,13 +278,13 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     await supabase.from("product_images").update({ is_cover: false }).eq("product_id", product.id);
     await supabase.from("product_images").update({ is_cover: true }).eq("id", imgId);
     setImages((prev) => prev.map((i) => ({ ...i, is_cover: i.id === imgId })));
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   async function removeImg(imgId: string) {
     await supabase.from("product_images").delete().eq("id", imgId);
     setImages((prev) => prev.filter((i) => i.id !== imgId));
-    qc.invalidateQueries({ queryKey: ["admin_products"] });
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   return (
