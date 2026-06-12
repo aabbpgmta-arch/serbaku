@@ -147,6 +147,7 @@ export type Database = {
           shipping_cost: number
           shipping_payer: Database["public"]["Enums"]["shipping_payer"]
           status: Database["public"]["Enums"]["order_status"]
+          stock_deducted: boolean
           subtotal: number
           total: number
           tracking_image_url: string | null
@@ -170,6 +171,7 @@ export type Database = {
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal?: number
           total?: number
           tracking_image_url?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
+          stock_deducted?: boolean
           subtotal?: number
           total?: number
           tracking_image_url?: string | null
