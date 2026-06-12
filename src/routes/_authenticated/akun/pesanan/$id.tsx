@@ -70,7 +70,7 @@ function OrderDetail() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [data, id, qc, user]);
+  }, [id, qc, user]);
 
   if (isLoading) return <div className="container-page py-20 text-center text-muted-foreground">Memuat...</div>;
   if (!data) return null;
@@ -102,8 +102,40 @@ function OrderDetail() {
           <h1 className="font-mono text-xl font-bold">{data.order_number}</h1>
           <p className="text-sm text-muted-foreground">{new Date(data.created_at).toLocaleString("id-ID")}</p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLOR[data.status]}`}>{STATUS_LABEL[data.status]}</span>
+        <div className="text-right">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">Status Pesanan</p>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLOR[data.status]}`}>{STATUS_LABEL[data.status]}</span>
+        </div>
       </div>
+
+      <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
+        {data.status === "dibatalkan" ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold">Timeline Status</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Pesanan ini tidak dilanjutkan.</p>
+            </div>
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">Pesanan Dibatalkan</span>
+          </div>
+        ) : (
+          <>
+            <h2 className="font-display text-lg font-semibold">Timeline Status</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              {TIMELINE_STEPS.map((step, index) => {
+                const active = index <= activeStepIndex;
+                return (
+                  <div key={step.status} className="flex items-center gap-3 sm:block">
+                    <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                      {index + 1}
+                    </div>
+                    <p className={`text-sm font-semibold sm:mt-2 ${active ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
