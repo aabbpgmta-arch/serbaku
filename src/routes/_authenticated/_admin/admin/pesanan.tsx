@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ChevronRight, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,22 +25,67 @@ type Order = {
   order_items: Array<{ id: string; product_name: string; quantity: number; unit_price: number; subtotal: number }>;
 };
 
+type OrderStatus = "menunggu_pembayaran" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
+
 function AdminPesanan() {
   const qc = useQueryClient();
   const [detail, setDetail] = useState<Order | null>(null);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin_orders"],
+    refetchInterval: 10_000,
     queryFn: async () => {
-      const { data } = await supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
+      if (error) throw error;
       return (data ?? []) as Order[];
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-orders-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
+        const nextOrder = payload.new as Partial<Order> | null;
+        if (nextOrder?.id) {
+          qc.setQueryData<Order[]>(["admin_orders"], (current) =>
+            current?.map((order) => (order.id === nextOrder.id ? { ...order, ...nextOrder } : order)),
+          );
+          setDetail((current) => (current?.id === nextOrder.id ? { ...current, ...nextOrder } : current));
+        }
+        qc.invalidateQueries({ queryKey: ["admin_orders"] });
+      })
+      .subscribe((status, error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Realtime pesanan gagal, fallback refresh 10 detik aktif", error);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
   async function updateStatus(id: string, status: string) {
-    const { error } = await supabase.from("orders").update({ status: status as "menunggu_pembayaran" | "diproses" | "dikirim" | "selesai" | "dibatalkan" }).eq("id", id);
-    if (error) toast.error(error.message);
-    else { toast.success("Status diperbarui"); qc.invalidateQueries({ queryKey: ["admin_orders"] }); }
+    const newStatus = status as OrderStatus;
+    const { data: updated, error } = await supabase
+      .from("orders")
+      .update({ status: newStatus })
+      .eq("id", id)
+      .select("id,status")
+      .single();
+
+    if (error || !updated) {
+      console.error("Gagal memperbarui status pesanan", { orderId: id, status: newStatus, error });
+      toast.error(error?.message ?? "Status gagal diperbarui");
+      return;
+    }
+
+    qc.setQueryData<Order[]>(["admin_orders"], (current) =>
+      current?.map((order) => (order.id === id ? { ...order, status: updated.status } : order)),
+    );
+    setDetail((current) => (current?.id === id ? { ...current, status: updated.status } : current));
+    await qc.invalidateQueries({ queryKey: ["admin_orders"] });
+    toast.success("Status diperbarui");
   }
 
   return (
