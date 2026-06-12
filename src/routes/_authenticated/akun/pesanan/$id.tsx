@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info } from "lucide-react";
@@ -7,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
+import { setOrderPaymentProof } from "@/lib/orders.functions";
 import { useSiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
 
@@ -36,6 +38,7 @@ function OrderDetail() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const savePaymentProof = useServerFn(setOrderPaymentProof);
   const { data: settings } = useSiteSettings();
   const payment = settings?.payment;
 
@@ -85,8 +88,14 @@ function OrderDetail() {
     const { error } = await supabase.storage.from("payment-proofs").upload(path, file, { upsert: true });
     if (error) { toast.error("Upload gagal"); setUploading(false); return; }
     const { data: signed } = await supabase.storage.from("payment-proofs").createSignedUrl(path, 60 * 60 * 24 * 365);
-    const { error: rpcErr } = await supabase.rpc("set_order_payment_proof", { _order_id: id, _url: signed?.signedUrl ?? path });
-    if (rpcErr) { toast.error(rpcErr.message); setUploading(false); return; }
+    try {
+      await savePaymentProof({ data: { orderId: id, url: signed?.signedUrl ?? path } });
+    } catch (saveError) {
+      console.error("Gagal menyimpan bukti transfer", saveError);
+      toast.error(saveError instanceof Error ? saveError.message : "Bukti transfer gagal disimpan");
+      setUploading(false);
+      return;
+    }
     toast.success("Bukti transfer terkirim");
     qc.invalidateQueries({ queryKey: ["order", id] });
     setUploading(false);
