@@ -56,7 +56,15 @@ function AdminProduk() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Produk</h1>
-        <Button onClick={() => { setEditing(null); setOpenForm(true); }} className="gap-1.5"><Plus className="h-4 w-4" /> Tambah Produk</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-1.5"><Plus className="h-4 w-4" /> Tambah Produk <ChevronDown className="h-3.5 w-3.5" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => { setEditing(null); setOpenForm(true); }}>Tambah Produk Satuan</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setOpenBulk(true)}>Tambah Produk Massal</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card">
