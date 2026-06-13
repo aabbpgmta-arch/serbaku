@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Zap, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Zap, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, Package, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -152,16 +152,34 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
     setEndsAt(computeEnd(startsAt || toLocalDT(start.toISOString()), ms));
   }
 
+type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null; sold30: number };
+type ViewMode = "large" | "medium" | "small" | "list";
+
+  // ...
   const { data: products } = useQuery({
     queryKey: ["fs_product_picker"],
     queryFn: async (): Promise<ProductPick[]> => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, price, stock, product_images(url, is_cover)")
-        .eq("is_active", true).order("name");
-      return (data ?? []).map((p) => ({
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString();
+      const [{ data: prods }, { data: items }] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id, name, price, stock, product_images(url, is_cover)")
+          .eq("is_active", true).order("name"),
+        supabase
+          .from("order_items")
+          .select("product_id, quantity, orders!inner(created_at, status)")
+          .gte("orders.created_at", since)
+          .neq("orders.status", "dibatalkan"),
+      ]);
+      const sales: Record<string, number> = {};
+      for (const it of items ?? []) {
+        if (!it.product_id) continue;
+        sales[it.product_id] = (sales[it.product_id] ?? 0) + Number(it.quantity ?? 0);
+      }
+      return (prods ?? []).map((p) => ({
         id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
         image: p.product_images?.find((i: { is_cover: boolean }) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null,
+        sold30: sales[p.id] ?? 0,
       }));
     },
     enabled: open,
