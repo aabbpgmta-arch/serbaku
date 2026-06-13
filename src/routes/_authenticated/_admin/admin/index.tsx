@@ -33,11 +33,24 @@ function DashboardPage() {
     },
   });
 
-  const { data: recentProducts } = useQuery({
-    queryKey: ["admin_recent_products"],
+  const { data: topProducts } = useQuery({
+    queryKey: ["admin_top_products_30d"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5);
-      return data ?? [];
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("product_id, product_name, quantity, unit_price, orders!inner(status, created_at)")
+        .gte("orders.created_at", since)
+        .neq("orders.status", "dibatalkan");
+      if (error) { console.error("[admin top products]", error); return []; }
+      const map = new Map<string, { key: string; name: string; price: number; qty: number }>();
+      for (const r of (data ?? []) as Array<{ product_id: string | null; product_name: string; quantity: number; unit_price: number }>) {
+        const key = r.product_id ?? r.product_name;
+        const prev = map.get(key);
+        if (prev) prev.qty += r.quantity;
+        else map.set(key, { key, name: r.product_name, price: Number(r.unit_price), qty: r.quantity });
+      }
+      return Array.from(map.values()).sort((a, b) => b.qty - a.qty).slice(0, 5);
     },
   });
 
