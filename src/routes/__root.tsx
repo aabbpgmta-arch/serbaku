@@ -19,6 +19,7 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Toaster } from "@/components/ui/sonner";
 import { AdsPixels } from "@/components/site/AdsPixels";
 import { AttributionCapture } from "@/components/site/AttributionCapture";
+import { ThemeProvider } from "@/components/site/ThemeProvider";
 
 function NotFoundComponent() {
   return (
@@ -108,6 +109,7 @@ function RootComponent() {
           <Toaster richColors position="top-center" />
           <AdsPixels />
           <AttributionCapture />
+          <ThemeProvider />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
