@@ -20,9 +20,9 @@ Tanpa ini, fitur lain (terlaris, badge, social proof) tidak punya angka.
 - **I. Badge Produk** — Terlaris/Trending/Baru otomatis dari stats; override manual via admin.
 - **J. Social Proof Ticker** — notifikasi berjalan dari order selesai (anonim: "Reseller Jakarta membeli 12 pcs").
 
-## Fase 3 — Customer Experience (E, H)
-- **E. Customer Juga Membeli** — di Detail Produk, prioritas: kategori sama → terlaris → frequently-bought-together.
-- **H. Wishlist** — tabel `wishlists`, tombol ❤ di kartu produk + detail produk, menu "Wishlist Saya" di akun.
+## Fase 3 — Customer Experience (E, H) ✅
+- **E. Customer Juga Membeli** — RPC `customer_also_bought` (kategori sama, prioritas terlaris), tampil di Detail Produk.
+- **H. Wishlist** — tabel `wishlists` + RLS, tombol ❤ di kartu katalog & detail produk, halaman `/akun/wishlist`, menu di Header (desktop & mobile).
 
 ## Fase 4 — Admin Operasional (G, M, N, Q)
 - **G. Export XLSX Pesanan** — tombol export di /admin/pesanan dengan filter status.
