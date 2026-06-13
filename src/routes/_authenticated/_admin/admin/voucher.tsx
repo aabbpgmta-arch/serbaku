@@ -324,6 +324,3 @@ function VoucherPreviewCard({
     </div>
   );
 }
-
-// Avoid "imported but unused" if effects are added later.
-useEffect;
