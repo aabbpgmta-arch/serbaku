@@ -44,13 +44,12 @@ function ProductPage() {
   const [qty, setQty] = useState(6);
   const { add } = useCart();
 
+  const flashSnap = resolveFlashFromItems(Number(product.price), product.flash_sale_items as FlashSaleItemJoin[]);
   const promo = {
     price: Number(product.price),
     discountType: product.discount_type as "none" | "percent" | "nominal" | null,
     discountValue: product.discount_value,
-    flashPrice: product.flash_price,
-    flashStartAt: product.flash_start_at,
-    flashEndAt: product.flash_end_at,
+    ...flashSnap,
   };
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
