@@ -2,7 +2,7 @@ import { useSiteSettings } from "@/lib/site-settings";
 
 const PLATFORMS = [
   {
-    key: "instagram" as const,
+    key: "instagram",
     label: "Instagram",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -11,7 +11,7 @@ const PLATFORMS = [
     ),
   },
   {
-    key: "tiktok" as const,
+    key: "tiktok",
     label: "TikTok",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -20,16 +20,16 @@ const PLATFORMS = [
     ),
   },
   {
-    key: "shopee" as const,
+    key: "shopee",
     label: "Shopee",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-        <path d="M15.93 2c-1.29 0-2.44.82-2.93 2.04-.49-1.22-1.64-2.04-2.93-2.04-1.57 0-2.92 1.1-3.31 2.6l-3.97 15.9c-.14.56.39 1.07.94.92l3.78-1.02c.48-.13.76-.64.63-1.12l-.87-3.47c-.13-.52.19-1.06.71-1.19.52-.13 1.06.19 1.19.71l.87 3.47c.13.52.64.8 1.16.67l.36-.1c.38-.1.72-.3 1-.57.5-.47.78-1.12.78-1.82v-9.6c0-1.13.92-2.05 2.05-2.05s2.05.92 2.05 2.05v7.66c0 .4.33.73.73.73h1.08c.4 0 .73-.33.73-.73v-7.66c0-1.13.92-2.05 2.05-2.05s2.05.92 2.05 2.05v7.66c0 .4.33.73.73.73h1.08c.4 0 .73-.33.73-.73v-7.66c0-2.94-2.39-5.33-5.33-5.33-.99 0-1.92.27-2.71.74.37-1.18 1.49-2.01 2.71-2.01 1.11 0 2.1.56 2.7 1.41.6-.85 1.59-1.41 2.7-1.41 1.83 0 3.32 1.49 3.32 3.32v9.68c0 .37.3.67.67.67s.67-.3.67-.67v-9.68c0-2.58-2.1-4.67-4.67-4.67-1.19 0-2.3.45-3.15 1.22-.85-.77-1.96-1.22-3.15-1.22zM6.5 13.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z" />
+        <path d="M12.017 2c-.958 0-1.825.38-2.465.996A3.493 3.493 0 0 0 7.095 2C5.395 2 4 3.343 4 5.011c0 .14.014.277.04.412L1.003 20.16c-.06.335.068.676.34.89.27.212.636.264.96.135l3.75-1.5a1.14 1.14 0 0 0 .668-.935l.52-5.207a5.07 5.07 0 0 0 2.15.48 5.07 5.07 0 0 0 5.07-5.07c0-.59-.1-1.157-.285-1.686a3.47 3.47 0 0 0 1.605-.39c.39.56.618 1.238.618 1.972 0 1.902-1.543 3.445-3.445 3.445h-.57a.855.855 0 0 0 0 1.71h.57c2.845 0 5.155-2.31 5.155-5.155 0-1.55-.687-2.938-1.768-3.882A3.473 3.473 0 0 0 15.527 2c-.958 0-1.825.38-2.465.996A3.493 3.493 0 0 0 12.017 2zm0 2.28c.662 0 1.21.505 1.277 1.15l.19 1.71h1.71a1.14 1.14 0 0 1 0 2.28h-1.71l-.19 1.71a1.28 1.28 0 0 1-1.277 1.15 1.28 1.28 0 0 1-1.277-1.15l-.19-1.71H8.83a1.14 1.14 0 0 1 0-2.28h1.71l.19-1.71A1.28 1.28 0 0 1 12.017 4.28z" />
       </svg>
     ),
   },
   {
-    key: "facebook" as const,
+    key: "facebook",
     label: "Facebook",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -38,7 +38,7 @@ const PLATFORMS = [
     ),
   },
   {
-    key: "youtube" as const,
+    key: "youtube",
     label: "YouTube",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -47,7 +47,7 @@ const PLATFORMS = [
     ),
   },
   {
-    key: "tokopedia" as const,
+    key: "tokopedia",
     label: "Tokopedia",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -56,7 +56,7 @@ const PLATFORMS = [
     ),
   },
   {
-    key: "whatsapp" as const,
+    key: "whatsapp",
     label: "WhatsApp",
     svg: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
@@ -71,29 +71,29 @@ export function SocialLinks({ className = "" }: { className?: string }) {
   const contact = settings?.contact;
   if (!contact) return null;
 
-  const links = PLATFORMS.filter((p) => {
-    const url = contact[p.key];
-    const active = contact[`${p.key}_active` as keyof typeof contact];
-    return !!url && active === true;
-  }).map((p) => ({
-    ...p,
-    url: contact[p.key] as string,
-  }));
+  const items: { key: string; label: string; url: string; svg: React.ReactNode }[] = [];
+  for (const p of PLATFORMS) {
+    const url = (contact as Record<string, unknown>)[p.key] as string | undefined;
+    const active = (contact as Record<string, unknown>)[`${p.key}_active`] as boolean | undefined;
+    if (url && active === true) {
+      items.push({ key: p.key, label: p.label, url, svg: p.svg });
+    }
+  }
 
-  if (links.length === 0) return null;
+  if (items.length === 0) return null;
 
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      {links.map((l) => (
+      {items.map((item) => (
         <a
-          key={l.key}
-          href={l.url}
+          key={item.key}
+          href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={l.label}
+          aria-label={item.label}
           className="grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground transition hover:bg-primary hover:text-primary-foreground"
         >
-          {l.svg}
+          {item.svg}
         </a>
       ))}
     </div>
