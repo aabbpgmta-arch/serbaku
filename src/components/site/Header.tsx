@@ -11,6 +11,7 @@ const nav = [
   { to: "/", label: "Beranda" },
   { to: "/katalog", label: "Katalog" },
   { to: "/flash-sale", label: "Flash Sale" },
+  { to: "/voucher", label: "Voucher" },
   { to: "/katalog?cat=serba_35", label: "Serba 35" },
   { to: "/katalog?cat=serba_75", label: "Serba 75" },
 ];

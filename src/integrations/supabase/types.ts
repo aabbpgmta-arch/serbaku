@@ -828,6 +828,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_active_vouchers: {
+        Args: never
+        Returns: {
+          code: string
+          description: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id: string
+          max_discount: number
+          min_subtotal: number
+          starts_at: string
+        }[]
+      }
       log_admin_action: {
         Args: {
           _action: string

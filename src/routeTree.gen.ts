@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VoucherRouteImport } from './routes/voucher'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
@@ -34,6 +35,11 @@ import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './r
 import { Route as AuthenticatedAdminAdminPromosiDashboardRouteImport } from './routes/_authenticated/_admin/admin/promosi.dashboard'
 import { Route as AuthenticatedAdminAdminPromosiAdsRouteImport } from './routes/_authenticated/_admin/admin/promosi.ads'
 
+const VoucherRoute = VoucherRouteImport.update({
+  id: '/voucher',
+  path: '/voucher',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/voucher': typeof VoucherRoute
   '/produk/$slug': typeof ProdukSlugRoute
   '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/voucher': typeof VoucherRoute
   '/produk/$slug': typeof ProdukSlugRoute
   '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/voucher': typeof VoucherRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/produk/$slug': typeof ProdukSlugRoute
   '/_authenticated/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
+    | '/voucher'
     | '/produk/$slug'
     | '/akun/wishlist'
     | '/admin/audit'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
+    | '/voucher'
     | '/produk/$slug'
     | '/akun/wishlist'
     | '/admin/audit'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
+    | '/voucher'
     | '/_authenticated/_admin'
     | '/produk/$slug'
     | '/_authenticated/akun/wishlist'
@@ -328,11 +340,19 @@ export interface RootRouteChildren {
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VoucherRoute: typeof VoucherRoute
   ProdukSlugRoute: typeof ProdukSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/voucher': {
+      id: '/voucher'
+      path: '/voucher'
+      fullPath: '/voucher'
+      preLoaderRoute: typeof VoucherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -570,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VoucherRoute: VoucherRoute,
   ProdukSlugRoute: ProdukSlugRoute,
 }
 export const routeTree = rootRouteImport
