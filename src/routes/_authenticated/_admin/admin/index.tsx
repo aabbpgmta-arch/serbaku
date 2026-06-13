@@ -33,11 +33,24 @@ function DashboardPage() {
     },
   });
 
-  const { data: recentProducts } = useQuery({
-    queryKey: ["admin_recent_products"],
+  const { data: topProducts } = useQuery({
+    queryKey: ["admin_top_products_30d"],
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5);
-      return data ?? [];
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("order_items")
+        .select("product_id, product_name, quantity, unit_price, orders!inner(status, created_at)")
+        .gte("orders.created_at", since)
+        .neq("orders.status", "dibatalkan");
+      if (error) { console.error("[admin top products]", error); return []; }
+      const map = new Map<string, { key: string; name: string; price: number; qty: number }>();
+      for (const r of (data ?? []) as Array<{ product_id: string | null; product_name: string; quantity: number; unit_price: number }>) {
+        const key = r.product_id ?? r.product_name;
+        const prev = map.get(key);
+        if (prev) prev.qty += r.quantity;
+        else map.set(key, { key, name: r.product_name, price: Number(r.unit_price), qty: r.quantity });
+      }
+      return Array.from(map.values()).sort((a, b) => b.qty - a.qty).slice(0, 5);
     },
   });
 
@@ -85,18 +98,21 @@ function DashboardPage() {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center justify-between"><h2 className="font-display text-lg font-semibold">Produk Terbaru</h2><Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola produk</Link></div>
+          <div className="flex items-center justify-between"><h2 className="font-display text-lg font-semibold">Produk Terlaris 30 Hari Terakhir</h2><Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola produk</Link></div>
           <div className="mt-4 space-y-3">
-            {(recentProducts ?? []).map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-xl border border-border/60 p-3">
-                <div>
-                  <p className="text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+            {(topProducts ?? []).map((p, i) => (
+              <div key={p.key} className="flex items-center justify-between rounded-xl border border-border/60 p-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-soft/40 text-xs font-bold text-primary">{i + 1}</span>
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">Terjual: <span className="font-semibold text-foreground">{p.qty} pcs</span></p>
+                  </div>
                 </div>
                 <p className="text-sm font-semibold text-primary">{formatRupiah(p.price)}</p>
               </div>
             ))}
-            {(recentProducts ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada produk.</p>}
+            {(topProducts ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada penjualan dalam 30 hari terakhir.</p>}
           </div>
         </div>
       </div>
