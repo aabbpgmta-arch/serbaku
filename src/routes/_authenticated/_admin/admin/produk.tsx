@@ -485,6 +485,44 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <label className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label>
           </div>
 
+          {/* PROMO & FLASH SALE */}
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+            <p className="mb-3 text-sm font-semibold">Promo & Flash Sale</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <Label>Tipe Diskon</Label>
+                <Select value={discountType} onValueChange={(v) => setDiscountType(v as "none"|"percent"|"nominal")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Tidak ada</SelectItem>
+                    <SelectItem value="percent">Persen (%)</SelectItem>
+                    <SelectItem value="nominal">Nominal (Rp)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Label>Nilai Diskon</Label>
+                <Input type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value) || 0)} disabled={discountType === "none"} />
+                <p className="mt-1 text-[11px] text-muted-foreground">Tampil sebagai harga coret di kartu produk & halaman detail.</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div>
+                <Label>Harga Flash Sale (Rp)</Label>
+                <Input type="number" min={0} value={flashPrice} onChange={(e) => setFlashPrice(e.target.value === "" ? "" : Number(e.target.value))} placeholder="Kosongkan untuk nonaktif" />
+              </div>
+              <div>
+                <Label>Mulai</Label>
+                <Input type="datetime-local" value={flashStart} onChange={(e) => setFlashStart(e.target.value)} />
+              </div>
+              <div>
+                <Label>Selesai</Label>
+                <Input type="datetime-local" value={flashEnd} onChange={(e) => setFlashEnd(e.target.value)} />
+              </div>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">Saat flash sale aktif, harga ini menggantikan diskon biasa. Pelanggan otomatis mendapat yang paling menguntungkan antara promo & diskon membership.</p>
+          </div>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
             <Button onClick={save} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
