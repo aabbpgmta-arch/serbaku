@@ -238,3 +238,14 @@ function ProductPage() {
     </div>
   );
 }
+
+function ProductSoldLine({ productId, stock }: { productId: string; stock: number }) {
+  const { data } = useSalesStats([productId]);
+  const sold = data?.get(productId)?.total_sold ?? 0;
+  return (
+    <p className="mt-2 text-sm text-muted-foreground">
+      Stok tersedia: <span className="font-semibold text-foreground">{stock}</span>
+      {sold > 0 ? <> · Terjual <span className="font-semibold text-foreground">{formatSold(sold)} pcs</span></> : null}
+    </p>
+  );
+}
