@@ -114,7 +114,7 @@ function ThemeEditor() {
 
   async function save() {
     const { error } = await supabase.from("site_settings")
-      .upsert({ key: "theme_active", value: theme as unknown as object }, { onConflict: "key" });
+      .upsert({ key: "theme_active", value: theme as never }, { onConflict: "key" });
     if (error) return toast.error(error.message);
     toast.success("Tema disimpan & diterapkan ke seluruh website");
     qc.invalidateQueries({ queryKey: ["theme_active"] });
@@ -128,7 +128,7 @@ function ThemeEditor() {
       { id: `custom-${Date.now()}`, name: presetName.trim(), theme },
     ];
     const { error } = await supabase.from("site_settings")
-      .upsert({ key: "theme_presets", value: next as unknown as object }, { onConflict: "key" });
+      .upsert({ key: "theme_presets", value: next as never }, { onConflict: "key" });
     if (error) return toast.error(error.message);
     toast.success(`Preset "${presetName}" tersimpan`);
     setPresetName("");
@@ -139,7 +139,7 @@ function ThemeEditor() {
     if (!id.startsWith("custom-")) return;
     const next = customPresets.filter((p) => p.id !== id);
     const { error } = await supabase.from("site_settings")
-      .upsert({ key: "theme_presets", value: next as unknown as object }, { onConflict: "key" });
+      .upsert({ key: "theme_presets", value: next as never }, { onConflict: "key" });
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["theme_admin"] });
   }
