@@ -152,6 +152,9 @@ function FlashSalePage() {
                     <p className={`font-display font-bold text-primary ${view === "large" ? "text-xl" : view === "small" ? "text-sm" : "text-lg"}`}>{formatRupiah(unit)}</p>
                     <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>
                   </div>
+                  {view !== "small" && statsMap?.get(p.id)?.total_sold ? (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Terjual {formatSold(statsMap.get(p.id)!.total_sold)} pcs</p>
+                  ) : null}
                 </Link>
               );
             })}
