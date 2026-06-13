@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAkunPesananIndexRouteImport } from './routes/_authenticated/akun/pesanan/index'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated/_admin/admin/index'
 import { Route as AuthenticatedAkunPesananIdRouteImport } from './routes/_authenticated/akun/pesanan/$id'
+import { Route as AuthenticatedAdminAdminVoucherRouteImport } from './routes/_authenticated/_admin/admin/voucher'
 import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_authenticated/_admin/admin/produk'
 import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
 import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
@@ -87,6 +88,12 @@ const AuthenticatedAkunPesananIdRoute =
     path: '/akun/pesanan/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminAdminVoucherRoute =
+  AuthenticatedAdminAdminVoucherRouteImport.update({
+    id: '/admin/voucher',
+    path: '/admin/voucher',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAdminProdukRoute =
   AuthenticatedAdminAdminProdukRouteImport.update({
     id: '/admin/produk',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
   '/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/admin/voucher': typeof AuthenticatedAdminAdminVoucherRoute
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
@@ -140,6 +148,7 @@ export interface FileRoutesByTo {
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
   '/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/admin/voucher': typeof AuthenticatedAdminAdminVoucherRoute
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan': typeof AuthenticatedAkunPesananIndexRoute
@@ -159,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/_authenticated/_admin/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
   '/_authenticated/_admin/admin/produk': typeof AuthenticatedAdminAdminProdukRoute
+  '/_authenticated/_admin/admin/voucher': typeof AuthenticatedAdminAdminVoucherRoute
   '/_authenticated/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/admin/pengaturan'
     | '/admin/pesanan'
     | '/admin/produk'
+    | '/admin/voucher'
     | '/akun/pesanan/$id'
     | '/admin/'
     | '/akun/pesanan/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/admin/pengaturan'
     | '/admin/pesanan'
     | '/admin/produk'
+    | '/admin/voucher'
     | '/akun/pesanan/$id'
     | '/admin'
     | '/akun/pesanan'
@@ -211,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/pengaturan'
     | '/_authenticated/_admin/admin/pesanan'
     | '/_authenticated/_admin/admin/produk'
+    | '/_authenticated/_admin/admin/voucher'
     | '/_authenticated/akun/pesanan/$id'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/akun/pesanan/'
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAkunPesananIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/_admin/admin/voucher': {
+      id: '/_authenticated/_admin/admin/voucher'
+      path: '/admin/voucher'
+      fullPath: '/admin/voucher'
+      preLoaderRoute: typeof AuthenticatedAdminAdminVoucherRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/_admin/admin/produk': {
       id: '/_authenticated/_admin/admin/produk'
       path: '/admin/produk'
@@ -349,6 +369,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdminPengaturanRoute: typeof AuthenticatedAdminAdminPengaturanRoute
   AuthenticatedAdminAdminPesananRoute: typeof AuthenticatedAdminAdminPesananRoute
   AuthenticatedAdminAdminProdukRoute: typeof AuthenticatedAdminAdminProdukRoute
+  AuthenticatedAdminAdminVoucherRoute: typeof AuthenticatedAdminAdminVoucherRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
 }
 
@@ -360,6 +381,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
       AuthenticatedAdminAdminPengaturanRoute,
     AuthenticatedAdminAdminPesananRoute: AuthenticatedAdminAdminPesananRoute,
     AuthenticatedAdminAdminProdukRoute: AuthenticatedAdminAdminProdukRoute,
+    AuthenticatedAdminAdminVoucherRoute: AuthenticatedAdminAdminVoucherRoute,
     AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   }
 

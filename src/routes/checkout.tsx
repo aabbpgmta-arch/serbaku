@@ -1,34 +1,59 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Crown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Crown, Tag, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useCart } from "@/lib/cart";
+import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
-import { tierMeta, discountForTier } from "@/lib/membership";
+import { tierMeta } from "@/lib/membership";
+import { bestUnitPrice } from "@/lib/promo";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useEffect } from "react";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Toko Serba" }, { name: "robots", content: "noindex" }] }),
   component: CheckoutPage,
 });
 
+function promoOf(i: CartItem) {
+  return {
+    price: i.price,
+    discountType: i.discountType ?? null,
+    discountValue: i.discountValue ?? null,
+    flashPrice: i.flashPrice ?? null,
+    flashStartAt: i.flashStartAt ?? null,
+    flashEndAt: i.flashEndAt ?? null,
+  };
+}
+
 function CheckoutPage() {
   const { items, subtotal, clear, totalQty } = useCart();
   const { user, loading, membershipTier, refreshMembership } = useAuth();
   const tier = tierMeta(membershipTier);
-  const membershipDiscount = user ? discountForTier(membershipTier, totalQty) : 0;
-  const discountedSubtotal = Math.max(0, subtotal - membershipDiscount);
+  const memberPerPcs = user ? tier.discountPerPcs : 0;
+
+  const enriched = useMemo(() => items.map((i) => {
+    const best = bestUnitPrice(promoOf(i), memberPerPcs);
+    return { item: i, unit: best.unit, lineTotal: best.unit * i.qty, saved: best.saved * i.qty, basis: best.basis };
+  }), [items, memberPerPcs]);
+
+  const promoSavings = enriched.filter((e) => e.basis === "promo").reduce((s, e) => s + e.saved, 0);
+  const memberSavings = enriched.filter((e) => e.basis === "member").reduce((s, e) => s + e.saved, 0);
+  const itemDiscount = promoSavings + memberSavings;
+  const subtotalAfterItem = Math.max(0, subtotal - itemDiscount);
+
   const navigate = useNavigate();
   const [shippingPayer, setShippingPayer] = useState<"pengirim" | "penerima">("penerima");
   const [shippingCost, setShippingCost] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+
+  const [voucherInput, setVoucherInput] = useState("");
+  const [voucherChecking, setVoucherChecking] = useState(false);
+  const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
 
   const [form, setForm] = useState({
     full_name: "", whatsapp: "", email: "", address: "", city: "", province: "", postal_code: "", notes: "",
@@ -59,11 +84,46 @@ function CheckoutPage() {
     }
   }, [user]);
 
+  // Re-validate voucher when subtotal changes
+  useEffect(() => {
+    if (!voucher) return;
+    (async () => {
+      const { data } = await supabase.rpc("validate_voucher", { _code: voucher.code, _subtotal: subtotalAfterItem });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || row.message !== "ok") {
+        setVoucher(null);
+        toast.error("Voucher tidak lagi berlaku: " + (row?.message ?? "error"));
+      } else if (Number(row.discount) !== voucher.discount) {
+        setVoucher({ code: row.code, discount: Number(row.discount) });
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotalAfterItem]);
+
   if (items.length === 0) {
     return <div className="container-page py-20 text-center text-muted-foreground">Keranjang kosong.</div>;
   }
 
-  const total = discountedSubtotal + (shippingPayer === "pengirim" ? shippingCost : 0);
+  const voucherDiscount = voucher?.discount ?? 0;
+  const subtotalAfterVoucher = Math.max(0, subtotalAfterItem - voucherDiscount);
+  const total = subtotalAfterVoucher + (shippingPayer === "pengirim" ? shippingCost : 0);
+
+  async function applyVoucher() {
+    const code = voucherInput.trim();
+    if (!code) return;
+    setVoucherChecking(true);
+    const { data, error } = await supabase.rpc("validate_voucher", { _code: code, _subtotal: subtotalAfterItem });
+    setVoucherChecking(false);
+    if (error) { toast.error(error.message); return; }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || row.message !== "ok") {
+      toast.error(row?.message ?? "Voucher tidak valid");
+      setVoucher(null);
+      return;
+    }
+    setVoucher({ code: row.code, discount: Number(row.discount) });
+    toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(Number(row.discount))})`);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +134,6 @@ function CheckoutPage() {
     }
     setSubmitting(true);
 
-    // Validate latest stock from Supabase
     const ids = items.map((i) => i.productId);
     const { data: stockRows, error: stockErr } = await supabase
       .from("products").select("id,stock,name,is_active").in("id", ids);
@@ -96,18 +155,24 @@ function CheckoutPage() {
         return;
       }
     }
+
+    // Snapshot membership_discount = bagian diskon dari basis "member"
+    const membershipDiscount = memberSavings;
+
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
         user_id: user.id,
         ...form,
-        subtotal,
+        subtotal: subtotalAfterItem, // subtotal yang sudah dipotong promo per-item
         shipping_cost: shippingPayer === "pengirim" ? shippingCost : 0,
         shipping_payer: shippingPayer,
         total,
         status: "menunggu_pembayaran",
         membership_tier: membershipTier,
         membership_discount: membershipDiscount,
+        voucher_code: voucher?.code ?? null,
+        voucher_discount: voucherDiscount,
       })
       .select()
       .single();
@@ -117,14 +182,14 @@ function CheckoutPage() {
       setSubmitting(false);
       return;
     }
-    const itemsPayload = items.map((i) => ({
+    const itemsPayload = enriched.map(({ item: i, unit, lineTotal }) => ({
       order_id: order.id,
       product_id: i.productId,
       product_name: i.name,
       product_image: i.image,
-      unit_price: i.price,
+      unit_price: unit,
       quantity: i.qty,
-      subtotal: i.price * i.qty,
+      subtotal: lineTotal,
     }));
     const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
     if (itemsErr) {
@@ -132,7 +197,6 @@ function CheckoutPage() {
       setSubmitting(false);
       return;
     }
-    // Save profile snapshot
     await supabase.from("profiles").upsert({
       id: user.id, email: form.email, full_name: form.full_name, whatsapp: form.whatsapp,
       address: form.address, city: form.city, province: form.province, postal_code: form.postal_code,
@@ -197,10 +261,16 @@ function CheckoutPage() {
         <aside className="h-fit rounded-2xl border border-border/60 bg-card p-6">
           <h2 className="font-display text-lg font-semibold">Ringkasan</h2>
           <div className="mt-4 space-y-3">
-            {items.map((i) => (
+            {enriched.map(({ item: i, unit, lineTotal }) => (
               <div key={i.productId} className="flex justify-between gap-3 text-sm">
-                <span className="line-clamp-2">{i.name} <span className="text-muted-foreground">×{i.qty}</span></span>
-                <span className="shrink-0 font-semibold">{formatRupiah(i.price * i.qty)}</span>
+                <span className="line-clamp-2">
+                  {i.name} <span className="text-muted-foreground">×{i.qty}</span>
+                  {unit < i.price && <span className="ml-1 text-[10px] font-semibold text-rose-600">PROMO</span>}
+                </span>
+                <span className="shrink-0 text-right">
+                  <div className="font-semibold">{formatRupiah(lineTotal)}</div>
+                  {unit < i.price && <div className="text-[10px] text-muted-foreground line-through">{formatRupiah(i.price * i.qty)}</div>}
+                </span>
               </div>
             ))}
           </div>
@@ -211,12 +281,46 @@ function CheckoutPage() {
               <span className="ml-auto">{tier.discountPerPcs > 0 ? `Diskon ${formatRupiah(tier.discountPerPcs)}/pcs` : "Belum ada diskon"}</span>
             </div>
           )}
+
+          {/* Voucher */}
+          <div className="mt-4 rounded-xl border border-dashed border-border p-3">
+            <Label className="flex items-center gap-1.5 text-xs"><Tag className="h-3.5 w-3.5" /> Kode Voucher</Label>
+            {voucher ? (
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm">
+                <span className="font-semibold text-emerald-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> {voucher.code}</span>
+                <span className="text-emerald-700">-{formatRupiah(voucher.discount)}</span>
+                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="text-xs text-muted-foreground hover:text-destructive">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="mt-2 flex gap-2">
+                <Input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} placeholder="MISAL: HEMAT10" className="uppercase" />
+                <Button type="button" variant="outline" onClick={applyVoucher} disabled={voucherChecking || !voucherInput.trim()}>
+                  {voucherChecking ? "..." : "Pakai"}
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
             <Row label={`Subtotal (${totalQty} pcs)`} value={formatRupiah(subtotal)} />
-            {membershipDiscount > 0 && (
+            {promoSavings > 0 && (
+              <div className="flex justify-between text-rose-600">
+                <span>Diskon Promo</span>
+                <span className="font-semibold">-{formatRupiah(promoSavings)}</span>
+              </div>
+            )}
+            {memberSavings > 0 && (
               <div className="flex justify-between text-emerald-600">
                 <span>Diskon Member {tier.label}</span>
-                <span className="font-semibold">-{formatRupiah(membershipDiscount)}</span>
+                <span className="font-semibold">-{formatRupiah(memberSavings)}</span>
+              </div>
+            )}
+            {voucherDiscount > 0 && (
+              <div className="flex justify-between text-rose-600">
+                <span>Voucher {voucher?.code}</span>
+                <span className="font-semibold">-{formatRupiah(voucherDiscount)}</span>
               </div>
             )}
             <Row label={`Ongkir (${shippingPayer === "pengirim" ? "ditanggung pengirim" : "ditanggung penerima"})`} value={shippingPayer === "pengirim" ? formatRupiah(shippingCost) : "—"} />

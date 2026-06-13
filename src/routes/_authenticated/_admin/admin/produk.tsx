@@ -26,6 +26,11 @@ type ProductRow = {
   category: "serba_35" | "serba_75" | "lainnya";
   description: string | null; is_active: boolean; is_bestseller: boolean; is_new: boolean;
   video_url: string | null;
+  discount_type: "none" | "percent" | "nominal" | null;
+  discount_value: number | null;
+  flash_price: number | null;
+  flash_start_at: string | null;
+  flash_end_at: string | null;
   product_images: Array<{ id: string; url: string; sort_order: number; is_cover: boolean }>;
 };
 
@@ -288,6 +293,12 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [images, setImages] = useState(product?.product_images ?? []);
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
+  const [discountType, setDiscountType] = useState<"none" | "percent" | "nominal">((product?.discount_type as "none"|"percent"|"nominal") ?? "none");
+  const [discountValue, setDiscountValue] = useState<number>(Number(product?.discount_value ?? 0));
+  const [flashPrice, setFlashPrice] = useState<number | "">(product?.flash_price ?? "");
+  const toLocalDT = (iso: string | null) => iso ? new Date(iso).toISOString().slice(0,16) : "";
+  const [flashStart, setFlashStart] = useState<string>(toLocalDT(product?.flash_start_at ?? null));
+  const [flashEnd, setFlashEnd] = useState<string>(toLocalDT(product?.flash_end_at ?? null));
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -298,7 +309,15 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
     setSaving(true);
     let slug = slugify(name);
-    const payload = { name, price, stock, category, description, is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl };
+    const payload = {
+      name, price, stock, category, description,
+      is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
+      discount_type: discountType,
+      discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
+      flash_price: flashPrice === "" ? null : Number(flashPrice),
+      flash_start_at: flashStart ? new Date(flashStart).toISOString() : null,
+      flash_end_at: flashEnd ? new Date(flashEnd).toISOString() : null,
+    };
 
     if (product) {
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
@@ -464,6 +483,44 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <label className="flex items-center gap-2"><Switch checked={isBestseller} onCheckedChange={setIsBestseller} /> Terlaris</label>
             <label className="flex items-center gap-2"><Switch checked={isNew} onCheckedChange={setIsNew} /> Produk Baru</label>
             <label className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label>
+          </div>
+
+          {/* PROMO & FLASH SALE */}
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+            <p className="mb-3 text-sm font-semibold">Promo & Flash Sale</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <Label>Tipe Diskon</Label>
+                <Select value={discountType} onValueChange={(v) => setDiscountType(v as "none"|"percent"|"nominal")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Tidak ada</SelectItem>
+                    <SelectItem value="percent">Persen (%)</SelectItem>
+                    <SelectItem value="nominal">Nominal (Rp)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Label>Nilai Diskon</Label>
+                <Input type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value) || 0)} disabled={discountType === "none"} />
+                <p className="mt-1 text-[11px] text-muted-foreground">Tampil sebagai harga coret di kartu produk & halaman detail.</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div>
+                <Label>Harga Flash Sale (Rp)</Label>
+                <Input type="number" min={0} value={flashPrice} onChange={(e) => setFlashPrice(e.target.value === "" ? "" : Number(e.target.value))} placeholder="Kosongkan untuk nonaktif" />
+              </div>
+              <div>
+                <Label>Mulai</Label>
+                <Input type="datetime-local" value={flashStart} onChange={(e) => setFlashStart(e.target.value)} />
+              </div>
+              <div>
+                <Label>Selesai</Label>
+                <Input type="datetime-local" value={flashEnd} onChange={(e) => setFlashEnd(e.target.value)} />
+              </div>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">Saat flash sale aktif, harga ini menggantikan diskon biasa. Pelanggan otomatis mendapat yang paling menguntungkan antara promo & diskon membership.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

@@ -2,9 +2,10 @@ import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
-import { Search, Package } from "lucide-react";
+import { Search, Package, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
+import { flashActive, productPromoUnit } from "@/lib/promo";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -45,7 +46,7 @@ function KatalogPage() {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("id, name, slug, price, category, stock, is_bestseller, is_new, product_images(url, is_cover, sort_order)")
+        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, flash_price, flash_start_at, flash_end_at, product_images(url, is_cover, sort_order)")
         .eq("is_active", true)
         .gt("stock", 0)
         .order("created_at", { ascending: false });
@@ -134,15 +135,25 @@ function KatalogPage() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products!.map((p) => {
             const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
+            const promo = { price: Number(p.price), discountType: p.discount_type as "none"|"percent"|"nominal"|null, discountValue: p.discount_value, flashPrice: p.flash_price, flashStartAt: p.flash_start_at, flashEndAt: p.flash_end_at };
+            const isFlash = flashActive(promo);
+            const promoUnit = productPromoUnit(promo);
+            const hasPromo = promoUnit < Number(p.price);
             return (
               <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
-                <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
+                <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                   {cover ? (
                     <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
                   ) : (
                     <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
                       <Package className="h-10 w-10" />
                     </div>
+                  )}
+                  {isFlash && (
+                    <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"><Flame className="h-3 w-3" /> Flash</span>
+                  )}
+                  {!isFlash && hasPromo && (
+                    <span className="absolute left-2 top-2 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">Diskon</span>
                   )}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -152,7 +163,10 @@ function KatalogPage() {
                   {p.is_new && <Badge variant="outline">Baru</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-sm font-medium">{p.name}</h3>
-                <p className="mt-1 font-display text-lg font-bold text-primary">{formatRupiah(p.price)}</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="font-display text-lg font-bold text-primary">{formatRupiah(promoUnit)}</p>
+                  {hasPromo && <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>}
+                </div>
                 <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
               </Link>
             );

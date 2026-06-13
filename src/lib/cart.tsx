@@ -5,10 +5,16 @@ export type CartItem = {
   productId: string;
   name: string;
   slug: string;
-  price: number;
+  price: number; // harga NORMAL per pcs (sebelum promo apapun)
   image: string | null;
   qty: number;
   stock: number;
+  // Promo snapshot (opsional)
+  discountType?: "none" | "percent" | "nominal" | null;
+  discountValue?: number | null;
+  flashPrice?: number | null;
+  flashStartAt?: string | null;
+  flashEndAt?: string | null;
 };
 
 type CartCtx = {
@@ -50,7 +56,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (exist) {
             return prev.map((p) =>
               p.productId === it.productId
-                ? { ...p, qty: Math.min(roundToSix(p.qty + q), Math.max(6, p.stock - (p.stock % 6) || p.stock)) }
+                ? { ...p, ...it, qty: Math.min(roundToSix(p.qty + q), Math.max(6, p.stock - (p.stock % 6) || p.stock)) }
                 : p,
             );
           }

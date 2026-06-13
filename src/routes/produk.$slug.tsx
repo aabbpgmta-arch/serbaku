@@ -1,13 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { Minus, Plus, Package, ShoppingBag, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Minus, Plus, Package, ShoppingBag, ArrowLeft, Flame, Timer, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah, roundToSix } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
+import { flashActive, productPromoUnit, formatCountdown } from "@/lib/promo";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
@@ -43,6 +44,26 @@ function ProductPage() {
   const [qty, setQty] = useState(6);
   const { add } = useCart();
 
+  const promo = {
+    price: Number(product.price),
+    discountType: product.discount_type as "none" | "percent" | "nominal" | null,
+    discountValue: product.discount_value,
+    flashPrice: product.flash_price,
+    flashStartAt: product.flash_start_at,
+    flashEndAt: product.flash_end_at,
+  };
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!flashActive(promo, now)) return;
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+  const isFlash = flashActive(promo, now);
+  const promoUnit = productPromoUnit(promo, now);
+  const hasPromo = promoUnit < promo.price;
+  const countdown = isFlash ? formatCountdown(promo.flashEndAt, now) : null;
+
   const { data: related } = useQuery({
     queryKey: ["related", product.id, product.category],
     queryFn: async () => {
@@ -67,12 +88,17 @@ function ProductPage() {
 
       <div className="grid gap-10 md:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-3xl bg-muted">
+          <div className="relative aspect-square overflow-hidden rounded-3xl bg-muted">
             {cover ? (
               <img src={cover} alt={product.name} className="h-full w-full object-cover" />
             ) : (
               <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
                 <Package className="h-16 w-16" />
+              </div>
+            )}
+            {isFlash && (
+              <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white shadow">
+                <Flame className="h-3 w-3" /> Flash Sale
               </div>
             )}
           </div>
@@ -105,10 +131,27 @@ function ProductPage() {
             {product.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
             {product.is_bestseller && <Badge className="bg-primary text-primary-foreground">Terlaris</Badge>}
             {product.is_new && <Badge variant="outline">Produk Baru</Badge>}
+            {!isFlash && product.discount_type === "percent" && Number(product.discount_value) > 0 && (
+              <Badge className="bg-rose-500 text-white"><Tag className="mr-1 h-3 w-3" />-{Number(product.discount_value)}%</Badge>
+            )}
+            {!isFlash && product.discount_type === "nominal" && Number(product.discount_value) > 0 && (
+              <Badge className="bg-rose-500 text-white"><Tag className="mr-1 h-3 w-3" />Hemat {formatRupiah(Number(product.discount_value))}</Badge>
+            )}
           </div>
           <h1 className="mt-3 font-display text-3xl font-bold md:text-4xl">{product.name}</h1>
-          <p className="mt-3 font-display text-3xl font-bold text-primary">{formatRupiah(product.price)}<span className="ml-1 text-sm font-normal text-muted-foreground">/pcs</span></p>
-          <p className="mt-1 text-sm text-muted-foreground">Stok tersedia: <span className="font-semibold text-foreground">{product.stock}</span></p>
+
+          <div className="mt-3 flex items-end gap-3">
+            <p className="font-display text-3xl font-bold text-primary">{formatRupiah(promoUnit)}<span className="ml-1 text-sm font-normal text-muted-foreground">/pcs</span></p>
+            {hasPromo && (
+              <p className="pb-1 text-base text-muted-foreground line-through">{formatRupiah(promo.price)}</p>
+            )}
+          </div>
+          {countdown && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+              <Timer className="h-3.5 w-3.5" /> Berakhir dalam {countdown}
+            </div>
+          )}
+          <p className="mt-2 text-sm text-muted-foreground">Stok tersedia: <span className="font-semibold text-foreground">{product.stock}</span></p>
 
           <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/20 p-4">
             <p className="text-sm font-semibold text-foreground">Minimal pembelian 6 pcs</p>
@@ -150,7 +193,19 @@ function ProductPage() {
               disabled={product.stock < 6}
               onClick={() => {
                 const cover0 = images[0]?.url ?? null;
-                add({ productId: product.id, name: product.name, slug: product.slug, price: Number(product.price), image: cover0, stock: product.stock }, qty);
+                add({
+                  productId: product.id,
+                  name: product.name,
+                  slug: product.slug,
+                  price: Number(product.price),
+                  image: cover0,
+                  stock: product.stock,
+                  discountType: product.discount_type as "none" | "percent" | "nominal" | null,
+                  discountValue: product.discount_value,
+                  flashPrice: product.flash_price,
+                  flashStartAt: product.flash_start_at,
+                  flashEndAt: product.flash_end_at,
+                }, qty);
                 toast.success(`${product.name} ditambahkan ke keranjang`);
               }}
             >
