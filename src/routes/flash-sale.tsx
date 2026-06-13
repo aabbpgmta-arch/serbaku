@@ -90,7 +90,7 @@ function FlashSalePage() {
               const flash = resolveFlashFromItems(p.price, items, now);
               const promo = { price: p.price, ...flash };
               const unit = productPromoUnit(promo, now);
-              const cd = formatCountdown(flash.flashEndAt, now);
+              const cd = countdownParts(flash.flashEndAt, now);
               const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
               return (
                 <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="flex items-center gap-4 p-3 hover:bg-accent/50">
@@ -99,7 +99,7 @@ function FlashSalePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
-                    {cd && <p className="text-xs font-semibold text-rose-600"><Timer className="mr-1 inline h-3 w-3" />{cd}</p>}
+                    {cd && <p className="text-xs font-semibold text-rose-600"><Timer className="mr-1 inline h-3 w-3" />{cd.days}h {String(cd.hours).padStart(2,"0")}:{String(cd.minutes).padStart(2,"0")}:{String(cd.seconds).padStart(2,"0")}</p>}
                   </div>
                   <div className="text-right">
                     <p className="font-display text-base font-bold text-primary">{formatRupiah(unit)}</p>
@@ -115,7 +115,7 @@ function FlashSalePage() {
               const flash = resolveFlashFromItems(p.price, items, now);
               const promo = { price: p.price, ...flash };
               const unit = productPromoUnit(promo, now);
-              const cd = formatCountdown(flash.flashEndAt, now);
+              const cd = countdownParts(flash.flashEndAt, now);
               const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
               return (
                 <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
@@ -123,8 +123,13 @@ function FlashSalePage() {
                     {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>}
                     <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"><Flame className="h-3 w-3" /> Flash</span>
                     {cd && (
-                      <div className="absolute bottom-2 left-2 right-2 rounded-md bg-black/70 px-2 py-1 text-center text-[11px] font-mono font-bold text-white">
-                        <Timer className="mr-1 inline h-3 w-3" />{cd}
+                      <div className="absolute bottom-2 left-2 right-2 grid grid-cols-4 gap-1 rounded-md bg-black/70 p-1 text-center text-white">
+                        {[["Hari", cd.days], ["Jam", cd.hours], ["Mnt", cd.minutes], ["Dtk", cd.seconds]].map(([k, v]) => (
+                          <div key={k as string} className="rounded bg-white/10 px-1 py-0.5">
+                            <div className="font-mono text-[11px] font-bold leading-none">{String(v as number).padStart(2,"0")}</div>
+                            <div className="text-[8px] uppercase opacity-70">{k}</div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
