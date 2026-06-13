@@ -91,6 +91,12 @@ function ProductPage() {
               ))}
             </div>
           )}
+          {product.video_url && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Video Produk</p>
+              <video src={product.video_url} controls className="aspect-video w-full overflow-hidden rounded-2xl bg-black" />
+            </div>
+          )}
         </div>
 
         <div>
