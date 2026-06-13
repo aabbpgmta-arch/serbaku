@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
+import { Route as FlashSaleRouteImport } from './routes/flash-sale'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -43,6 +44,11 @@ const KeranjangRoute = KeranjangRouteImport.update({
 const KatalogRoute = KatalogRouteImport.update({
   id: '/katalog',
   path: '/katalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlashSaleRoute = FlashSaleRouteImport.update({
+  id: '/flash-sale',
+  path: '/flash-sale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -273,6 +285,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
+  FlashSaleRoute: typeof FlashSaleRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/katalog'
       fullPath: '/katalog'
       preLoaderRoute: typeof KatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flash-sale': {
+      id: '/flash-sale'
+      path: '/flash-sale'
+      fullPath: '/flash-sale'
+      preLoaderRoute: typeof FlashSaleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
+  FlashSaleRoute: FlashSaleRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
