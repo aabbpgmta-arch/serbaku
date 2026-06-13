@@ -54,6 +54,13 @@ const DEFAULTS: SiteSettings = {
     whatsapp: "6282130007881",
     email: "halo@tokoserba.id",
     address: "Indonesia",
+    whatsapp_active: true,
+    instagram_active: false,
+    tiktok_active: false,
+    shopee_active: false,
+    facebook_active: false,
+    youtube_active: false,
+    tokopedia_active: false,
   },
   hero: {
     headline: "Supplier Produk Serba 35 & Serba 75",
