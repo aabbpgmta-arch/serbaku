@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, User as UserIcon, Menu, X, LayoutDashboard, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { ShoppingBag, User as UserIcon, Menu, X, LayoutDashboard, LogOut, Sun, Moon, Monitor, Heart } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "./Logo";
 import { useCart } from "@/lib/cart";
@@ -56,7 +56,10 @@ export function Header() {
             )}
           </Link>
           {user ? (
-            <div className="hidden items-center gap-2 md:flex">
+            <div className="hidden items-center gap-1 md:flex">
+              <Link to="/akun/wishlist" aria-label="Wishlist">
+                <Button variant="ghost" size="icon"><Heart className="h-4 w-4" /></Button>
+              </Link>
               <Link to="/akun/pesanan">
                 <Button variant="ghost" size="sm" className="gap-1.5"><UserIcon className="h-4 w-4" /> Akun</Button>
               </Link>
@@ -92,6 +95,7 @@ export function Header() {
             {user ? (
               <>
                 <Link to="/akun/pesanan" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">Akun Saya</Link>
+                <Link to="/akun/wishlist" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">Wishlist Saya</Link>
                 <button onClick={() => { signOut(); setOpen(false); }} className="rounded-md px-3 py-2 text-left text-sm hover:bg-accent">Keluar</button>
               </>
             ) : (

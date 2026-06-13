@@ -652,6 +652,35 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlists: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       product_sales_stats: {
@@ -677,6 +706,13 @@ export type Database = {
       compute_membership_tier: {
         Args: { _spend: number }
         Returns: Database["public"]["Enums"]["membership_tier"]
+      }
+      customer_also_bought: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          product_id: string
+          qty_sold: number
+        }[]
       }
       get_store_stats: {
         Args: never

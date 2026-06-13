@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { flashActive, productPromoUnit, formatCountdown, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
+import { WishlistButton } from "@/components/site/WishlistButton";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
@@ -65,16 +66,18 @@ function ProductPage() {
   const countdown = isFlash ? formatCountdown(promo.flashEndAt, now) : null;
 
   const { data: related } = useQuery({
-    queryKey: ["related", product.id, product.category],
+    queryKey: ["customer_also_bought", product.id],
     queryFn: async () => {
+      const { data: rpc } = await supabase.rpc("customer_also_bought", { p_product_id: product.id, p_limit: 8 });
+      const ids = ((rpc ?? []) as { product_id: string }[]).map((r) => r.product_id);
+      if (ids.length === 0) return [];
       const { data } = await supabase
         .from("products")
         .select("id, name, slug, price, product_images(url, is_cover)")
-        .eq("is_active", true)
-        .eq("category", product.category)
-        .neq("id", product.id)
-        .limit(4);
-      return data ?? [];
+        .in("id", ids)
+        .eq("is_active", true);
+      const order = new Map(ids.map((id, i) => [id, i]));
+      return (data ?? []).sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99)).slice(0, 8);
     },
   });
 
@@ -186,7 +189,7 @@ function ProductPage() {
             <span className="text-xs text-muted-foreground">pcs</span>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
               size="lg"
               className="gap-2"
@@ -211,13 +214,14 @@ function ProductPage() {
             >
               <ShoppingBag className="h-4 w-4" /> Tambah ke Keranjang
             </Button>
+            <WishlistButton productId={product.id} size="lg" variant="inline" />
           </div>
         </div>
       </div>
 
       {related && related.length > 0 && (
         <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold">Produk Terkait</h2>
+          <h2 className="font-display text-2xl font-bold">Customer Juga Membeli</h2>
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((r) => {
               const c = r.product_images?.find((i) => i.is_cover)?.url ?? r.product_images?.[0]?.url ?? null;

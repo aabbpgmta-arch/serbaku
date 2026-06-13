@@ -9,6 +9,7 @@ import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleIte
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { WishlistButton } from "@/components/site/WishlistButton";
 
 const searchSchema = z.object({
   cat: z.enum(["serba_35", "serba_75", "lainnya", "terlaris", "baru"]).optional(),
@@ -205,7 +206,8 @@ function KatalogPage() {
             const promoUnit = productPromoUnit(promo);
             const hasPromo = promoUnit < Number(p.price);
             return (
-              <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
+              <div key={p.id} className="group relative">
+                <Link to="/produk/$slug" params={{ slug: p.slug }}>
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                   {cover ? (
                     <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
@@ -240,7 +242,9 @@ function KatalogPage() {
                     {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
                   </p>
                 )}
-              </Link>
+                </Link>
+                <WishlistButton productId={p.id} className="absolute right-2 top-2" />
+              </div>
             );
           })}
         </div>
