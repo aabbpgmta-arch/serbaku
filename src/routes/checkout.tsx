@@ -180,16 +180,6 @@ function CheckoutPage() {
         },
       });
 
-      await supabase.from("profiles").upsert({
-        id: user.id,
-        email: form.email,
-        full_name: form.full_name,
-        whatsapp: form.whatsapp,
-        address: form.address,
-        city: form.city,
-        province: form.province,
-        postal_code: form.postal_code,
-      });
       clear();
       await refreshMembership();
       toast.success("Pesanan berhasil dibuat!");
