@@ -105,10 +105,12 @@ function FlashSalePage() {
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
                     {cd && <p className="text-xs font-semibold text-rose-600"><Timer className="mr-1 inline h-3 w-3" />{cd.days}h {String(cd.hours).padStart(2,"0")}:{String(cd.minutes).padStart(2,"0")}:{String(cd.seconds).padStart(2,"0")}</p>}
+                    {statsMap?.get(p.id)?.total_sold ? <p className="text-[11px] text-muted-foreground">Terjual {formatSold(statsMap.get(p.id)!.total_sold)} pcs</p> : null}
                   </div>
                   <div className="text-right">
                     <p className="font-display text-base font-bold text-primary">{formatRupiah(unit)}</p>
                     <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>
+                    {p.price > unit && <p className="text-[11px] font-semibold text-rose-600">Hemat {Math.round(((p.price - unit) / p.price) * 100)}%</p>}
                   </div>
                 </Link>
               );
