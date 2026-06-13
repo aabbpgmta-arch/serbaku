@@ -150,8 +150,8 @@ function AdminPesanan() {
           </thead>
           <tbody>
             {isLoading ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
-              : (orders ?? []).length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Belum ada pesanan.</td></tr>
-              : orders!.map((o) => (
+              : filtered.length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Belum ada pesanan.</td></tr>
+              : filtered.map((o) => (
                 <tr key={o.id} className="border-t border-border/60">
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs">{o.order_number}</p>
