@@ -98,18 +98,21 @@ function DashboardPage() {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center justify-between"><h2 className="font-display text-lg font-semibold">Produk Terbaru</h2><Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola produk</Link></div>
+          <div className="flex items-center justify-between"><h2 className="font-display text-lg font-semibold">Produk Terlaris 30 Hari Terakhir</h2><Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola produk</Link></div>
           <div className="mt-4 space-y-3">
-            {(recentProducts ?? []).map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-xl border border-border/60 p-3">
-                <div>
-                  <p className="text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+            {(topProducts ?? []).map((p, i) => (
+              <div key={p.key} className="flex items-center justify-between rounded-xl border border-border/60 p-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-soft/40 text-xs font-bold text-primary">{i + 1}</span>
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">Terjual: <span className="font-semibold text-foreground">{p.qty} pcs</span></p>
+                  </div>
                 </div>
                 <p className="text-sm font-semibold text-primary">{formatRupiah(p.price)}</p>
               </div>
             ))}
-            {(recentProducts ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada produk.</p>}
+            {(topProducts ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada penjualan dalam 30 hari terakhir.</p>}
           </div>
         </div>
       </div>
