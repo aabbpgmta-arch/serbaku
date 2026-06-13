@@ -61,6 +61,10 @@ function FlashSalePage() {
     refetchInterval: 30_000,
   });
 
+  const productIds = (products ?? []).map((x) => x.product.id);
+  const { data: statsMap } = useSalesStats(productIds);
+
+
   return (
     <div className="container-page py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
