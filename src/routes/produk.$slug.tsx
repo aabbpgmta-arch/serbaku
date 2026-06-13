@@ -151,7 +151,7 @@ function ProductPage() {
               <Timer className="h-3.5 w-3.5" /> Berakhir dalam {countdown}
             </div>
           )}
-          <p className="mt-2 text-sm text-muted-foreground">Stok tersedia: <span className="font-semibold text-foreground">{product.stock}</span></p>
+          <ProductSoldLine productId={product.id} stock={product.stock} />
 
           <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/20 p-4">
             <p className="text-sm font-semibold text-foreground">Minimal pembelian 6 pcs</p>
