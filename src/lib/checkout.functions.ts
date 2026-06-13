@@ -251,5 +251,17 @@ export const createOrder = createServerFn({ method: "POST" })
       throw new Error("Gagal menyimpan item pesanan: " + itemsErr.message);
     }
 
+    const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
+      id: userId,
+      email: data.form.email || null,
+      full_name: data.form.full_name,
+      whatsapp: data.form.whatsapp,
+      address: data.form.address,
+      city: data.form.city,
+      province: data.form.province,
+      postal_code: data.form.postal_code || null,
+    });
+    if (profileErr) throw new Error("Gagal memperbarui profil: " + profileErr.message);
+
     return { order_id: order.id as string };
   });
