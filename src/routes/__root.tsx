@@ -105,6 +105,7 @@ function RootComponent() {
             <WhatsAppFloat />
           </div>
           <Toaster richColors position="top-center" />
+          <AdsPixels />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
