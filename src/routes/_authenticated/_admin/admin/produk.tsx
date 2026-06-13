@@ -285,6 +285,14 @@ function AdminProduk() {
 
       <ProductFormDialog key={editing?.id ?? "new"} open={openForm} onOpenChange={setOpenForm} product={editing} />
       <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
+      {historyFor && (
+        <PriceHistoryDialog
+          productId={historyFor.id}
+          productName={historyFor.name}
+          open={!!historyFor}
+          onOpenChange={(o) => !o && setHistoryFor(null)}
+        />
+      )}
     </div>
   );
 }
