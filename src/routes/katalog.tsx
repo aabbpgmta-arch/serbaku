@@ -2,9 +2,10 @@ import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
-import { Search, Package } from "lucide-react";
+import { Search, Package, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
+import { flashActive, productPromoUnit } from "@/lib/promo";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
