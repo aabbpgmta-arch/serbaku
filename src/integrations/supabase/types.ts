@@ -139,6 +139,8 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          membership_discount: number
+          membership_tier: Database["public"]["Enums"]["membership_tier"] | null
           notes: string | null
           order_number: string
           payment_proof_url: string | null
@@ -163,6 +165,10 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          membership_discount?: number
+          membership_tier?:
+            | Database["public"]["Enums"]["membership_tier"]
+            | null
           notes?: string | null
           order_number?: string
           payment_proof_url?: string | null
@@ -187,6 +193,10 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          membership_discount?: number
+          membership_tier?:
+            | Database["public"]["Enums"]["membership_tier"]
+            | null
           notes?: string | null
           order_number?: string
           payment_proof_url?: string | null
@@ -297,6 +307,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          lifetime_spend: number
+          membership_tier: Database["public"]["Enums"]["membership_tier"]
           postal_code: string | null
           province: string | null
           updated_at: string
@@ -309,6 +321,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          lifetime_spend?: number
+          membership_tier?: Database["public"]["Enums"]["membership_tier"]
           postal_code?: string | null
           province?: string | null
           updated_at?: string
@@ -321,6 +335,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          lifetime_spend?: number
+          membership_tier?: Database["public"]["Enums"]["membership_tier"]
           postal_code?: string | null
           province?: string | null
           updated_at?: string
@@ -441,6 +457,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_membership_tier: {
+        Args: { _spend: number }
+        Returns: Database["public"]["Enums"]["membership_tier"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -455,6 +475,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "customer"
+      membership_tier: "new" | "grande" | "elite" | "royal"
       order_status:
         | "menunggu_pembayaran"
         | "diproses"
@@ -591,6 +612,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "customer"],
+      membership_tier: ["new", "grande", "elite", "royal"],
       order_status: [
         "menunggu_pembayaran",
         "diproses",
