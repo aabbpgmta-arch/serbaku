@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Zap, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Zap, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, Package, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,7 @@ const DURATIONS = [
   { label: "1 bulan", ms: 30 * 24 * 60 * 60_000 },
 ];
 
-type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null };
+type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null; sold30: number };
 type ViewMode = "large" | "medium" | "small" | "list";
 
 function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null }) {
@@ -155,13 +155,27 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   const { data: products } = useQuery({
     queryKey: ["fs_product_picker"],
     queryFn: async (): Promise<ProductPick[]> => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, price, stock, product_images(url, is_cover)")
-        .eq("is_active", true).order("name");
-      return (data ?? []).map((p) => ({
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString();
+      const [{ data: prods }, { data: items }] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id, name, price, stock, product_images(url, is_cover)")
+          .eq("is_active", true).order("name"),
+        supabase
+          .from("order_items")
+          .select("product_id, quantity, orders!inner(created_at, status)")
+          .gte("orders.created_at", since)
+          .neq("orders.status", "dibatalkan"),
+      ]);
+      const sales: Record<string, number> = {};
+      for (const it of items ?? []) {
+        if (!it.product_id) continue;
+        sales[it.product_id] = (sales[it.product_id] ?? 0) + Number(it.quantity ?? 0);
+      }
+      return (prods ?? []).map((p) => ({
         id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
         image: p.product_images?.find((i: { is_cover: boolean }) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null,
+        sold30: sales[p.id] ?? 0,
       }));
     },
     enabled: open,
@@ -169,8 +183,15 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (products ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
+    const list = (products ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
+    return [...list].sort((a, b) => a.sold30 - b.sold30 || a.name.localeCompare(b.name));
   }, [products, search]);
+
+  const recommendedIds = useMemo(() => {
+    const sorted = [...(products ?? [])].sort((a, b) => a.sold30 - b.sold30);
+    const n = Math.min(10, sorted.length);
+    return new Set(sorted.slice(0, n).map((p) => p.id));
+  }, [products]);
 
   function toggle(id: string) {
     const next = new Set(selected);
@@ -289,7 +310,10 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
 
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold">Pilih Produk ({selected.size} dipilih)</p>
+              <div>
+                <p className="text-sm font-semibold">Pilih Produk ({selected.size} dipilih)</p>
+                <p className="text-[11px] text-muted-foreground">Diurutkan dari penjualan terendah 30 hari. Top {Math.min(10, products?.length ?? 0)} mendapat badge 🔥 Rekomendasi.</p>
+              </div>
               <div className="flex items-center gap-2">
                 <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari produk..." className="h-8 w-40" />
                 <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
@@ -303,15 +327,29 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
             </div>
 
             {view === "list" ? (
-              <div className="max-h-96 divide-y divide-border overflow-y-auto rounded-xl border border-border">
-                {filtered.map((p) => (
-                  <ProductPickRow key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} />
-                ))}
+              <div className="max-h-[480px] overflow-y-auto rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="p-2 w-8"></th>
+                      <th className="p-2">Produk</th>
+                      <th className="p-2">Harga</th>
+                      <th className="p-2">Stok</th>
+                      <th className="p-2">Terjual 30 hari</th>
+                      <th className="p-2">Diskon</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filtered.map((p) => (
+                      <ProductPickRow key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} recommended={recommendedIds.has(p.id)} />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className={`grid max-h-[480px] gap-3 overflow-y-auto rounded-xl border border-border p-3 ${view === "large" ? "grid-cols-2" : view === "medium" ? "grid-cols-3 md:grid-cols-4" : "grid-cols-4 md:grid-cols-6"}`}>
                 {filtered.map((p) => (
-                  <ProductPickCard key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} view={view} />
+                  <ProductPickCard key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} view={view} recommended={recommendedIds.has(p.id)} />
                 ))}
               </div>
             )}
@@ -348,17 +386,27 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   );
 }
 
-function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; view: ViewMode }) {
+function RecommendBadge() {
+  return (
+    <Badge className="bg-rose-500 text-white text-[9px] gap-0.5 px-1.5 py-0">
+      <Flame className="h-2.5 w-2.5" /> Rekomendasi
+    </Badge>
+  );
+}
+
+function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view, recommended }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; view: ViewMode; recommended: boolean }) {
   return (
     <div className={`relative rounded-xl border bg-card p-2 transition ${checked ? "border-primary ring-2 ring-primary/30" : "border-border"}`}>
       <button type="button" onClick={onToggle} className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-md bg-background/90 shadow">
         <Checkbox checked={checked} onCheckedChange={onToggle} />
       </button>
+      {recommended && <div className="absolute right-2 top-2 z-10"><RecommendBadge /></div>}
       <div className="aspect-square overflow-hidden rounded-lg bg-muted">
         {p.image ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
       </div>
       <p className={`mt-2 line-clamp-2 font-medium ${view === "small" ? "text-[11px]" : "text-xs"}`}>{p.name}</p>
       <p className="text-[11px] text-primary">{formatRupiah(p.price)}</p>
+      <p className="text-[10px] text-muted-foreground">Stok {p.stock} • Terjual 30h: <span className={p.sold30 === 0 ? "font-semibold text-rose-600" : ""}>{p.sold30}</span></p>
       {checked && (
         <div className="mt-2 flex items-center gap-1">
           <select className="h-7 rounded border border-border bg-background px-1 text-[11px]" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
@@ -371,25 +419,34 @@ function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view }: { p: Pr
   );
 }
 
-function ProductPickRow({ p, checked, onToggle, dv, onChangeDv }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void }) {
+function ProductPickRow({ p, checked, onToggle, dv, onChangeDv, recommended }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; recommended: boolean }) {
   return (
-    <div className={`flex items-center gap-3 p-2 ${checked ? "bg-primary/5" : ""}`}>
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
-      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-4 w-4" /></div>}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-sm font-medium">{p.name}</p>
-        <p className="text-xs text-primary">{formatRupiah(p.price)}</p>
-      </div>
-      {checked && (
-        <div className="flex items-center gap-1">
-          <select className="h-8 rounded border border-border bg-background px-1 text-xs" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
-            <option value="percent">%</option><option value="nominal">Rp</option>
-          </select>
-          <Input className="h-8 w-20 text-xs" type="number" min={0} value={dv?.value ?? 0} onChange={(e) => onChangeDv({ type: dv?.type ?? "percent", value: Number(e.target.value) || 0 })} />
+    <tr className={checked ? "bg-primary/5" : ""}>
+      <td className="p-2"><Checkbox checked={checked} onCheckedChange={onToggle} /></td>
+      <td className="p-2">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+            {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-4 w-4" /></div>}
+          </div>
+          <div className="min-w-0">
+            <p className="line-clamp-1 text-sm font-medium">{p.name}</p>
+            {recommended && <div className="mt-0.5"><RecommendBadge /></div>}
+          </div>
         </div>
-      )}
-    </div>
+      </td>
+      <td className="p-2 text-xs">{formatRupiah(p.price)}</td>
+      <td className="p-2 text-xs">{p.stock}</td>
+      <td className="p-2 text-xs"><span className={p.sold30 === 0 ? "font-semibold text-rose-600" : ""}>{p.sold30}</span></td>
+      <td className="p-2">
+        {checked ? (
+          <div className="flex items-center gap-1">
+            <select className="h-8 rounded border border-border bg-background px-1 text-xs" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
+              <option value="percent">%</option><option value="nominal">Rp</option>
+            </select>
+            <Input className="h-8 w-20 text-xs" type="number" min={0} value={dv?.value ?? 0} onChange={(e) => onChangeDv({ type: dv?.type ?? "percent", value: Number(e.target.value) || 0 })} />
+          </div>
+        ) : <span className="text-[11px] text-muted-foreground">—</span>}
+      </td>
+    </tr>
   );
 }
