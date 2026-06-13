@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Flame, Timer, Package, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
-import { resolveFlashFromItems, productPromoUnit, formatCountdown, type FlashSaleItemJoin } from "@/lib/promo";
+import { resolveFlashFromItems, productPromoUnit, countdownParts, type FlashSaleItemJoin } from "@/lib/promo";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/flash-sale")({
