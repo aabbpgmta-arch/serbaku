@@ -20,8 +20,11 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function CheckoutPage() {
-  const { items, subtotal, clear } = useCart();
-  const { user, loading } = useAuth();
+  const { items, subtotal, clear, totalQty } = useCart();
+  const { user, loading, membershipTier, refreshMembership } = useAuth();
+  const tier = tierMeta(membershipTier);
+  const membershipDiscount = user ? discountForTier(membershipTier, totalQty) : 0;
+  const discountedSubtotal = Math.max(0, subtotal - membershipDiscount);
   const navigate = useNavigate();
   const [shippingPayer, setShippingPayer] = useState<"pengirim" | "penerima">("penerima");
   const [shippingCost, setShippingCost] = useState(0);
@@ -60,7 +63,7 @@ function CheckoutPage() {
     return <div className="container-page py-20 text-center text-muted-foreground">Keranjang kosong.</div>;
   }
 
-  const total = subtotal + (shippingPayer === "pengirim" ? shippingCost : 0);
+  const total = discountedSubtotal + (shippingPayer === "pengirim" ? shippingCost : 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
