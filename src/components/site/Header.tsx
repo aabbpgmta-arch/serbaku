@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, User as UserIcon, Menu, X, LayoutDashboard, LogOut } from "lucide-react";
+import { ShoppingBag, User as UserIcon, Menu, X, LayoutDashboard, LogOut, Sun, Moon, Monitor } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "./Logo";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { useThemeMode } from "@/components/site/ThemeProvider";
 
 const nav = [
   { to: "/", label: "Beranda" },
@@ -38,6 +39,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeModeToggle />
           {isAdmin && (
             <Link to="/admin" className="hidden md:inline-flex">
               <Button variant="outline" size="sm" className="gap-1.5">
@@ -99,5 +101,22 @@ export function Header() {
         </div>
       )}
     </header>
+  );
+}
+
+function ThemeModeToggle() {
+  const [mode, setMode] = useThemeMode();
+  const next = mode === "light" ? "dark" : mode === "dark" ? "auto" : "light";
+  const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+  const label = mode === "light" ? "Light" : mode === "dark" ? "Dark" : "Auto";
+  return (
+    <button
+      onClick={() => setMode(next)}
+      title={`Mode: ${label} (klik untuk ganti)`}
+      className="grid h-10 w-10 place-items-center rounded-full hover:bg-accent"
+      aria-label={`Theme mode: ${label}`}
+    >
+      <Icon className="h-5 w-5" />
+    </button>
   );
 }
