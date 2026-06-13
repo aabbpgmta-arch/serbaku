@@ -292,10 +292,6 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "nominal">((product?.discount_type as "none"|"percent"|"nominal") ?? "none");
   const [discountValue, setDiscountValue] = useState<number>(Number(product?.discount_value ?? 0));
-  const [flashPrice, setFlashPrice] = useState<number | "">(product?.flash_price ?? "");
-  const toLocalDT = (iso: string | null) => iso ? new Date(iso).toISOString().slice(0,16) : "";
-  const [flashStart, setFlashStart] = useState<string>(toLocalDT(product?.flash_start_at ?? null));
-  const [flashEnd, setFlashEnd] = useState<string>(toLocalDT(product?.flash_end_at ?? null));
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -311,9 +307,6 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
       discount_type: discountType,
       discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
-      flash_price: flashPrice === "" ? null : Number(flashPrice),
-      flash_start_at: flashStart ? new Date(flashStart).toISOString() : null,
-      flash_end_at: flashEnd ? new Date(flashEnd).toISOString() : null,
     };
 
     if (product) {
