@@ -255,6 +255,7 @@ export type Database = {
           slug: string
           stock: number
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           category?: Database["public"]["Enums"]["product_category"]
@@ -269,6 +270,7 @@ export type Database = {
           slug: string
           stock?: number
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           category?: Database["public"]["Enums"]["product_category"]
@@ -283,6 +285,7 @@ export type Database = {
           slug?: string
           stock?: number
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
