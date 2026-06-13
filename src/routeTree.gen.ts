@@ -27,7 +27,6 @@ import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
 import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
 import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
-import { Route as AuthenticatedAdminAdminPromosiRekomendasiRouteImport } from './routes/_authenticated/_admin/admin/promosi.rekomendasi'
 import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './routes/_authenticated/_admin/admin/promosi.flash-sale'
 import { Route as AuthenticatedAdminAdminPromosiDashboardRouteImport } from './routes/_authenticated/_admin/admin/promosi.dashboard'
 import { Route as AuthenticatedAdminAdminPromosiAdsRouteImport } from './routes/_authenticated/_admin/admin/promosi.ads'
@@ -128,12 +127,6 @@ const AuthenticatedAdminAdminPelangganRoute =
     path: '/admin/pelanggan',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
-const AuthenticatedAdminAdminPromosiRekomendasiRoute =
-  AuthenticatedAdminAdminPromosiRekomendasiRouteImport.update({
-    id: '/admin/promosi/rekomendasi',
-    path: '/admin/promosi/rekomendasi',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
 const AuthenticatedAdminAdminPromosiFlashSaleRoute =
   AuthenticatedAdminAdminPromosiFlashSaleRouteImport.update({
     id: '/admin/promosi/flash-sale',
@@ -173,7 +166,6 @@ export interface FileRoutesByFullPath {
   '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
   '/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
-  '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -195,7 +187,6 @@ export interface FileRoutesByTo {
   '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
   '/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
-  '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -220,7 +211,6 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
   '/_authenticated/_admin/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/_authenticated/_admin/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
-  '/_authenticated/_admin/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -244,7 +234,6 @@ export interface FileRouteTypes {
     | '/admin/promosi/ads'
     | '/admin/promosi/dashboard'
     | '/admin/promosi/flash-sale'
-    | '/admin/promosi/rekomendasi'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -266,7 +255,6 @@ export interface FileRouteTypes {
     | '/admin/promosi/ads'
     | '/admin/promosi/dashboard'
     | '/admin/promosi/flash-sale'
-    | '/admin/promosi/rekomendasi'
   id:
     | '__root__'
     | '/'
@@ -290,7 +278,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/promosi/ads'
     | '/_authenticated/_admin/admin/promosi/dashboard'
     | '/_authenticated/_admin/admin/promosi/flash-sale'
-    | '/_authenticated/_admin/admin/promosi/rekomendasi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -433,13 +420,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPelangganRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/_authenticated/_admin/admin/promosi/rekomendasi': {
-      id: '/_authenticated/_admin/admin/promosi/rekomendasi'
-      path: '/admin/promosi/rekomendasi'
-      fullPath: '/admin/promosi/rekomendasi'
-      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiRekomendasiRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
     '/_authenticated/_admin/admin/promosi/flash-sale': {
       id: '/_authenticated/_admin/admin/promosi/flash-sale'
       path: '/admin/promosi/flash-sale'
@@ -474,7 +454,6 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdminPromosiAdsRoute: typeof AuthenticatedAdminAdminPromosiAdsRoute
   AuthenticatedAdminAdminPromosiDashboardRoute: typeof AuthenticatedAdminAdminPromosiDashboardRoute
   AuthenticatedAdminAdminPromosiFlashSaleRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
-  AuthenticatedAdminAdminPromosiRekomendasiRoute: typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -493,8 +472,6 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
       AuthenticatedAdminAdminPromosiDashboardRoute,
     AuthenticatedAdminAdminPromosiFlashSaleRoute:
       AuthenticatedAdminAdminPromosiFlashSaleRoute,
-    AuthenticatedAdminAdminPromosiRekomendasiRoute:
-      AuthenticatedAdminAdminPromosiRekomendasiRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
