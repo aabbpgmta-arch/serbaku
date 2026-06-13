@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
 import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
 import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
+import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated/_admin/admin/audit'
 import { Route as AuthenticatedAdminAdminPromosiTemaRouteImport } from './routes/_authenticated/_admin/admin/promosi.tema'
 import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './routes/_authenticated/_admin/admin/promosi.flash-sale'
 import { Route as AuthenticatedAdminAdminPromosiDashboardRouteImport } from './routes/_authenticated/_admin/admin/promosi.dashboard'
@@ -135,6 +136,12 @@ const AuthenticatedAdminAdminPelangganRoute =
     path: '/admin/pelanggan',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAdminAuditRoute =
+  AuthenticatedAdminAdminAuditRouteImport.update({
+    id: '/admin/audit',
+    path: '/admin/audit',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAdminPromosiTemaRoute =
   AuthenticatedAdminAdminPromosiTemaRouteImport.update({
     id: '/admin/promosi/tema',
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
   '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
+  '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
   '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
+  '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -219,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/produk/$slug': typeof ProdukSlugRoute
   '/_authenticated/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
+  '/_authenticated/_admin/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/_authenticated/_admin/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/_authenticated/_admin/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/_authenticated/_admin/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/produk/$slug'
     | '/akun/wishlist'
+    | '/admin/audit'
     | '/admin/pelanggan'
     | '/admin/pengaturan'
     | '/admin/pesanan'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/produk/$slug'
     | '/akun/wishlist'
+    | '/admin/audit'
     | '/admin/pelanggan'
     | '/admin/pengaturan'
     | '/admin/pesanan'
@@ -292,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/produk/$slug'
     | '/_authenticated/akun/wishlist'
+    | '/_authenticated/_admin/admin/audit'
     | '/_authenticated/_admin/admin/pelanggan'
     | '/_authenticated/_admin/admin/pengaturan'
     | '/_authenticated/_admin/admin/pesanan'
@@ -453,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPelangganRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/_admin/admin/audit': {
+      id: '/_authenticated/_admin/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/_admin/admin/promosi/tema': {
       id: '/_authenticated/_admin/admin/promosi/tema'
       path: '/admin/promosi/tema'
@@ -485,6 +505,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAdminAuditRoute: typeof AuthenticatedAdminAdminAuditRoute
   AuthenticatedAdminAdminPelangganRoute: typeof AuthenticatedAdminAdminPelangganRoute
   AuthenticatedAdminAdminPengaturanRoute: typeof AuthenticatedAdminAdminPengaturanRoute
   AuthenticatedAdminAdminPesananRoute: typeof AuthenticatedAdminAdminPesananRoute
@@ -499,6 +520,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAdminAuditRoute: AuthenticatedAdminAdminAuditRoute,
     AuthenticatedAdminAdminPelangganRoute:
       AuthenticatedAdminAdminPelangganRoute,
     AuthenticatedAdminAdminPengaturanRoute:
@@ -553,3 +575,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
