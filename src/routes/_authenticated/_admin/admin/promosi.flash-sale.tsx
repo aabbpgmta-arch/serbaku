@@ -39,7 +39,6 @@ function FlashSaleAdmin() {
   });
 
 const [editing, setEditing] = useState<Campaign | null>(null);
-  const [selectedDurMs, setSelectedDurMs] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
 
   async function remove(id: string) {
