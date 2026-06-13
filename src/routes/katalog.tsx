@@ -182,7 +182,10 @@ function KatalogPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
-                  <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Stok: {p.stock}
+                    {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="font-display text-base font-bold text-primary">{formatRupiah(promoUnit)}</p>
