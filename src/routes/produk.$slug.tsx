@@ -8,13 +8,13 @@ import { formatRupiah, roundToSix } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
-import { flashActive, productPromoUnit, formatCountdown } from "@/lib/promo";
+import { flashActive, productPromoUnit, formatCountdown, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("products")
-      .select("*, product_images(id,url,is_cover,sort_order)")
+      .select("*, product_images(id,url,is_cover,sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))")
       .eq("slug", params.slug)
       .eq("is_active", true)
       .maybeSingle();
