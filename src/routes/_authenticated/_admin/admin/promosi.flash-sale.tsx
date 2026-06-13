@@ -135,10 +135,21 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
 
+  function computeEnd(startLocal: string, ms: number): string {
+    const start = new Date(startLocal);
+    const end = new Date(start.getTime() + ms);
+    const y = end.getFullYear();
+    const m = String(end.getMonth() + 1).padStart(2, "0");
+    const d = String(end.getDate()).padStart(2, "0");
+    const h = String(end.getHours()).padStart(2, "0");
+    const min = String(end.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${d}T${h}:${min}`;
+  }
   function applyDuration(ms: number) {
+    setSelectedDurMs(ms);
     const start = startsAt ? new Date(startsAt) : new Date();
     if (!startsAt) setStartsAt(toLocalDT(start.toISOString()));
-    setEndsAt(toLocalDT(new Date(start.getTime() + ms).toISOString()));
+    setEndsAt(computeEnd(startsAt || toLocalDT(start.toISOString()), ms));
   }
 
   const { data: products } = useQuery({
