@@ -3,11 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles, BadgeCheck } from "lucide-react";
+import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles, BadgeCheck, ShoppingBag, TrendingUp, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/site-settings";
 import { formatRupiah } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { useStoreStats, useTopProducts, badgeFor, type ProductCard } from "@/lib/homepage-stats";
+import { formatSold } from "@/lib/sales-stats";
+import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
