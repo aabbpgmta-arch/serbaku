@@ -81,6 +81,10 @@ function KatalogPage() {
     },
   });
 
+  const productIds = (products ?? []).map((p) => p.id);
+  const { data: statsMap } = useSalesStats(productIds);
+
+
   return (
     <div className="container-page py-10">
       <div className="mb-6">
