@@ -39,6 +39,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeModeToggle />
           {isAdmin && (
             <Link to="/admin" className="hidden md:inline-flex">
               <Button variant="outline" size="sm" className="gap-1.5">
