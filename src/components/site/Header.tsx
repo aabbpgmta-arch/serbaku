@@ -103,3 +103,20 @@ export function Header() {
     </header>
   );
 }
+
+function ThemeModeToggle() {
+  const [mode, setMode] = useThemeMode();
+  const next = mode === "light" ? "dark" : mode === "dark" ? "auto" : "light";
+  const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+  const label = mode === "light" ? "Light" : mode === "dark" ? "Dark" : "Auto";
+  return (
+    <button
+      onClick={() => setMode(next)}
+      title={`Mode: ${label} (klik untuk ganti)`}
+      className="grid h-10 w-10 place-items-center rounded-full hover:bg-accent"
+      aria-label={`Theme mode: ${label}`}
+    >
+      <Icon className="h-5 w-5" />
+    </button>
+  );
+}
