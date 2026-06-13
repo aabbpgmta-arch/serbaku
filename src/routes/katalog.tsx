@@ -234,7 +234,12 @@ function KatalogPage() {
                   <p className={`font-display font-bold text-primary ${view === "large" ? "text-xl" : view === "small" ? "text-sm" : "text-lg"}`}>{formatRupiah(promoUnit)}</p>
                   {hasPromo && <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>}
                 </div>
-                {view !== "small" && <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>}
+                {view !== "small" && (
+                  <p className="text-xs text-muted-foreground">
+                    Stok: {p.stock}
+                    {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
+                  </p>
+                )}
               </Link>
             );
           })}
