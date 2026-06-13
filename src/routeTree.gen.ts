@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/
 import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
 import { Route as AuthenticatedAdminAdminPromosiRekomendasiRouteImport } from './routes/_authenticated/_admin/admin/promosi.rekomendasi'
 import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './routes/_authenticated/_admin/admin/promosi.flash-sale'
+import { Route as AuthenticatedAdminAdminPromosiDashboardRouteImport } from './routes/_authenticated/_admin/admin/promosi.dashboard'
 import { Route as AuthenticatedAdminAdminPromosiAdsRouteImport } from './routes/_authenticated/_admin/admin/promosi.ads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -139,6 +140,12 @@ const AuthenticatedAdminAdminPromosiFlashSaleRoute =
     path: '/admin/promosi/flash-sale',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAdminPromosiDashboardRoute =
+  AuthenticatedAdminAdminPromosiDashboardRouteImport.update({
+    id: '/admin/promosi/dashboard',
+    path: '/admin/promosi/dashboard',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAdminPromosiAdsRoute =
   AuthenticatedAdminAdminPromosiAdsRouteImport.update({
     id: '/admin/promosi/ads',
@@ -164,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
   '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
   '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
@@ -185,6 +193,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan': typeof AuthenticatedAkunPesananIndexRoute
   '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
   '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
@@ -209,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
   '/_authenticated/_admin/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/_authenticated/_admin/admin/promosi/dashboard': typeof AuthenticatedAdminAdminPromosiDashboardRoute
   '/_authenticated/_admin/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
   '/_authenticated/_admin/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/akun/pesanan/'
     | '/admin/promosi/ads'
+    | '/admin/promosi/dashboard'
     | '/admin/promosi/flash-sale'
     | '/admin/promosi/rekomendasi'
   fileRoutesByTo: FileRoutesByTo
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/akun/pesanan'
     | '/admin/promosi/ads'
+    | '/admin/promosi/dashboard'
     | '/admin/promosi/flash-sale'
     | '/admin/promosi/rekomendasi'
   id:
@@ -276,6 +288,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/akun/pesanan/'
     | '/_authenticated/_admin/admin/promosi/ads'
+    | '/_authenticated/_admin/admin/promosi/dashboard'
     | '/_authenticated/_admin/admin/promosi/flash-sale'
     | '/_authenticated/_admin/admin/promosi/rekomendasi'
   fileRoutesById: FileRoutesById
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/_admin/admin/promosi/dashboard': {
+      id: '/_authenticated/_admin/admin/promosi/dashboard'
+      path: '/admin/promosi/dashboard'
+      fullPath: '/admin/promosi/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiDashboardRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/_admin/admin/promosi/ads': {
       id: '/_authenticated/_admin/admin/promosi/ads'
       path: '/admin/promosi/ads'
@@ -452,6 +472,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdminVoucherRoute: typeof AuthenticatedAdminAdminVoucherRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminPromosiAdsRoute: typeof AuthenticatedAdminAdminPromosiAdsRoute
+  AuthenticatedAdminAdminPromosiDashboardRoute: typeof AuthenticatedAdminAdminPromosiDashboardRoute
   AuthenticatedAdminAdminPromosiFlashSaleRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
   AuthenticatedAdminAdminPromosiRekomendasiRoute: typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
@@ -468,6 +489,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
     AuthenticatedAdminAdminPromosiAdsRoute:
       AuthenticatedAdminAdminPromosiAdsRoute,
+    AuthenticatedAdminAdminPromosiDashboardRoute:
+      AuthenticatedAdminAdminPromosiDashboardRoute,
     AuthenticatedAdminAdminPromosiFlashSaleRoute:
       AuthenticatedAdminAdminPromosiFlashSaleRoute,
     AuthenticatedAdminAdminPromosiRekomendasiRoute:
@@ -508,3 +531,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
