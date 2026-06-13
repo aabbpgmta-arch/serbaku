@@ -13,16 +13,35 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 });
 
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Sparkles, Target } from "lucide-react";
 
-const items = [
+type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+
+const mainItems: Item[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/produk", label: "Produk", icon: Package },
   { to: "/admin/pesanan", label: "Pesanan", icon: ShoppingBag },
   { to: "/admin/pelanggan", label: "Pelanggan", icon: Users },
+];
+const promoItems: Item[] = [
+  { to: "/admin/promosi/ads", label: "Ads Manager", icon: Target },
+  { to: "/admin/promosi/flash-sale", label: "Flash Sale", icon: Zap },
+  { to: "/admin/promosi/rekomendasi", label: "Rekomendasi", icon: Sparkles },
   { to: "/admin/voucher", label: "Voucher", icon: Tag },
+];
+const settingItems: Item[] = [
   { to: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
 ];
+
+function NavItem({ i, path }: { i: Item; path: string }) {
+  const active = i.exact ? path === i.to : path.startsWith(i.to);
+  const Icon = i.icon;
+  return (
+    <Link to={i.to} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${active ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}>
+      <Icon className="h-4 w-4" /> {i.label}
+    </Link>
+  );
+}
 
 function AdminShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -31,15 +50,15 @@ function AdminShell() {
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <aside className="h-fit rounded-2xl border border-border/60 bg-card p-3">
           <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin</p>
-          {items.map((i) => {
-            const active = i.exact ? path === i.to : path.startsWith(i.to);
-            const Icon = i.icon;
-            return (
-              <Link key={i.to} to={i.to} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${active ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}>
-                <Icon className="h-4 w-4" /> {i.label}
-              </Link>
-            );
-          })}
+          {mainItems.map((i) => <NavItem key={i.to} i={i} path={path} />)}
+
+          <p className="mt-4 flex items-center gap-1.5 px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Megaphone className="h-3 w-3" /> Promosi
+          </p>
+          {promoItems.map((i) => <NavItem key={i.to} i={i} path={path} />)}
+
+          <p className="mt-4 px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lainnya</p>
+          {settingItems.map((i) => <NavItem key={i.to} i={i} path={path} />)}
         </aside>
         <div className="min-w-0"><Outlet /></div>
       </div>
