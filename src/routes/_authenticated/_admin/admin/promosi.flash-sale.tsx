@@ -112,7 +112,16 @@ type ViewMode = "large" | "medium" | "small" | "list";
 function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null }) {
   const qc = useQueryClient();
   const [name, setName] = useState(campaign?.name ?? "");
-  const toLocalDT = (iso: string | null) => iso ? new Date(iso).toISOString().slice(0,16) : "";
+  function toLocalDT(iso: string | null) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${h}:${min}`;
+  }
   const [startsAt, setStartsAt] = useState(campaign ? toLocalDT(campaign.starts_at) : toLocalDT(new Date().toISOString()));
   const [endsAt, setEndsAt] = useState(campaign ? toLocalDT(campaign.ends_at) : "");
   const [isActive, setIsActive] = useState(campaign?.is_active ?? true);
