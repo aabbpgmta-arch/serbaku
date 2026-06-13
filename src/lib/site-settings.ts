@@ -9,6 +9,16 @@ export type ContactSettings = {
   instagram?: string;
   tiktok?: string;
   shopee?: string;
+  facebook?: string;
+  youtube?: string;
+  tokopedia?: string;
+  whatsapp_active?: boolean;
+  instagram_active?: boolean;
+  tiktok_active?: boolean;
+  shopee_active?: boolean;
+  facebook_active?: boolean;
+  youtube_active?: boolean;
+  tokopedia_active?: boolean;
 };
 export type HeroSettings = {
   headline: string;
@@ -44,6 +54,13 @@ const DEFAULTS: SiteSettings = {
     whatsapp: "6282130007881",
     email: "halo@tokoserba.id",
     address: "Indonesia",
+    whatsapp_active: true,
+    instagram_active: false,
+    tiktok_active: false,
+    shopee_active: false,
+    facebook_active: false,
+    youtube_active: false,
+    tokopedia_active: false,
   },
   hero: {
     headline: "Supplier Produk Serba 35 & Serba 75",

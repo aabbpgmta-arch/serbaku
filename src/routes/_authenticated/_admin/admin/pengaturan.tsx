@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
 import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pengaturan")({
   head: () => ({ meta: [{ title: "Pengaturan Website — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -71,7 +72,7 @@ function AdminSettings() {
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
-        <TabsContent value="contact"><SettingForm settingKey="contact" fields={["whatsapp", "email", "address", "instagram", "tiktok", "shopee", "facebook", "youtube", "tokopedia"]} /></TabsContent>
+        <TabsContent value="contact"><ContactSettingsForm /></TabsContent>
         <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
         <TabsContent value="footer"><SettingForm settingKey="footer" fields={["description", "copyright"]} multiline={["description"]} /></TabsContent>
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
@@ -448,6 +449,93 @@ function TestimonialDialog({ initial, onClose }: { initial: Testimonial | null; 
           <Button onClick={save}>Simpan</Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Custom Contact Settings Form with toggles ───
+
+const CONTACT_FIELDS: { key: string; label: string; isSocial: boolean }[] = [
+  { key: "whatsapp", label: "WhatsApp", isSocial: true },
+  { key: "email", label: "Email", isSocial: false },
+  { key: "address", label: "Alamat", isSocial: false },
+  { key: "instagram", label: "Instagram", isSocial: true },
+  { key: "tiktok", label: "TikTok", isSocial: true },
+  { key: "shopee", label: "Shopee", isSocial: true },
+  { key: "facebook", label: "Facebook", isSocial: true },
+  { key: "youtube", label: "YouTube", isSocial: true },
+  { key: "tokopedia", label: "Tokopedia", isSocial: true },
+];
+
+function ContactSettingsForm() {
+  const qc = useQueryClient();
+  const settingKey = "contact";
+  const { data } = useQuery({
+    queryKey: ["setting", settingKey],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", settingKey).maybeSingle();
+      const defaults = (siteSettingsDefaults() as unknown as Record<string, Record<string, Json>>)[settingKey] ?? {};
+      return { ...defaults, ...((data?.value as Record<string, Json> | null) ?? {}) };
+    },
+  });
+  const [form, setForm] = useState<Record<string, Json>>({});
+  useEffect(() => { if (data) setForm(data); }, [data]);
+
+  async function save() {
+    const { error } = await supabase.from("site_settings").upsert({ key: settingKey, value: form as Record<string, Json> });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tersimpan");
+      qc.invalidateQueries({ queryKey: ["site_settings"] });
+      qc.invalidateQueries({ queryKey: ["setting", settingKey] });
+    }
+  }
+
+  const socials = CONTACT_FIELDS.filter((f) => f.isSocial);
+  const basics = CONTACT_FIELDS.filter((f) => !f.isSocial);
+
+  return (
+    <div className="mt-4 space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+      {basics.map((f) => (
+        <div key={f.key}>
+          <Label>{f.label}</Label>
+          <Input value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+        </div>
+      ))}
+
+      <div className="pt-2">
+        <h4 className="font-display text-sm font-semibold text-foreground">Sosial Media & Marketplace</h4>
+        <p className="text-xs text-muted-foreground">Isi link dan aktifkan platform yang ingin ditampilkan di website.</p>
+      </div>
+
+      <div className="space-y-3">
+        {socials.map((f) => {
+          const activeKey = `${f.key}_active`;
+          const isActive = !!(form[activeKey] ?? false);
+          return (
+            <div key={f.key} className="flex items-start gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">{f.label}</Label>
+                <Input
+                  className="mt-1"
+                  placeholder={`https://...`}
+                  value={String(form[f.key] ?? "")}
+                  onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-5">
+                <Switch
+                  checked={isActive}
+                  onCheckedChange={(checked) => setForm({ ...form, [activeKey]: checked })}
+                />
+                <span className="text-[10px] text-muted-foreground">{isActive ? "Aktif" : "Nonaktif"}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Button onClick={save}>Simpan</Button>
     </div>
   );
 }

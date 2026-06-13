@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle } from "lucide-react";
 import { Logo } from "./Logo";
+import { SocialLinks } from "./SocialLinks";
 import { useSiteSettings } from "@/lib/site-settings";
 
 export function Footer() {
@@ -13,6 +14,9 @@ export function Footer() {
         <div className="md:col-span-2">
           <Logo />
           <p className="mt-4 max-w-md text-sm text-muted-foreground">{f?.description}</p>
+          <div className="mt-4">
+            <SocialLinks />
+          </div>
         </div>
         <div>
           <h3 className="font-display text-base font-semibold">Menu</h3>
@@ -34,9 +38,6 @@ export function Footer() {
             )}
             {c?.address && (
               <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4" />{c.address}</li>
-            )}
-            {c?.instagram && (
-              <li className="flex items-start gap-2"><Instagram className="mt-0.5 h-4 w-4" />{c.instagram}</li>
             )}
           </ul>
         </div>
