@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Upload } from "lucide-react";
+import { ChevronRight, Upload, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR, STATUS_ORDER } from "@/lib/order-status";
@@ -88,9 +89,54 @@ function AdminPesanan() {
     toast.success("Status diperbarui");
   }
 
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const filtered = (orders ?? []).filter((o) => filterStatus === "all" || o.status === filterStatus);
+
+  function exportXlsx() {
+    if (filtered.length === 0) { toast.error("Tidak ada data untuk diexport"); return; }
+    const rows = filtered.map((o) => ({
+      "No. Pesanan": o.order_number,
+      "Tanggal": new Date(o.created_at).toLocaleString("id-ID"),
+      "Nama": o.full_name,
+      "WhatsApp": o.whatsapp,
+      "Email": o.email ?? "",
+      "Alamat": o.address,
+      "Kota": o.city,
+      "Provinsi": o.province,
+      "Kode Pos": o.postal_code ?? "",
+      "Subtotal": o.subtotal,
+      "Ongkir": o.shipping_cost,
+      "Total": o.total,
+      "Status": STATUS_LABEL[o.status] ?? o.status,
+      "No. Resi": o.tracking_number ?? "",
+      "Item": o.order_items.map((i) => `${i.product_name} x${i.quantity}`).join("; "),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Pesanan");
+    const fname = `pesanan-${filterStatus}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    toast.success(`${rows.length} pesanan diexport`);
+  }
+
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold">Pesanan</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-2xl font-bold">Pesanan</h1>
+        <div className="flex items-center gap-2">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="h-9 w-44 text-xs"><SelectValue placeholder="Filter status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={exportXlsx}>
+            <Download className="h-3.5 w-3.5" /> Export XLSX
+          </Button>
+        </div>
+      </div>
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/60 bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
@@ -104,8 +150,8 @@ function AdminPesanan() {
           </thead>
           <tbody>
             {isLoading ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
-              : (orders ?? []).length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Belum ada pesanan.</td></tr>
-              : orders!.map((o) => (
+              : filtered.length === 0 ? <tr><td colSpan={5} className="py-10 text-center text-muted-foreground">Belum ada pesanan.</td></tr>
+              : filtered.map((o) => (
                 <tr key={o.id} className="border-t border-border/60">
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs">{o.order_number}</p>

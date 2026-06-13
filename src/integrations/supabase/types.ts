@@ -703,6 +703,29 @@ export type Database = {
       }
     }
     Functions: {
+      admin_idle_products: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          category: string
+          id: string
+          last_sold_at: string
+          name: string
+          price: number
+          slug: string
+          stock: number
+        }[]
+      }
+      admin_low_stock_products: {
+        Args: { p_limit?: number; p_threshold?: number }
+        Returns: {
+          category: string
+          id: string
+          name: string
+          price: number
+          slug: string
+          stock: number
+        }[]
+      }
       compute_membership_tier: {
         Args: { _spend: number }
         Returns: Database["public"]["Enums"]["membership_tier"]

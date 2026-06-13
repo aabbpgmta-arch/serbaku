@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Target, BarChart3, Palette } from "lucide-react";
+import { GlobalSearch } from "@/components/admin/GlobalSearch";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
@@ -48,6 +49,9 @@ function AdminShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="container-page py-8">
+      <div className="mb-5">
+        <GlobalSearch />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <aside className="h-fit rounded-2xl border border-border/60 bg-card p-3">
           <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin</p>

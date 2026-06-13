@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Package, ShoppingBag, Users, Wallet } from "lucide-react";
+import { Package, ShoppingBag, Users, Wallet, AlertTriangle, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
+import { useLowStock, useIdleProducts } from "@/lib/admin-widgets";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
   head: () => ({ meta: [{ title: "Dashboard Admin — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -114,6 +115,75 @@ function DashboardPage() {
             ))}
             {(topProducts ?? []).length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Belum ada penjualan dalam 30 hari terakhir.</p>}
           </div>
+        </div>
+      </div>
+
+      <OperationalWidgets />
+    </div>
+  );
+}
+
+function OperationalWidgets() {
+  const lowStock = useLowStock(10, 8);
+  const idle = useIdleProducts(60, 8);
+
+  return (
+    <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="rounded-2xl border border-border/60 bg-card p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+            <AlertTriangle className="h-4 w-4 text-amber-600" /> Stok Menipis
+          </h2>
+          <Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola</Link>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Stok ≤ 10, urut terendah</p>
+        <div className="mt-4 space-y-2">
+          {lowStock.isLoading && <p className="py-6 text-center text-xs text-muted-foreground">Memuat...</p>}
+          {lowStock.error && <p className="py-6 text-center text-xs text-destructive">Gagal memuat data</p>}
+          {!lowStock.isLoading && (lowStock.data ?? []).length === 0 && (
+            <p className="py-6 text-center text-xs text-muted-foreground">Semua produk stoknya aman 🎉</p>
+          )}
+          {(lowStock.data ?? []).map((p) => (
+            <Link key={p.id} to="/admin/produk" className="flex items-center justify-between rounded-xl border border-border/60 p-3 text-sm hover:bg-accent">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{p.name}</p>
+                <p className="text-xs text-muted-foreground">{formatRupiah(p.price)}</p>
+              </div>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${p.stock === 0 ? "bg-destructive/15 text-destructive" : "bg-amber-100 text-amber-800"}`}>
+                {p.stock} stok
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+            <Snowflake className="h-4 w-4 text-blue-600" /> Produk Tidak Bergerak
+          </h2>
+          <Link to="/admin/produk" className="text-xs text-primary hover:underline">Kelola</Link>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">≥60 hari tanpa penjualan</p>
+        <div className="mt-4 space-y-2">
+          {idle.isLoading && <p className="py-6 text-center text-xs text-muted-foreground">Memuat...</p>}
+          {idle.error && <p className="py-6 text-center text-xs text-destructive">Gagal memuat data</p>}
+          {!idle.isLoading && (idle.data ?? []).length === 0 && (
+            <p className="py-6 text-center text-xs text-muted-foreground">Semua produk aktif bergerak 🚀</p>
+          )}
+          {(idle.data ?? []).map((p) => (
+            <Link key={p.id} to="/admin/produk" className="flex items-center justify-between rounded-xl border border-border/60 p-3 text-sm hover:bg-accent">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{p.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {p.last_sold_at ? `Terakhir: ${new Date(p.last_sold_at).toLocaleDateString("id-ID")}` : "Belum pernah terjual"}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {p.stock} stok
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

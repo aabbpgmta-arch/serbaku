@@ -24,11 +24,11 @@ Tanpa ini, fitur lain (terlaris, badge, social proof) tidak punya angka.
 - **E. Customer Juga Membeli** — RPC `customer_also_bought` (kategori sama, prioritas terlaris), tampil di Detail Produk.
 - **H. Wishlist** — tabel `wishlists` + RLS, tombol ❤ di kartu katalog & detail produk, halaman `/akun/wishlist`, menu di Header (desktop & mobile).
 
-## Fase 4 — Admin Operasional (G, M, N, Q)
-- **G. Export XLSX Pesanan** — tombol export di /admin/pesanan dengan filter status.
-- **M. Stok Menipis** — widget dashboard, stok ≤ 10, urut terendah.
-- **N. Produk Tidak Bergerak** — widget dashboard, ≥60 hari tanpa terjual, aksi Arsipkan/Flash Sale/Hapus.
-- **Q. Global Search** — search bar di header admin, hasil real-time (produk/pesanan/pelanggan/voucher/flash sale).
+## Fase 4 — Admin Operasional (G, M, N, Q) ✅
+- **G. Export XLSX Pesanan** — tombol export di /admin/pesanan + filter status (semua / per status).
+- **M. Stok Menipis** — widget dashboard admin, stok ≤ 10, urut terendah, via RPC `admin_low_stock_products`.
+- **N. Produk Tidak Bergerak** — widget dashboard admin, ≥60 hari tanpa penjualan, via RPC `admin_idle_products`.
+- **Q. Global Search** — search bar di header admin, hasil grup: Produk / Pesanan / Pelanggan / Voucher / Flash Sale, debounce 250ms.
 
 ## Fase 5 — Audit & Backup (K, O, P)
 - **K. Riwayat Perubahan Harga** — tabel `product_price_history` + trigger auto-log saat `products.price` berubah.
