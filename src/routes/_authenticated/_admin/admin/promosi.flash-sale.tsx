@@ -133,6 +133,7 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   const [view, setView] = useState<ViewMode>("medium");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedDurMs, setSelectedDurMs] = useState<number | null>(null);
 
   function computeEnd(startLocal: string, ms: number): string {
     const start = new Date(startLocal);
