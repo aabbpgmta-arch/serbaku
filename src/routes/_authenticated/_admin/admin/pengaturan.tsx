@@ -2,19 +2,55 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Star, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
+import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pengaturan")({
   head: () => ({ meta: [{ title: "Pengaturan Website — Toko Serba" }, { name: "robots", content: "noindex" }] }),
   component: AdminSettings,
 });
+
+// Field config: which fields are images, with preset + folder
+type ImgFieldCfg = { preset: ResizePreset; folder: string };
+const IMAGE_FIELDS: Record<string, ImgFieldCfg> = {
+  logo_url: { preset: "logo", folder: "brand" },
+  favicon_url: { preset: "favicon", folder: "brand" },
+  image_url: { preset: "hero", folder: "hero" },
+  image_url_2: { preset: "hero", folder: "hero" },
+  image_url_3: { preset: "hero", folder: "hero" },
+  image_url_4: { preset: "hero", folder: "hero" },
+  bank_logo_url: { preset: "logo", folder: "payment" },
+};
+
+function fieldLabel(name: string) {
+  const map: Record<string, string> = {
+    logo_url: "Logo",
+    favicon_url: "Favicon",
+    image_url: "Hero Banner 1",
+    image_url_2: "Hero Banner 2",
+    image_url_3: "Hero Banner 3",
+    image_url_4: "Hero Banner 4",
+    bank_logo_url: "Logo Bank",
+    whatsapp: "WhatsApp",
+    name: "Nama",
+    headline: "Headline",
+    subheadline: "Subheadline",
+    cta_text: "Teks Tombol",
+    cta_link: "Link Tombol",
+    bank_name: "Nama Bank",
+    account_holder: "Atas Nama",
+    account_number: "Nomor Rekening",
+  };
+  return map[name] ?? name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function AdminSettings() {
   return (
@@ -35,7 +71,7 @@ function AdminSettings() {
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
-        <TabsContent value="contact"><SettingForm settingKey="contact" fields={["whatsapp", "email", "address", "instagram", "tiktok", "shopee"]} /></TabsContent>
+        <TabsContent value="contact"><SettingForm settingKey="contact" fields={["whatsapp", "email", "address", "instagram", "tiktok", "shopee", "facebook", "youtube", "tokopedia"]} /></TabsContent>
         <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
         <TabsContent value="footer"><SettingForm settingKey="footer" fields={["description", "copyright"]} multiline={["description"]} /></TabsContent>
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
@@ -61,24 +97,45 @@ function SettingForm({ settingKey, fields, multiline = [] }: { settingKey: strin
 
   async function save() {
     const { error } = await supabase.from("site_settings").upsert({ key: settingKey, value: form });
-    if (error) toast.error(error.message); else { toast.success("Tersimpan"); qc.invalidateQueries({ queryKey: ["site_settings"] }); qc.invalidateQueries({ queryKey: ["setting", settingKey] }); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tersimpan");
+      qc.invalidateQueries({ queryKey: ["site_settings"] });
+      qc.invalidateQueries({ queryKey: ["setting", settingKey] });
+    }
   }
 
   return (
     <div className="mt-4 space-y-4 rounded-2xl border border-border/60 bg-card p-5">
-      {fields.map((f) => (
-        <div key={f}>
-          <Label className="capitalize">{f.replace(/_/g, " ")}</Label>
-          {multiline.includes(f)
-            ? <Textarea rows={3} value={form[f] ?? ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
-            : <Input value={form[f] ?? ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />}
-        </div>
-      ))}
+      {fields.map((f) => {
+        const imgCfg = IMAGE_FIELDS[f];
+        if (imgCfg) {
+          return (
+            <ImageUpload
+              key={f}
+              label={fieldLabel(f)}
+              value={form[f] ?? ""}
+              onChange={(url) => setForm({ ...form, [f]: url ?? "" })}
+              preset={imgCfg.preset}
+              folder={imgCfg.folder}
+            />
+          );
+        }
+        return (
+          <div key={f}>
+            <Label>{fieldLabel(f)}</Label>
+            {multiline.includes(f)
+              ? <Textarea rows={3} value={form[f] ?? ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />
+              : <Input value={form[f] ?? ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })} />}
+          </div>
+        );
+      })}
       <Button onClick={save}>Simpan</Button>
     </div>
   );
 }
 
+// ─── Sections / Categories editors ───
 function SectionsEditor() {
   return <CrudList table="homepage_sections" fields={[
     { name: "title", label: "Judul" },
@@ -91,24 +148,14 @@ function CategoriesEditor() {
   return <CrudList table="website_categories" fields={[
     { name: "name", label: "Nama" },
     { name: "description", label: "Deskripsi", multiline: true },
-    { name: "image_url", label: "Gambar URL" },
+    { name: "image_url", label: "Gambar", image: { preset: "category", folder: "category" } },
     { name: "link", label: "Link" },
     { name: "sort_order", label: "Urutan", type: "number" },
   ]} />;
 }
-function TestimonialsEditor() {
-  return <CrudList table="testimonials" fields={[
-    { name: "name", label: "Nama" },
-    { name: "role", label: "Peran" },
-    { name: "message", label: "Pesan", multiline: true },
-    { name: "avatar_url", label: "Avatar URL" },
-    { name: "rating", label: "Rating (1-5)", type: "number" },
-    { name: "sort_order", label: "Urutan", type: "number" },
-  ]} />;
-}
 
-type FieldDef = { name: string; label: string; multiline?: boolean; type?: string };
-function CrudList({ table, fields }: { table: "homepage_sections" | "website_categories" | "testimonials"; fields: FieldDef[] }) {
+type FieldDef = { name: string; label: string; multiline?: boolean; type?: string; image?: ImgFieldCfg };
+function CrudList({ table, fields }: { table: "homepage_sections" | "website_categories"; fields: FieldDef[] }) {
   const qc = useQueryClient();
   const { data: rows } = useQuery({
     queryKey: ["cms", table],
@@ -138,8 +185,11 @@ function CrudList({ table, fields }: { table: "homepage_sections" | "website_cat
       <div className="space-y-2">
         {(rows ?? []).map((r) => (
           <div key={r.id as string} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
+            {typeof r.image_url === "string" && r.image_url && (
+              <img src={r.image_url as string} alt="" className="h-10 w-10 rounded-lg object-cover" />
+            )}
             <div className="flex-1">
-              <p className="text-sm font-medium">{(r.title as string) ?? (r.name as string) ?? (r.message as string)?.slice(0, 60)}</p>
+              <p className="text-sm font-medium">{(r.title as string) ?? (r.name as string)}</p>
               <p className="text-xs text-muted-foreground">Urutan {r.sort_order as number} · {r.is_active ? "Aktif" : "Nonaktif"}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => toggle(r.id as string, r.is_active as boolean)}>{r.is_active ? "Nonaktifkan" : "Aktifkan"}</Button>
@@ -155,7 +205,7 @@ function CrudList({ table, fields }: { table: "homepage_sections" | "website_cat
   );
 }
 
-function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sections" | "website_categories" | "testimonials"; fields: FieldDef[]; initial: Record<string, unknown> | null; onClose: () => void }) {
+function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sections" | "website_categories"; fields: FieldDef[]; initial: Record<string, unknown> | null; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<string, string | number>>(() => {
     const init: Record<string, string | number> = {};
@@ -169,11 +219,8 @@ function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sect
       update: (p: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<unknown> };
       insert: (p: Record<string, unknown>) => Promise<unknown>;
     };
-    if (initial?.id) {
-      await client.update(payload).eq("id", initial.id as string);
-    } else {
-      await client.insert(payload);
-    }
+    if (initial?.id) await client.update(payload).eq("id", initial.id as string);
+    else await client.insert(payload);
     toast.success("Tersimpan");
     qc.invalidateQueries({ queryKey: ["cms", table] });
     onClose();
@@ -181,17 +228,220 @@ function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sect
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-elegant" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-elegant max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-display text-lg font-semibold">{initial ? "Edit" : "Tambah"}</h3>
         <div className="mt-4 space-y-3">
           {fields.map((f) => (
             <div key={f.name}>
-              <Label>{f.label}</Label>
-              {f.multiline
-                ? <Textarea rows={3} value={String(form[f.name] ?? "")} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
-                : <Input type={f.type ?? "text"} value={String(form[f.name] ?? "")} onChange={(e) => setForm({ ...form, [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value })} />}
+              {f.image ? (
+                <ImageUpload
+                  label={f.label}
+                  value={String(form[f.name] ?? "")}
+                  onChange={(url) => setForm({ ...form, [f.name]: url ?? "" })}
+                  preset={f.image.preset}
+                  folder={f.image.folder}
+                />
+              ) : (
+                <>
+                  <Label>{f.label}</Label>
+                  {f.multiline
+                    ? <Textarea rows={3} value={String(form[f.name] ?? "")} onChange={(e) => setForm({ ...form, [f.name]: e.target.value })} />
+                    : <Input type={f.type ?? "text"} value={String(form[f.name] ?? "")} onChange={(e) => setForm({ ...form, [f.name]: f.type === "number" ? Number(e.target.value) : e.target.value })} />}
+                </>
+              )}
             </div>
           ))}
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Batal</Button>
+          <Button onClick={save}>Simpan</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Testimonials editor (custom UI) ───
+
+type Testimonial = {
+  id: string;
+  name: string;
+  city: string | null;
+  role: string | null;
+  message: string;
+  avatar_url: string | null;
+  photos: string[];
+  rating: number;
+  verified: boolean;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function TestimonialsEditor() {
+  const qc = useQueryClient();
+  const { data: rows } = useQuery({
+    queryKey: ["cms", "testimonials"],
+    queryFn: async () => {
+      const { data } = await supabase.from("testimonials").select("*").order("sort_order");
+      return (data ?? []).map((r) => ({
+        ...r,
+        photos: Array.isArray(r.photos) ? (r.photos as string[]) : [],
+      })) as Testimonial[];
+    },
+  });
+
+  const [editing, setEditing] = useState<Testimonial | null>(null);
+  const [open, setOpen] = useState(false);
+
+  async function del(t: Testimonial) {
+    if (!confirm("Hapus testimoni?")) return;
+    await supabase.from("testimonials").delete().eq("id", t.id);
+    // cleanup storage
+    const urls = [t.avatar_url, ...(t.photos ?? [])].filter(Boolean) as string[];
+    for (const u of urls) {
+      const m = u.match(/\/object\/(?:sign|public)\/website-assets\/([^?]+)/);
+      if (m) await supabase.storage.from("website-assets").remove([decodeURIComponent(m[1])]).catch(() => {});
+    }
+    qc.invalidateQueries({ queryKey: ["cms", "testimonials"] });
+  }
+  async function toggle(t: Testimonial) {
+    await supabase.from("testimonials").update({ is_active: !t.is_active }).eq("id", t.id);
+    qc.invalidateQueries({ queryKey: ["cms", "testimonials"] });
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex justify-end">
+        <Button size="sm" className="gap-1" onClick={() => { setEditing(null); setOpen(true); }}>
+          <Plus className="h-3.5 w-3.5" /> Tambah Testimoni
+        </Button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {(rows ?? []).map((t) => (
+          <div key={t.id} className="rounded-xl border border-border/60 bg-card p-4">
+            <div className="flex items-start gap-3">
+              {t.avatar_url ? (
+                <img src={t.avatar_url} alt={t.name} className="h-12 w-12 rounded-full object-cover" />
+              ) : (
+                <div className="grid h-12 w-12 place-items-center rounded-full bg-primary-soft text-primary font-bold">
+                  {t.name.charAt(0)}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate font-medium">{t.name}</p>
+                  {t.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
+                </div>
+                {t.city && <p className="text-xs text-muted-foreground">{t.city}</p>}
+                <div className="mt-1 flex gap-0.5 text-primary">
+                  {Array.from({ length: t.rating ?? 5 }).map((_, i) => (
+                    <Star key={i} className="h-3 w-3 fill-current" />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">"{t.message}"</p>
+            <div className="mt-3 flex justify-end gap-1">
+              <Button variant="ghost" size="sm" onClick={() => toggle(t)}>{t.is_active ? "Nonaktifkan" : "Aktifkan"}</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setEditing(t); setOpen(true); }}>Edit</Button>
+              <Button variant="ghost" size="icon" onClick={() => del(t)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            </div>
+          </div>
+        ))}
+        {(rows ?? []).length === 0 && (
+          <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground sm:col-span-2">
+            Belum ada testimoni.
+          </p>
+        )}
+      </div>
+
+      {open && <TestimonialDialog initial={editing} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+function TestimonialDialog({ initial, onClose }: { initial: Testimonial | null; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [name, setName] = useState(initial?.name ?? "");
+  const [city, setCity] = useState(initial?.city ?? "");
+  const [message, setMessage] = useState(initial?.message ?? "");
+  const [rating, setRating] = useState(initial?.rating ?? 5);
+  const [sortOrder, setSortOrder] = useState(initial?.sort_order ?? 0);
+  const [verified, setVerified] = useState(initial?.verified ?? false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initial?.avatar_url ?? null);
+  const [photos, setPhotos] = useState<string[]>(initial?.photos ?? []);
+
+  async function save() {
+    if (!name.trim() || !message.trim()) {
+      toast.error("Nama dan pesan wajib diisi");
+      return;
+    }
+    const payload = {
+      name: name.trim(),
+      city: city.trim() || null,
+      message: message.trim(),
+      avatar_url: avatarUrl,
+      photos,
+      rating,
+      sort_order: sortOrder,
+      verified,
+      is_active: initial?.is_active ?? true,
+    };
+    const { error } = initial?.id
+      ? await supabase.from("testimonials").update(payload).eq("id", initial.id)
+      : await supabase.from("testimonials").insert(payload);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tersimpan");
+      qc.invalidateQueries({ queryKey: ["cms", "testimonials"] });
+      onClose();
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-card p-6 shadow-elegant" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-display text-lg font-semibold">{initial ? "Edit Testimoni" : "Tambah Testimoni"}</h3>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Nama Customer</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Kota</Label>
+            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Jakarta" />
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Isi Testimoni</Label>
+            <Textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
+          </div>
+          <div>
+            <Label>Rating</Label>
+            <div className="mt-1 flex gap-1">
+              {[1,2,3,4,5].map((n) => (
+                <button key={n} type="button" onClick={() => setRating(n)}>
+                  <Star className={`h-6 w-6 ${n <= rating ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Label>Urutan</Label>
+            <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
+          </div>
+          <div className="sm:col-span-2 flex items-center justify-between rounded-lg border border-border p-3">
+            <div>
+              <p className="text-sm font-medium">Pembeli Terverifikasi</p>
+              <p className="text-xs text-muted-foreground">Tampilkan badge ✔ di testimoni</p>
+            </div>
+            <Switch checked={verified} onCheckedChange={setVerified} />
+          </div>
+          <div className="sm:col-span-2">
+            <ImageUpload label="Foto Customer" value={avatarUrl} onChange={setAvatarUrl} preset="avatar" folder="testimonials" />
+          </div>
+          <div className="sm:col-span-2">
+            <MultiImageUpload label="Foto Pendukung (produk / chat / unboxing, maks. 5)" values={photos} onChange={setPhotos} preset="photo" folder="testimonials" max={5} />
+          </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Batal</Button>
