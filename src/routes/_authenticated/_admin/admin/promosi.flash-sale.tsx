@@ -183,8 +183,15 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (products ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
+    const list = (products ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
+    return [...list].sort((a, b) => a.sold30 - b.sold30 || a.name.localeCompare(b.name));
   }, [products, search]);
+
+  const recommendedIds = useMemo(() => {
+    const sorted = [...(products ?? [])].sort((a, b) => a.sold30 - b.sold30);
+    const n = Math.min(10, sorted.length);
+    return new Set(sorted.slice(0, n).map((p) => p.id));
+  }, [products]);
 
   function toggle(id: string) {
     const next = new Set(selected);
