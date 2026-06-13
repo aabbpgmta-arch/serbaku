@@ -26,6 +26,11 @@ type ProductRow = {
   category: "serba_35" | "serba_75" | "lainnya";
   description: string | null; is_active: boolean; is_bestseller: boolean; is_new: boolean;
   video_url: string | null;
+  discount_type: "none" | "percent" | "nominal" | null;
+  discount_value: number | null;
+  flash_price: number | null;
+  flash_start_at: string | null;
+  flash_end_at: string | null;
   product_images: Array<{ id: string; url: string; sort_order: number; is_cover: boolean }>;
 };
 
