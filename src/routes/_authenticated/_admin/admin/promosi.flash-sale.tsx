@@ -386,17 +386,27 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   );
 }
 
-function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; view: ViewMode }) {
+function RecommendBadge() {
+  return (
+    <Badge className="bg-rose-500 text-white text-[9px] gap-0.5 px-1.5 py-0">
+      <Flame className="h-2.5 w-2.5" /> Rekomendasi
+    </Badge>
+  );
+}
+
+function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view, recommended }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; view: ViewMode; recommended: boolean }) {
   return (
     <div className={`relative rounded-xl border bg-card p-2 transition ${checked ? "border-primary ring-2 ring-primary/30" : "border-border"}`}>
       <button type="button" onClick={onToggle} className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-md bg-background/90 shadow">
         <Checkbox checked={checked} onCheckedChange={onToggle} />
       </button>
+      {recommended && <div className="absolute right-2 top-2 z-10"><RecommendBadge /></div>}
       <div className="aspect-square overflow-hidden rounded-lg bg-muted">
         {p.image ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
       </div>
       <p className={`mt-2 line-clamp-2 font-medium ${view === "small" ? "text-[11px]" : "text-xs"}`}>{p.name}</p>
       <p className="text-[11px] text-primary">{formatRupiah(p.price)}</p>
+      <p className="text-[10px] text-muted-foreground">Stok {p.stock} • Terjual 30h: <span className={p.sold30 === 0 ? "font-semibold text-rose-600" : ""}>{p.sold30}</span></p>
       {checked && (
         <div className="mt-2 flex items-center gap-1">
           <select className="h-7 rounded border border-border bg-background px-1 text-[11px]" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
@@ -409,25 +419,34 @@ function ProductPickCard({ p, checked, onToggle, dv, onChangeDv, view }: { p: Pr
   );
 }
 
-function ProductPickRow({ p, checked, onToggle, dv, onChangeDv }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void }) {
+function ProductPickRow({ p, checked, onToggle, dv, onChangeDv, recommended }: { p: ProductPick; checked: boolean; onToggle: () => void; dv?: { type: "percent"|"nominal"; value: number }; onChangeDv: (v: { type: "percent"|"nominal"; value: number }) => void; recommended: boolean }) {
   return (
-    <div className={`flex items-center gap-3 p-2 ${checked ? "bg-primary/5" : ""}`}>
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
-      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-4 w-4" /></div>}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-sm font-medium">{p.name}</p>
-        <p className="text-xs text-primary">{formatRupiah(p.price)}</p>
-      </div>
-      {checked && (
-        <div className="flex items-center gap-1">
-          <select className="h-8 rounded border border-border bg-background px-1 text-xs" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
-            <option value="percent">%</option><option value="nominal">Rp</option>
-          </select>
-          <Input className="h-8 w-20 text-xs" type="number" min={0} value={dv?.value ?? 0} onChange={(e) => onChangeDv({ type: dv?.type ?? "percent", value: Number(e.target.value) || 0 })} />
+    <tr className={checked ? "bg-primary/5" : ""}>
+      <td className="p-2"><Checkbox checked={checked} onCheckedChange={onToggle} /></td>
+      <td className="p-2">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+            {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-4 w-4" /></div>}
+          </div>
+          <div className="min-w-0">
+            <p className="line-clamp-1 text-sm font-medium">{p.name}</p>
+            {recommended && <div className="mt-0.5"><RecommendBadge /></div>}
+          </div>
         </div>
-      )}
-    </div>
+      </td>
+      <td className="p-2 text-xs">{formatRupiah(p.price)}</td>
+      <td className="p-2 text-xs">{p.stock}</td>
+      <td className="p-2 text-xs"><span className={p.sold30 === 0 ? "font-semibold text-rose-600" : ""}>{p.sold30}</span></td>
+      <td className="p-2">
+        {checked ? (
+          <div className="flex items-center gap-1">
+            <select className="h-8 rounded border border-border bg-background px-1 text-xs" value={dv?.type ?? "percent"} onChange={(e) => onChangeDv({ type: e.target.value as "percent"|"nominal", value: dv?.value ?? 0 })}>
+              <option value="percent">%</option><option value="nominal">Rp</option>
+            </select>
+            <Input className="h-8 w-20 text-xs" type="number" min={0} value={dv?.value ?? 0} onChange={(e) => onChangeDv({ type: dv?.type ?? "percent", value: Number(e.target.value) || 0 })} />
+          </div>
+        ) : <span className="text-[11px] text-muted-foreground">—</span>}
+      </td>
+    </tr>
   );
 }
