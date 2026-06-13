@@ -106,6 +106,8 @@ function CheckoutPage() {
         shipping_payer: shippingPayer,
         total,
         status: "menunggu_pembayaran",
+        membership_tier: membershipTier,
+        membership_discount: membershipDiscount,
       })
       .select()
       .single();
@@ -136,6 +138,7 @@ function CheckoutPage() {
       address: form.address, city: form.city, province: form.province, postal_code: form.postal_code,
     });
     clear();
+    await refreshMembership();
     toast.success("Pesanan berhasil dibuat!");
     navigate({ to: "/akun/pesanan/$id", params: { id: order.id } });
   }
