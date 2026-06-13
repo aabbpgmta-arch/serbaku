@@ -201,9 +201,9 @@ function ProductPage() {
                   stock: product.stock,
                   discountType: product.discount_type as "none" | "percent" | "nominal" | null,
                   discountValue: product.discount_value,
-                  flashPrice: product.flash_price,
-                  flashStartAt: product.flash_start_at,
-                  flashEndAt: product.flash_end_at,
+                  flashPrice: flashSnap.flashPrice,
+                  flashStartAt: flashSnap.flashStartAt,
+                  flashEndAt: flashSnap.flashEndAt,
                 }, qty);
                 toast.success(`${product.name} ditambahkan ke keranjang`);
               }}
