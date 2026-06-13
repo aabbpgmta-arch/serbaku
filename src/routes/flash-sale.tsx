@@ -129,6 +129,7 @@ function FlashSalePage() {
                   <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                     {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>}
                     <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"><Flame className="h-3 w-3" /> Flash</span>
+                    {p.price > unit && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-rose-900 shadow">Hemat {Math.round(((p.price - unit) / p.price) * 100)}%</span>}
                     {cd && (
                       <div className="absolute bottom-2 left-2 right-2 grid grid-cols-4 gap-1 rounded-md bg-black/70 p-1 text-center text-white">
                         {[["Hari", cd.days], ["Jam", cd.hours], ["Mnt", cd.minutes], ["Dtk", cd.seconds]].map(([k, v]) => (
