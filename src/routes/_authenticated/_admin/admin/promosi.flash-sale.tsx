@@ -105,7 +105,7 @@ const DURATIONS = [
   { label: "1 bulan", ms: 30 * 24 * 60 * 60_000 },
 ];
 
-type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null };
+type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null; sold30: number };
 type ViewMode = "large" | "medium" | "small" | "list";
 
 function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null }) {
@@ -152,10 +152,6 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
     setEndsAt(computeEnd(startsAt || toLocalDT(start.toISOString()), ms));
   }
 
-type ProductPick = { id: string; name: string; price: number; stock: number; image: string | null; sold30: number };
-type ViewMode = "large" | "medium" | "small" | "list";
-
-  // ...
   const { data: products } = useQuery({
     queryKey: ["fs_product_picker"],
     queryFn: async (): Promise<ProductPick[]> => {
