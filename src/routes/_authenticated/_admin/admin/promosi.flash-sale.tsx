@@ -38,7 +38,7 @@ function FlashSaleAdmin() {
     },
   });
 
-  const [editing, setEditing] = useState<Campaign | null>(null);
+const [editing, setEditing] = useState<Campaign | null>(null);
   const [open, setOpen] = useState(false);
 
   async function remove(id: string) {
@@ -111,7 +111,16 @@ type ViewMode = "large" | "medium" | "small" | "list";
 function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null }) {
   const qc = useQueryClient();
   const [name, setName] = useState(campaign?.name ?? "");
-  const toLocalDT = (iso: string | null) => iso ? new Date(iso).toISOString().slice(0,16) : "";
+  function toLocalDT(iso: string | null) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${h}:${min}`;
+  }
   const [startsAt, setStartsAt] = useState(campaign ? toLocalDT(campaign.starts_at) : toLocalDT(new Date().toISOString()));
   const [endsAt, setEndsAt] = useState(campaign ? toLocalDT(campaign.ends_at) : "");
   const [isActive, setIsActive] = useState(campaign?.is_active ?? true);
@@ -124,11 +133,23 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
   const [view, setView] = useState<ViewMode>("medium");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedDurMs, setSelectedDurMs] = useState<number | null>(null);
 
+  function computeEnd(startLocal: string, ms: number): string {
+    const start = new Date(startLocal);
+    const end = new Date(start.getTime() + ms);
+    const y = end.getFullYear();
+    const m = String(end.getMonth() + 1).padStart(2, "0");
+    const d = String(end.getDate()).padStart(2, "0");
+    const h = String(end.getHours()).padStart(2, "0");
+    const min = String(end.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${d}T${h}:${min}`;
+  }
   function applyDuration(ms: number) {
+    setSelectedDurMs(ms);
     const start = startsAt ? new Date(startsAt) : new Date();
     if (!startsAt) setStartsAt(toLocalDT(start.toISOString()));
-    setEndsAt(toLocalDT(new Date(start.getTime() + ms).toISOString()));
+    setEndsAt(computeEnd(startsAt || toLocalDT(start.toISOString()), ms));
   }
 
   const { data: products } = useQuery({
@@ -234,7 +255,7 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
           <div><Label>Nama Campaign</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Flash Sale Akhir Pekan" /></div>
 
           <div className="grid gap-3 md:grid-cols-3">
-            <div><Label>Mulai</Label><Input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} /></div>
+            <div><Label>Mulai</Label><Input type="datetime-local" value={startsAt} onChange={(e) => { const v = e.target.value; setStartsAt(v); if (selectedDurMs) setEndsAt(computeEnd(v, selectedDurMs)); }} /></div>
             <div><Label>Selesai</Label><Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></div>
             <div className="flex items-end"><label className="flex items-center gap-2 text-sm"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label></div>
           </div>
