@@ -45,7 +45,7 @@ function KatalogPage() {
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("id, name, slug, price, category, stock, is_bestseller, is_new, product_images(url, is_cover, sort_order)")
+        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, flash_price, flash_start_at, flash_end_at, product_images(url, is_cover, sort_order)")
         .eq("is_active", true)
         .gt("stock", 0)
         .order("created_at", { ascending: false });
