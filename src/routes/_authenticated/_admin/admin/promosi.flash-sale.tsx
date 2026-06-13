@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { logAction } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/promosi/flash-sale")({
   head: () => ({ meta: [{ title: "Flash Sale — Admin" }, { name: "robots", content: "noindex" }] }),
@@ -46,6 +47,7 @@ const [editing, setEditing] = useState<Campaign | null>(null);
     const { error } = await supabase.from("flash_sales").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Dihapus");
+    void logAction("delete_flash_sale", "flash_sale", id);
     qc.invalidateQueries({ queryKey: ["admin_flash_sales"] });
   }
 
@@ -249,6 +251,7 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
     }
     setSaving(false);
     toast.success(campaign ? "Flash Sale diperbarui" : "Flash Sale dibuat");
+    void logAction(campaign ? "update_flash_sale" : "create_flash_sale", "flash_sale", campaignId, { name, items: items.length });
     qc.invalidateQueries({ queryKey: ["admin_flash_sales"] });
     qc.invalidateQueries({ queryKey: ["flash_sale_public"] });
     onOpenChange(false);
