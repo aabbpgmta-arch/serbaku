@@ -7,6 +7,7 @@ import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
 import { tierMeta } from "@/lib/membership";
 import { bestUnitPrice } from "@/lib/promo";
+import { getAttribution } from "@/lib/attribution";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -159,6 +160,7 @@ function CheckoutPage() {
     // Snapshot membership_discount = bagian diskon dari basis "member"
     const membershipDiscount = memberSavings;
 
+    const attribution = getAttribution();
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
@@ -173,6 +175,13 @@ function CheckoutPage() {
         membership_discount: membershipDiscount,
         voucher_code: voucher?.code ?? null,
         voucher_discount: voucherDiscount,
+        utm_source: attribution?.utm_source ?? null,
+        utm_medium: attribution?.utm_medium ?? null,
+        utm_campaign: attribution?.utm_campaign ?? null,
+        utm_content: attribution?.utm_content ?? null,
+        utm_term: attribution?.utm_term ?? null,
+        referrer: attribution?.referrer ?? null,
+        landing_path: attribution?.landing_path ?? null,
       })
       .select()
       .single();

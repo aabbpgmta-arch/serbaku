@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 });
 
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Sparkles, Target } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Sparkles, Target, BarChart3 } from "lucide-react";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
@@ -25,6 +25,7 @@ const mainItems: Item[] = [
 ];
 const promoItems: Item[] = [
   { to: "/admin/promosi/ads", label: "Ads Manager", icon: Target },
+  { to: "/admin/promosi/dashboard", label: "Dashboard Iklan", icon: BarChart3 },
   { to: "/admin/promosi/flash-sale", label: "Flash Sale", icon: Zap },
   { to: "/admin/promosi/rekomendasi", label: "Rekomendasi", icon: Sparkles },
   { to: "/admin/voucher", label: "Voucher", icon: Tag },

@@ -170,6 +170,19 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
     if (!startsAt || !endsAt) return toast.error("Waktu mulai & selesai wajib diisi");
     if (new Date(endsAt) <= new Date(startsAt)) return toast.error("Waktu selesai harus setelah waktu mulai");
     if (selected.size === 0) return toast.error("Pilih minimal 1 produk");
+
+    // Validasi per-produk
+    for (const pid of selected) {
+      const cfg = perProduct[pid] ?? { type: discountType, value: discountValue };
+      const prod = (products ?? []).find((x) => x.id === pid);
+      if (cfg.type === "percent") {
+        if (cfg.value < 1 || cfg.value > 100) return toast.error(`Diskon persen harus 1–100% (${prod?.name ?? pid})`);
+      } else {
+        if (cfg.value <= 0) return toast.error(`Nominal diskon harus > 0 (${prod?.name ?? pid})`);
+        if (prod && cfg.value >= prod.price) return toast.error(`Diskon nominal melebihi harga produk "${prod.name}"`);
+      }
+    }
+
     setSaving(true);
     const payload = { name, starts_at: new Date(startsAt).toISOString(), ends_at: new Date(endsAt).toISOString(), is_active: isActive };
     let campaignId = campaign?.id;
@@ -195,7 +208,22 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
     setSaving(false);
     toast.success(campaign ? "Flash Sale diperbarui" : "Flash Sale dibuat");
     qc.invalidateQueries({ queryKey: ["admin_flash_sales"] });
+    qc.invalidateQueries({ queryKey: ["flash_sale_public"] });
     onOpenChange(false);
+  }
+
+  function previewFor(p: ProductPick): { unit: number; ok: boolean } {
+    const cfg = perProduct[p.id] ?? { type: discountType, value: discountValue };
+    let unit = p.price;
+    let ok = true;
+    if (cfg.type === "percent") {
+      if (cfg.value < 1 || cfg.value > 100) ok = false;
+      unit = Math.max(0, Math.round(p.price * (1 - cfg.value / 100)));
+    } else {
+      if (cfg.value <= 0 || cfg.value >= p.price) ok = false;
+      unit = Math.max(0, p.price - cfg.value);
+    }
+    return { unit, ok };
   }
 
   return (
@@ -267,6 +295,27 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
               </div>
             )}
           </div>
+
+          {selected.size > 0 && (
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Preview Harga Setelah Diskon</p>
+              <div className="max-h-40 space-y-1 overflow-y-auto text-xs">
+                {Array.from(selected).map((pid) => {
+                  const p = (products ?? []).find((x) => x.id === pid);
+                  if (!p) return null;
+                  const pv = previewFor(p);
+                  return (
+                    <div key={pid} className="flex items-center justify-between gap-2">
+                      <span className="line-clamp-1 flex-1">{p.name}</span>
+                      <span className="text-muted-foreground line-through">{formatRupiah(p.price)}</span>
+                      <span className={`font-semibold ${pv.ok ? "text-primary" : "text-destructive"}`}>{formatRupiah(pv.unit)}</span>
+                      {!pv.ok && <Badge variant="destructive" className="text-[9px]">Invalid</Badge>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>

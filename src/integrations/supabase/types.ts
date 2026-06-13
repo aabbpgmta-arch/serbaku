@@ -211,6 +211,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          landing_path: string | null
           membership_discount: number
           membership_tier: Database["public"]["Enums"]["membership_tier"] | null
           notes: string | null
@@ -218,6 +219,7 @@ export type Database = {
           payment_proof_url: string | null
           postal_code: string | null
           province: string
+          referrer: string | null
           shipping_cost: number
           shipping_payer: Database["public"]["Enums"]["shipping_payer"]
           status: Database["public"]["Enums"]["order_status"]
@@ -228,6 +230,11 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           voucher_code: string | null
           voucher_discount: number
           whatsapp: string
@@ -239,6 +246,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          landing_path?: string | null
           membership_discount?: number
           membership_tier?:
             | Database["public"]["Enums"]["membership_tier"]
@@ -248,6 +256,7 @@ export type Database = {
           payment_proof_url?: string | null
           postal_code?: string | null
           province: string
+          referrer?: string | null
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -258,6 +267,11 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           voucher_code?: string | null
           voucher_discount?: number
           whatsapp: string
@@ -269,6 +283,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          landing_path?: string | null
           membership_discount?: number
           membership_tier?:
             | Database["public"]["Enums"]["membership_tier"]
@@ -278,6 +293,7 @@ export type Database = {
           payment_proof_url?: string | null
           postal_code?: string | null
           province?: string
+          referrer?: string | null
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -288,6 +304,11 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           voucher_code?: string | null
           voucher_discount?: number
           whatsapp?: string

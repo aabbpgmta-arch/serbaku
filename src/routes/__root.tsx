@@ -18,6 +18,7 @@ import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Toaster } from "@/components/ui/sonner";
 import { AdsPixels } from "@/components/site/AdsPixels";
+import { AttributionCapture } from "@/components/site/AttributionCapture";
 
 function NotFoundComponent() {
   return (
@@ -106,6 +107,7 @@ function RootComponent() {
           </div>
           <Toaster richColors position="top-center" />
           <AdsPixels />
+          <AttributionCapture />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
