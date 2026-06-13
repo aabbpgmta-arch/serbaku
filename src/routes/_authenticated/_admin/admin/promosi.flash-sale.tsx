@@ -310,7 +310,10 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
 
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold">Pilih Produk ({selected.size} dipilih)</p>
+              <div>
+                <p className="text-sm font-semibold">Pilih Produk ({selected.size} dipilih)</p>
+                <p className="text-[11px] text-muted-foreground">Diurutkan dari penjualan terendah 30 hari. Top {Math.min(10, products?.length ?? 0)} mendapat badge 🔥 Rekomendasi.</p>
+              </div>
               <div className="flex items-center gap-2">
                 <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari produk..." className="h-8 w-40" />
                 <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
@@ -324,15 +327,29 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
             </div>
 
             {view === "list" ? (
-              <div className="max-h-96 divide-y divide-border overflow-y-auto rounded-xl border border-border">
-                {filtered.map((p) => (
-                  <ProductPickRow key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} />
-                ))}
+              <div className="max-h-[480px] overflow-y-auto rounded-xl border border-border">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="p-2 w-8"></th>
+                      <th className="p-2">Produk</th>
+                      <th className="p-2">Harga</th>
+                      <th className="p-2">Stok</th>
+                      <th className="p-2">Terjual 30 hari</th>
+                      <th className="p-2">Diskon</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filtered.map((p) => (
+                      <ProductPickRow key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} recommended={recommendedIds.has(p.id)} />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className={`grid max-h-[480px] gap-3 overflow-y-auto rounded-xl border border-border p-3 ${view === "large" ? "grid-cols-2" : view === "medium" ? "grid-cols-3 md:grid-cols-4" : "grid-cols-4 md:grid-cols-6"}`}>
                 {filtered.map((p) => (
-                  <ProductPickCard key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} view={view} />
+                  <ProductPickCard key={p.id} p={p} checked={selected.has(p.id)} onToggle={() => toggle(p.id)} dv={perProduct[p.id]} onChangeDv={(v) => setPerProduct({ ...perProduct, [p.id]: v })} view={view} recommended={recommendedIds.has(p.id)} />
                 ))}
               </div>
             )}
