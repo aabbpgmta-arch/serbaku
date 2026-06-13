@@ -140,6 +140,9 @@ function HomePage() {
       {/* STATISTIK TOKO */}
       <StoreStatsSection />
 
+      {/* VOUCHER AKTIF */}
+      <VoucherStripSection />
+
       {/* KATEGORI */}
       {(categories ?? []).length > 0 && (
         <section className="container-page py-10">
