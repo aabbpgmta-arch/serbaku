@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { flashActive, productPromoUnit, formatCountdown, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
+import { useSalesStats, formatSold } from "@/lib/sales-stats";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
