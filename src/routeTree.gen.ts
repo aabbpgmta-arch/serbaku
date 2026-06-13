@@ -19,6 +19,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProdukSlugRouteImport } from './routes/produk.$slug'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/_admin/route'
+import { Route as AuthenticatedAkunWishlistRouteImport } from './routes/_authenticated/akun/wishlist'
 import { Route as AuthenticatedAkunPesananIndexRouteImport } from './routes/_authenticated/akun/pesanan/index'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated/_admin/admin/index'
 import { Route as AuthenticatedAkunPesananIdRouteImport } from './routes/_authenticated/akun/pesanan/$id'
@@ -80,6 +81,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   id: '/_admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAkunWishlistRoute =
+  AuthenticatedAkunWishlistRouteImport.update({
+    id: '/akun/wishlist',
+    path: '/akun/wishlist',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAkunPesananIndexRoute =
   AuthenticatedAkunPesananIndexRouteImport.update({
     id: '/akun/pesanan/',
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
+  '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
   '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/produk/$slug': typeof ProdukSlugRoute
+  '/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
   '/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -209,6 +218,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/produk/$slug': typeof ProdukSlugRoute
+  '/_authenticated/akun/wishlist': typeof AuthenticatedAkunWishlistRoute
   '/_authenticated/_admin/admin/pelanggan': typeof AuthenticatedAdminAdminPelangganRoute
   '/_authenticated/_admin/admin/pengaturan': typeof AuthenticatedAdminAdminPengaturanRoute
   '/_authenticated/_admin/admin/pesanan': typeof AuthenticatedAdminAdminPesananRoute
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/keranjang'
     | '/sitemap.xml'
     | '/produk/$slug'
+    | '/akun/wishlist'
     | '/admin/pelanggan'
     | '/admin/pengaturan'
     | '/admin/pesanan'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/keranjang'
     | '/sitemap.xml'
     | '/produk/$slug'
+    | '/akun/wishlist'
     | '/admin/pelanggan'
     | '/admin/pengaturan'
     | '/admin/pesanan'
@@ -279,6 +291,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/_admin'
     | '/produk/$slug'
+    | '/_authenticated/akun/wishlist'
     | '/_authenticated/_admin/admin/pelanggan'
     | '/_authenticated/_admin/admin/pengaturan'
     | '/_authenticated/_admin/admin/pesanan'
@@ -375,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/akun/wishlist': {
+      id: '/_authenticated/akun/wishlist'
+      path: '/akun/wishlist'
+      fullPath: '/akun/wishlist'
+      preLoaderRoute: typeof AuthenticatedAkunWishlistRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/akun/pesanan/': {
@@ -504,12 +524,14 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAkunWishlistRoute: typeof AuthenticatedAkunWishlistRoute
   AuthenticatedAkunPesananIdRoute: typeof AuthenticatedAkunPesananIdRoute
   AuthenticatedAkunPesananIndexRoute: typeof AuthenticatedAkunPesananIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedAkunWishlistRoute: AuthenticatedAkunWishlistRoute,
   AuthenticatedAkunPesananIdRoute: AuthenticatedAkunPesananIdRoute,
   AuthenticatedAkunPesananIndexRoute: AuthenticatedAkunPesananIndexRoute,
 }
