@@ -89,8 +89,8 @@ function CheckoutPage() {
   useEffect(() => {
     if (!voucher) return;
     (async () => {
-      const { data } = await supabase.rpc("validate_voucher", { _code: voucher.code, _subtotal: subtotalAfterItem });
-      const row = Array.isArray(data) ? data[0] : data;
+      const { validateVoucher } = await import("@/lib/checkout.functions");
+      const row = await validateVoucher({ data: { code: voucher.code, subtotal: subtotalAfterItem } });
       if (!row || row.message !== "ok") {
         setVoucher(null);
         toast.error("Voucher tidak lagi berlaku: " + (row?.message ?? "error"));
@@ -113,10 +113,10 @@ function CheckoutPage() {
     const code = voucherInput.trim();
     if (!code) return;
     setVoucherChecking(true);
-    const { data, error } = await supabase.rpc("validate_voucher", { _code: code, _subtotal: subtotalAfterItem });
+    const { validateVoucher } = await import("@/lib/checkout.functions");
+    const row = await validateVoucher({ data: { code, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
     setVoucherChecking(false);
-    if (error) { toast.error(error.message); return; }
-    const row = Array.isArray(data) ? data[0] : data;
+    if ("error" in row) { toast.error(row.error?.message ?? "Voucher tidak bisa divalidasi"); return; }
     if (!row || row.message !== "ok") {
       toast.error(row?.message ?? "Voucher tidak valid");
       setVoucher(null);
@@ -180,16 +180,6 @@ function CheckoutPage() {
         },
       });
 
-      await supabase.from("profiles").upsert({
-        id: user.id,
-        email: form.email,
-        full_name: form.full_name,
-        whatsapp: form.whatsapp,
-        address: form.address,
-        city: form.city,
-        province: form.province,
-        postal_code: form.postal_code,
-      });
       clear();
       await refreshMembership();
       toast.success("Pesanan berhasil dibuat!");

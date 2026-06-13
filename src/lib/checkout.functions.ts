@@ -51,6 +51,30 @@ const CreateOrderSchema = z.object({
     .optional(),
 });
 
+const ValidateVoucherSchema = z.object({
+  code: z.string().trim().min(1).max(64),
+  subtotal: z.number().min(0).max(1_000_000_000),
+});
+
+export const validateVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ValidateVoucherSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("validate_voucher", {
+      _code: data.code,
+      _subtotal: data.subtotal,
+    });
+
+    if (error) throw new Error("Voucher tidak bisa divalidasi");
+    const row = Array.isArray(result) ? result[0] : result;
+    return {
+      code: (row?.code as string | undefined) ?? data.code,
+      discount: Number(row?.discount ?? 0),
+      message: (row?.message as string | undefined) ?? "Voucher tidak valid",
+    };
+  });
+
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => CreateOrderSchema.parse(data))
@@ -226,6 +250,18 @@ export const createOrder = createServerFn({ method: "POST" })
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
       throw new Error("Gagal menyimpan item pesanan: " + itemsErr.message);
     }
+
+    const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
+      id: userId,
+      email: data.form.email || null,
+      full_name: data.form.full_name,
+      whatsapp: data.form.whatsapp,
+      address: data.form.address,
+      city: data.form.city,
+      province: data.form.province,
+      postal_code: data.form.postal_code || null,
+    });
+    if (profileErr) throw new Error("Gagal memperbarui profil: " + profileErr.message);
 
     return { order_id: order.id as string };
   });

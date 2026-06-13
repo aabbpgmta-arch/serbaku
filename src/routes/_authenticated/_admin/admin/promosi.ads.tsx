@@ -18,7 +18,6 @@ type Pixels = {
   ga4_id?: string;
   meta_pixel_id?: string;
   tiktok_pixel_id?: string;
-  youtube_tag?: string;
 };
 
 function AdsPage() {
@@ -37,7 +36,13 @@ function AdsPage() {
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase.from("site_settings").upsert({ key: "ads_pixels", value: form });
+    const safePixels: Pixels = {
+      google_ads_id: form.google_ads_id?.trim() || undefined,
+      ga4_id: form.ga4_id?.trim() || undefined,
+      meta_pixel_id: form.meta_pixel_id?.trim() || undefined,
+      tiktok_pixel_id: form.tiktok_pixel_id?.trim() || undefined,
+    };
+    const { error } = await supabase.from("site_settings").upsert({ key: "ads_pixels", value: safePixels });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Pixel/Tag disimpan. Akan dimuat di halaman publik.");
@@ -75,7 +80,6 @@ function AdsPage() {
             <div><Label>GA4 Measurement ID</Label><Input placeholder="G-XXXXXXXXXX" value={form.ga4_id ?? ""} onChange={(e) => setForm({ ...form, ga4_id: e.target.value })} /></div>
             <div><Label>Meta (Facebook) Pixel ID</Label><Input placeholder="1234567890" value={form.meta_pixel_id ?? ""} onChange={(e) => setForm({ ...form, meta_pixel_id: e.target.value })} /></div>
             <div><Label>TikTok Pixel ID</Label><Input placeholder="ABCDEF0123" value={form.tiktok_pixel_id ?? ""} onChange={(e) => setForm({ ...form, tiktok_pixel_id: e.target.value })} /></div>
-            <div className="md:col-span-2"><Label>YouTube / Tag Tambahan (raw snippet, opsional)</Label><textarea className="mt-1 w-full rounded-md border border-border bg-background p-2 text-sm font-mono" rows={3} value={form.youtube_tag ?? ""} onChange={(e) => setForm({ ...form, youtube_tag: e.target.value })} placeholder="// JS snippet langsung di-inject ke <head>" /></div>
           </div>
         )}
         <div className="mt-4 flex justify-end">
