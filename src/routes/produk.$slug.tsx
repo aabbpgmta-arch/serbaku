@@ -189,7 +189,7 @@ function ProductPage() {
             <span className="text-xs text-muted-foreground">pcs</span>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
               size="lg"
               className="gap-2"
@@ -214,13 +214,14 @@ function ProductPage() {
             >
               <ShoppingBag className="h-4 w-4" /> Tambah ke Keranjang
             </Button>
+            <WishlistButton productId={product.id} size="lg" variant="inline" />
           </div>
         </div>
       </div>
 
       {related && related.length > 0 && (
         <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold">Produk Terkait</h2>
+          <h2 className="font-display text-2xl font-bold">Customer Juga Membeli</h2>
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((r) => {
               const c = r.product_images?.find((i) => i.is_cover)?.url ?? r.product_images?.[0]?.url ?? null;
