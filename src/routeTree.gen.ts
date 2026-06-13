@@ -26,6 +26,8 @@ import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
 import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
 import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
+import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './routes/_authenticated/_admin/admin/promosi.flash-sale'
+import { Route as AuthenticatedAdminAdminPromosiAdsRouteImport } from './routes/_authenticated/_admin/admin/promosi.ads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -118,6 +120,18 @@ const AuthenticatedAdminAdminPelangganRoute =
     path: '/admin/pelanggan',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAdminPromosiFlashSaleRoute =
+  AuthenticatedAdminAdminPromosiFlashSaleRouteImport.update({
+    id: '/admin/promosi/flash-sale',
+    path: '/admin/promosi/flash-sale',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPromosiAdsRoute =
+  AuthenticatedAdminAdminPromosiAdsRouteImport.update({
+    id: '/admin/promosi/ads',
+    path: '/admin/promosi/ads',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,6 +149,8 @@ export interface FileRoutesByFullPath {
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
+  '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -152,6 +168,8 @@ export interface FileRoutesByTo {
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan': typeof AuthenticatedAkunPesananIndexRoute
+  '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -172,6 +190,8 @@ export interface FileRoutesById {
   '/_authenticated/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
+  '/_authenticated/_admin/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/_authenticated/_admin/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +211,8 @@ export interface FileRouteTypes {
     | '/akun/pesanan/$id'
     | '/admin/'
     | '/akun/pesanan/'
+    | '/admin/promosi/ads'
+    | '/admin/promosi/flash-sale'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +230,8 @@ export interface FileRouteTypes {
     | '/akun/pesanan/$id'
     | '/admin'
     | '/akun/pesanan'
+    | '/admin/promosi/ads'
+    | '/admin/promosi/flash-sale'
   id:
     | '__root__'
     | '/'
@@ -227,6 +251,8 @@ export interface FileRouteTypes {
     | '/_authenticated/akun/pesanan/$id'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/akun/pesanan/'
+    | '/_authenticated/_admin/admin/promosi/ads'
+    | '/_authenticated/_admin/admin/promosi/flash-sale'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -361,6 +387,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPelangganRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/_admin/admin/promosi/flash-sale': {
+      id: '/_authenticated/_admin/admin/promosi/flash-sale'
+      path: '/admin/promosi/flash-sale'
+      fullPath: '/admin/promosi/flash-sale'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/promosi/ads': {
+      id: '/_authenticated/_admin/admin/promosi/ads'
+      path: '/admin/promosi/ads'
+      fullPath: '/admin/promosi/ads'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiAdsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
@@ -371,6 +411,8 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdminProdukRoute: typeof AuthenticatedAdminAdminProdukRoute
   AuthenticatedAdminAdminVoucherRoute: typeof AuthenticatedAdminAdminVoucherRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
+  AuthenticatedAdminAdminPromosiAdsRoute: typeof AuthenticatedAdminAdminPromosiAdsRoute
+  AuthenticatedAdminAdminPromosiFlashSaleRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -383,6 +425,10 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminAdminProdukRoute: AuthenticatedAdminAdminProdukRoute,
     AuthenticatedAdminAdminVoucherRoute: AuthenticatedAdminAdminVoucherRoute,
     AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
+    AuthenticatedAdminAdminPromosiAdsRoute:
+      AuthenticatedAdminAdminPromosiAdsRoute,
+    AuthenticatedAdminAdminPromosiFlashSaleRoute:
+      AuthenticatedAdminAdminPromosiFlashSaleRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -418,3 +464,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
