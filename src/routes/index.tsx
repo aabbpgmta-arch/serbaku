@@ -57,7 +57,7 @@ function HomePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, name, slug, price, category, is_bestseller, is_new, product_images(url, is_cover, sort_order)")
+        .select("id, name, slug, price, category, is_bestseller, is_new, manual_badge, product_images(url, is_cover, sort_order)")
         .eq("is_active", true)
         .or("is_bestseller.eq.true,is_new.eq.true")
         .limit(8);
@@ -137,6 +137,9 @@ function HomePage() {
         </div>
       </section>
 
+      {/* STATISTIK TOKO */}
+      <StoreStatsSection />
+
       {/* KATEGORI */}
       {(categories ?? []).length > 0 && (
         <section className="container-page py-10">
@@ -200,8 +203,7 @@ function HomePage() {
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {p.category === "serba_35" && <Badge variant="secondary" className="bg-primary-soft/60 text-foreground">Serba 35</Badge>}
                     {p.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
-                    {p.is_bestseller && <Badge className="bg-primary text-primary-foreground">Terlaris</Badge>}
-                    {p.is_new && <Badge variant="outline">Baru</Badge>}
+                    {badgeFor(p) && <Badge className="bg-primary text-primary-foreground">{badgeFor(p)}</Badge>}
                   </div>
                   <h3 className="mt-2 line-clamp-2 text-sm font-medium">{p.name}</h3>
                   <p className="mt-1 font-display text-lg font-bold text-primary">{formatRupiah(p.price)}</p>
@@ -215,6 +217,9 @@ function HomePage() {
           </div>
         )}
       </section>
+
+      {/* TERLARIS MINGGU & BULAN INI */}
+      <TopProductsSection />
 
       {/* TESTIMONI */}
       {(testimonials ?? []).length > 0 && (
@@ -248,7 +253,124 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <SocialProofTicker />
     </div>
+  );
+}
+
+function StoreStatsSection() {
+  const { data } = useStoreStats();
+  if (!data) return null;
+  const hasAny =
+    data.total_products + data.total_customers + data.total_orders_done + data.total_items_sold > 0;
+  if (!hasAny) return null;
+  const items: Array<{ icon: React.ComponentType<{ className?: string }>; label: string; value: number }> = [
+    { icon: Package, label: "Produk Aktif", value: data.total_products },
+    { icon: ShoppingBag, label: "Item Terjual", value: data.total_items_sold },
+    { icon: CheckCircle2, label: "Pesanan Selesai", value: data.total_orders_done },
+    { icon: Users, label: "Pelanggan", value: data.total_customers },
+  ];
+  return (
+    <section className="container-page py-8">
+      <div className="grid grid-cols-2 gap-3 rounded-3xl border border-border/60 bg-card p-5 sm:p-7 md:grid-cols-4 md:gap-5">
+        {items.map((it) => {
+          const Icon = it.icon;
+          return (
+            <div key={it.label} className="flex items-center gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft/60 text-primary">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-display text-2xl font-bold leading-tight">
+                  {it.value.toLocaleString("id-ID")}
+                </div>
+                <div className="truncate text-xs text-muted-foreground">{it.label}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function TopProductsSection() {
+  const [days, setDays] = useState<7 | 30>(7);
+  const { data, isLoading } = useTopProducts(days, 8);
+  return (
+    <section className="container-page py-14">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="badge-pink"><TrendingUp className="h-3 w-3" /> Terlaris</span>
+          <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">
+            {days === 7 ? "Terlaris Minggu Ini" : "Terlaris Bulan Ini"}
+          </h2>
+        </div>
+        <div className="inline-flex rounded-full border border-border bg-card p-1 text-sm">
+          {[7, 30].map((d) => (
+            <button
+              key={d}
+              onClick={() => setDays(d as 7 | 30)}
+              className={`rounded-full px-4 py-1.5 font-semibold transition ${
+                days === d ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {d === 7 ? "7 Hari" : "30 Hari"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-square animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      ) : data && data.length > 0 ? (
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {data.map((p) => <TopProductCard key={p.id} p={p} />)}
+        </div>
+      ) : (
+        <div className="mt-8 rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+          Belum ada penjualan dalam {days} hari terakhir.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TopProductCard({ p }: { p: ProductCard }) {
+  const cover =
+    p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
+  const badge = badgeFor(p);
+  return (
+    <Link to="/produk/$slug" params={{ slug: p.slug }} className="group">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
+        {cover ? (
+          <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+        ) : (
+          <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
+            <Package className="h-10 w-10" />
+          </div>
+        )}
+        {badge && (
+          <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {p.category === "serba_35" && <Badge variant="secondary" className="bg-primary-soft/60 text-foreground">Serba 35</Badge>}
+        {p.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
+      </div>
+      <h3 className="mt-2 line-clamp-2 text-sm font-medium">{p.name}</h3>
+      <p className="mt-1 font-display text-lg font-bold text-primary">{formatRupiah(p.price)}</p>
+      {p.qty_sold && p.qty_sold > 0 ? (
+        <p className="mt-0.5 text-xs text-muted-foreground">Terjual {formatSold(p.qty_sold)} pcs</p>
+      ) : null}
+    </Link>
   );
 }
 
