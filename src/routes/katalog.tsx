@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Search, Package, Flame } from "lucide-react";
+import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
-import { flashActive, productPromoUnit } from "@/lib/promo";
+import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -37,16 +37,31 @@ const FILTERS = [
   { id: "baru" as const, label: "Produk Baru" },
 ];
 
+type ViewMode = "large" | "medium" | "small" | "list";
+
+const VIEW_GRID: Record<Exclude<ViewMode, "list">, string> = {
+  large: "grid-cols-1 sm:grid-cols-2",
+  medium: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+  small: "grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
+};
+
 function KatalogPage() {
   const search = useSearch({ from: "/katalog" });
   const [q, setQ] = useState(search.q ?? "");
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "medium";
+    return (localStorage.getItem("katalog_view") as ViewMode) || "medium";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("katalog_view", view);
+  }, [view]);
 
   const { data: products, isLoading, error } = useQuery({
     queryKey: ["products", search.cat, search.q],
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, flash_price, flash_start_at, flash_end_at, product_images(url, is_cover, sort_order)")
+        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, product_images(url, is_cover, sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))")
         .eq("is_active", true)
         .gt("stock", 0)
         .order("created_at", { ascending: false });
@@ -60,15 +75,10 @@ function KatalogPage() {
       if (search.q) query = query.ilike("name", `%${search.q}%`);
 
       const { data, error } = await query;
-      if (error) {
-        console.error("[katalog] gagal memuat produk", error);
-        throw error;
-      }
-      console.info("[katalog] produk dimuat", { count: data?.length ?? 0, filter: search });
+      if (error) { console.error("[katalog] gagal memuat", error); throw error; }
       return data ?? [];
     },
   });
-
 
   return (
     <div className="container-page py-10">
@@ -92,22 +102,42 @@ function KatalogPage() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari produk..." className="pl-9" />
       </form>
 
-      <div className="mb-8 flex flex-wrap gap-2">
-        {FILTERS.map((f) => {
-          const active = search.cat === f.id;
-          return (
-            <Link
-              key={f.label}
-              to="/katalog"
-              search={{ ...search, cat: f.id }}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
-                active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"
-              }`}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map((f) => {
+            const active = search.cat === f.id;
+            return (
+              <Link
+                key={f.label}
+                to="/katalog"
+                search={{ ...search, cat: f.id }}
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                  active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"
+                }`}
+              >
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+          {([
+            ["large", LayoutGrid, "Large"],
+            ["medium", Grid3x3, "Medium"],
+            ["small", Grid2x2, "Small"],
+            ["list", ListIcon, "List"],
+          ] as const).map(([id, Icon, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setView(id)}
+              title={label}
+              className={`grid h-8 w-8 place-items-center rounded-full transition ${view === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}
             >
-              {f.label}
-            </Link>
-          );
-        })}
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -130,12 +160,39 @@ function KatalogPage() {
           <Package className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">Belum ada produk pada kategori ini.</p>
         </div>
-
-      ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      ) : view === "list" ? (
+        <div className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-card">
           {products!.map((p) => {
             const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
-            const promo = { price: Number(p.price), discountType: p.discount_type as "none"|"percent"|"nominal"|null, discountValue: p.discount_value, flashPrice: p.flash_price, flashStartAt: p.flash_start_at, flashEndAt: p.flash_end_at };
+            const flash = resolveFlashFromItems(Number(p.price), p.flash_sale_items as FlashSaleItemJoin[]);
+            const promo = { price: Number(p.price), discountType: p.discount_type as "none"|"percent"|"nominal"|null, discountValue: p.discount_value, ...flash };
+            const isFlash = flashActive(promo);
+            const promoUnit = productPromoUnit(promo);
+            const hasPromo = promoUnit < Number(p.price);
+            return (
+              <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="flex items-center gap-4 p-3 hover:bg-accent/50">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
+                  {isFlash && <span className="absolute left-1 top-1 rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white"><Flame className="inline h-2.5 w-2.5" /></span>}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
+                  <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-display text-base font-bold text-primary">{formatRupiah(promoUnit)}</p>
+                  {hasPromo && <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className={`grid gap-4 ${VIEW_GRID[view]}`}>
+          {products!.map((p) => {
+            const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
+            const flash = resolveFlashFromItems(Number(p.price), p.flash_sale_items as FlashSaleItemJoin[]);
+            const promo = { price: Number(p.price), discountType: p.discount_type as "none"|"percent"|"nominal"|null, discountValue: p.discount_value, ...flash };
             const isFlash = flashActive(promo);
             const promoUnit = productPromoUnit(promo);
             const hasPromo = promoUnit < Number(p.price);
@@ -156,18 +213,20 @@ function KatalogPage() {
                     <span className="absolute left-2 top-2 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">Diskon</span>
                   )}
                 </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {p.category === "serba_35" && <Badge variant="secondary" className="bg-primary-soft/60 text-foreground">Serba 35</Badge>}
-                  {p.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
-                  {p.is_bestseller && <Badge className="bg-primary text-primary-foreground">Terlaris</Badge>}
-                  {p.is_new && <Badge variant="outline">Baru</Badge>}
-                </div>
-                <h3 className="mt-2 line-clamp-2 text-sm font-medium">{p.name}</h3>
+                {view !== "small" && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {p.category === "serba_35" && <Badge variant="secondary" className="bg-primary-soft/60 text-foreground">Serba 35</Badge>}
+                    {p.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
+                    {p.is_bestseller && <Badge className="bg-primary text-primary-foreground">Terlaris</Badge>}
+                    {p.is_new && <Badge variant="outline">Baru</Badge>}
+                  </div>
+                )}
+                <h3 className={`mt-2 line-clamp-2 font-medium ${view === "small" ? "text-xs" : "text-sm"}`}>{p.name}</h3>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <p className="font-display text-lg font-bold text-primary">{formatRupiah(promoUnit)}</p>
+                  <p className={`font-display font-bold text-primary ${view === "large" ? "text-xl" : view === "small" ? "text-sm" : "text-lg"}`}>{formatRupiah(promoUnit)}</p>
                   {hasPromo && <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>}
                 </div>
-                <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+                {view !== "small" && <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>}
               </Link>
             );
           })}
