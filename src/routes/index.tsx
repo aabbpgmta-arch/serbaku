@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/site-settings";
 import { formatRupiah } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
-import { SocialLinks } from "@/components/site/SocialLinks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -225,18 +224,6 @@ function HomePage() {
         </section>
       )}
 
-
-      {/* KONTAK / SOSIAL */}
-      <section className="container-page py-14">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="badge-pink">Kontak</span>
-          <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Hubungi Kami</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Temukan kami di platform favoritmu</p>
-        </div>
-        <div className="mt-8 flex justify-center">
-          <SocialLinks />
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="container-page py-14">
