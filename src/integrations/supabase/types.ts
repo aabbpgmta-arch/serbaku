@@ -156,6 +156,8 @@ export type Database = {
           tracking_number: string | null
           updated_at: string
           user_id: string | null
+          voucher_code: string | null
+          voucher_discount: number
           whatsapp: string
         }
         Insert: {
@@ -184,6 +186,8 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          voucher_code?: string | null
+          voucher_discount?: number
           whatsapp: string
         }
         Update: {
@@ -212,6 +216,8 @@ export type Database = {
           tracking_number?: string | null
           updated_at?: string
           user_id?: string | null
+          voucher_code?: string | null
+          voucher_discount?: number
           whatsapp?: string
         }
         Relationships: []
@@ -256,6 +262,11 @@ export type Database = {
           category: Database["public"]["Enums"]["product_category"]
           created_at: string
           description: string | null
+          discount_type: string
+          discount_value: number
+          flash_end_at: string | null
+          flash_price: number | null
+          flash_start_at: string | null
           id: string
           is_active: boolean
           is_bestseller: boolean
@@ -271,6 +282,11 @@ export type Database = {
           category?: Database["public"]["Enums"]["product_category"]
           created_at?: string
           description?: string | null
+          discount_type?: string
+          discount_value?: number
+          flash_end_at?: string | null
+          flash_price?: number | null
+          flash_start_at?: string | null
           id?: string
           is_active?: boolean
           is_bestseller?: boolean
@@ -286,6 +302,11 @@ export type Database = {
           category?: Database["public"]["Enums"]["product_category"]
           created_at?: string
           description?: string | null
+          discount_type?: string
+          discount_value?: number
+          flash_end_at?: string | null
+          flash_price?: number | null
+          flash_start_at?: string | null
           id?: string
           is_active?: boolean
           is_bestseller?: boolean
@@ -419,6 +440,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          min_subtotal: number
+          starts_at: string | null
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_subtotal?: number
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_subtotal?: number
+          starts_at?: string | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+        }
+        Relationships: []
+      }
       website_categories: {
         Row: {
           created_at: string
@@ -471,6 +543,14 @@ export type Database = {
       set_order_payment_proof: {
         Args: { _order_id: string; _url: string }
         Returns: undefined
+      }
+      validate_voucher: {
+        Args: { _code: string; _subtotal: number }
+        Returns: {
+          code: string
+          discount: number
+          message: string
+        }[]
       }
     }
     Enums: {
