@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Target, BarChart3, Palette } from "lucide-react";
+import { GlobalSearch } from "@/components/admin/GlobalSearch";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
