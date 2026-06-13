@@ -220,31 +220,10 @@ function HomePage() {
             <span className="badge-pink">Testimoni</span>
             <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Reseller Toko Serba</h2>
           </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {testimonials!.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-border/60 bg-card p-6 shadow-soft">
-                <div className="flex gap-0.5 text-primary">
-                  {Array.from({ length: t.rating ?? 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="mt-3 text-sm text-foreground/80">"{t.message}"</p>
-                <div className="mt-4 flex items-center gap-3">
-                  {t.avatar_url ? (
-                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary font-bold">
-                      {t.name.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold">{t.name}</div>
-                    {t.role && <div className="text-xs text-muted-foreground">{t.role}</div>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialSlider items={testimonials!} />
         </section>
       )}
+
 
       {/* CTA */}
       <section className="container-page py-14">
