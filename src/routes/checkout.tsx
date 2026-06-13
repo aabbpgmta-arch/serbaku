@@ -157,64 +157,51 @@ function CheckoutPage() {
       }
     }
 
-    // Snapshot membership_discount = bagian diskon dari basis "member"
-    const membershipDiscount = memberSavings;
-
     const attribution = getAttribution();
-    const { data: order, error } = await supabase
-      .from("orders")
-      .insert({
-        user_id: user.id,
-        ...form,
-        subtotal: subtotalAfterItem, // subtotal yang sudah dipotong promo per-item
-        shipping_cost: shippingPayer === "pengirim" ? shippingCost : 0,
-        shipping_payer: shippingPayer,
-        total,
-        status: "menunggu_pembayaran",
-        membership_tier: membershipTier,
-        membership_discount: membershipDiscount,
-        voucher_code: voucher?.code ?? null,
-        voucher_discount: voucherDiscount,
-        utm_source: attribution?.utm_source ?? null,
-        utm_medium: attribution?.utm_medium ?? null,
-        utm_campaign: attribution?.utm_campaign ?? null,
-        utm_content: attribution?.utm_content ?? null,
-        utm_term: attribution?.utm_term ?? null,
-        referrer: attribution?.referrer ?? null,
-        landing_path: attribution?.landing_path ?? null,
-      })
-      .select()
-      .single();
+    try {
+      const { createOrder } = await import("@/lib/checkout.functions");
+      const res = await createOrder({
+        data: {
+          items: items.map((i) => ({ product_id: i.productId, qty: i.qty })),
+          form: {
+            full_name: form.full_name,
+            whatsapp: form.whatsapp,
+            email: form.email,
+            address: form.address,
+            city: form.city,
+            province: form.province,
+            postal_code: form.postal_code,
+            notes: form.notes,
+          },
+          voucher_code: voucher?.code ?? null,
+          shipping_payer: shippingPayer,
+          shipping_cost: shippingPayer === "pengirim" ? shippingCost : 0,
+          attribution: attribution ?? null,
+        },
+      });
 
-    if (error || !order) {
-      toast.error("Gagal membuat pesanan: " + (error?.message ?? ""));
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        email: form.email,
+        full_name: form.full_name,
+        whatsapp: form.whatsapp,
+        address: form.address,
+        city: form.city,
+        province: form.province,
+        postal_code: form.postal_code,
+      });
+      clear();
+      await refreshMembership();
+      toast.success("Pesanan berhasil dibuat!");
+      navigate({ to: "/akun/pesanan/$id", params: { id: res.order_id } });
+    } catch (err: any) {
+      toast.error("Gagal membuat pesanan: " + (err?.message ?? String(err)));
       setSubmitting(false);
       return;
     }
-    const itemsPayload = enriched.map(({ item: i, unit, lineTotal }) => ({
-      order_id: order.id,
-      product_id: i.productId,
-      product_name: i.name,
-      product_image: i.image,
-      unit_price: unit,
-      quantity: i.qty,
-      subtotal: lineTotal,
-    }));
-    const { error: itemsErr } = await supabase.from("order_items").insert(itemsPayload);
-    if (itemsErr) {
-      toast.error("Gagal menyimpan item pesanan");
-      setSubmitting(false);
-      return;
-    }
-    await supabase.from("profiles").upsert({
-      id: user.id, email: form.email, full_name: form.full_name, whatsapp: form.whatsapp,
-      address: form.address, city: form.city, province: form.province, postal_code: form.postal_code,
-    });
-    clear();
-    await refreshMembership();
-    toast.success("Pesanan berhasil dibuat!");
-    navigate({ to: "/akun/pesanan/$id", params: { id: order.id } });
   }
+
+
 
   return (
     <div className="container-page py-10">
