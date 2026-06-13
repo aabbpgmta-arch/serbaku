@@ -50,6 +50,7 @@ function AdminProduk() {
   const [openBulk, setOpenBulk] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [historyFor, setHistoryFor] = useState<ProductRow | null>(null);
   const [view, setView] = useState<"list" | "grid">(() => {
     if (typeof window === "undefined") return "list";
     return (localStorage.getItem("admin_products_view") as "list" | "grid") || "list";
@@ -76,12 +77,18 @@ function AdminProduk() {
 
   async function toggleActive(p: ProductRow) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
-    if (error) toast.error(error.message); else { toast.success("Status diperbarui"); refresh(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Status diperbarui");
+      void logAction(p.is_active ? "deactivate_product" : "activate_product", "product", p.id, { name: p.name });
+      refresh();
+    }
   }
 
   async function deleteProduct(p: ProductRow) {
     if (!confirm(`Hapus produk "${p.name}"?`)) return;
-    await deleteProductsWithMedia([p.id]);
+    const ok = await deleteProductsWithMedia([p.id]);
+    if (ok) void logAction("delete_product", "product", p.id, { name: p.name });
     refresh();
   }
 
