@@ -334,11 +334,13 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Produk diperbarui");
+      void logAction("update_product", "product", product.id, { name, price });
     } else {
       slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
-      const { error } = await supabase.from("products").insert({ ...payload, slug }).select().single();
+      const { data: created, error } = await supabase.from("products").insert({ ...payload, slug }).select().single();
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Produk dibuat");
+      if (created?.id) void logAction("create_product", "product", created.id, { name, price });
     }
     setSaving(false);
     qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
