@@ -9,6 +9,16 @@ export type ContactSettings = {
   instagram?: string;
   tiktok?: string;
   shopee?: string;
+  facebook?: string;
+  youtube?: string;
+  tokopedia?: string;
+  whatsapp_active?: boolean;
+  instagram_active?: boolean;
+  tiktok_active?: boolean;
+  shopee_active?: boolean;
+  facebook_active?: boolean;
+  youtube_active?: boolean;
+  tokopedia_active?: boolean;
 };
 export type HeroSettings = {
   headline: string;
