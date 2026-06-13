@@ -393,6 +393,7 @@ export type Database = {
           is_active: boolean
           is_bestseller: boolean
           is_new: boolean
+          manual_badge: string | null
           name: string
           price: number
           slug: string
@@ -410,6 +411,7 @@ export type Database = {
           is_active?: boolean
           is_bestseller?: boolean
           is_new?: boolean
+          manual_badge?: string | null
           name: string
           price: number
           slug: string
@@ -427,6 +429,7 @@ export type Database = {
           is_active?: boolean
           is_bestseller?: boolean
           is_new?: boolean
+          manual_badge?: string | null
           name?: string
           price?: number
           slug?: string
@@ -675,6 +678,15 @@ export type Database = {
         Args: { _spend: number }
         Returns: Database["public"]["Enums"]["membership_tier"]
       }
+      get_store_stats: {
+        Args: never
+        Returns: {
+          total_customers: number
+          total_items_sold: number
+          total_orders_done: number
+          total_products: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -682,9 +694,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      recent_sales_ticker: {
+        Args: { p_limit?: number }
+        Returns: {
+          city: string
+          created_at: string
+          product_name: string
+          qty: number
+        }[]
+      }
       set_order_payment_proof: {
         Args: { _order_id: string; _url: string }
         Returns: undefined
+      }
+      top_products_window: {
+        Args: { p_days: number; p_limit?: number }
+        Returns: {
+          product_id: string
+          qty_sold: number
+        }[]
       }
       validate_voucher: {
         Args: { _code: string; _subtotal: number }
