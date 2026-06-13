@@ -38,7 +38,12 @@ export function Footer() {
               <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4" />{c.address}</li>
             )}
           </ul>
+          <div className="mt-4">
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sosial Media</h4>
+            <SocialLinks />
+          </div>
         </div>
+
       </div>
       <div className="border-t border-border/60">
         <div className="container-page py-4 text-center text-xs text-muted-foreground">{f?.copyright}</div>
