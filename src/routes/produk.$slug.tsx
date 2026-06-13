@@ -66,16 +66,18 @@ function ProductPage() {
   const countdown = isFlash ? formatCountdown(promo.flashEndAt, now) : null;
 
   const { data: related } = useQuery({
-    queryKey: ["related", product.id, product.category],
+    queryKey: ["customer_also_bought", product.id],
     queryFn: async () => {
+      const { data: rpc } = await supabase.rpc("customer_also_bought", { p_product_id: product.id, p_limit: 8 });
+      const ids = ((rpc ?? []) as { product_id: string }[]).map((r) => r.product_id);
+      if (ids.length === 0) return [];
       const { data } = await supabase
         .from("products")
         .select("id, name, slug, price, product_images(url, is_cover)")
-        .eq("is_active", true)
-        .eq("category", product.category)
-        .neq("id", product.id)
-        .limit(4);
-      return data ?? [];
+        .in("id", ids)
+        .eq("is_active", true);
+      const order = new Map(ids.map((id, i) => [id, i]));
+      return (data ?? []).sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99)).slice(0, 8);
     },
   });
 
