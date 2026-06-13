@@ -88,6 +88,21 @@ export function formatCountdown(end: string | null | undefined, now: Date = new 
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const ss = s % 60;
-  if (d > 0) return `${d}h ${h}j ${m}m`;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (d > 0) return `${d}h ${pad(h)}:${pad(m)}:${pad(ss)}`;
+  return `${pad(h)}:${pad(m)}:${pad(ss)}`;
+}
+
+export type CountdownParts = { days: number; hours: number; minutes: number; seconds: number } | null;
+export function countdownParts(end: string | null | undefined, now: Date = new Date()): CountdownParts {
+  if (!end) return null;
+  const ms = new Date(end).getTime() - now.getTime();
+  if (ms <= 0) return null;
+  const s = Math.floor(ms / 1000);
+  return {
+    days: Math.floor(s / 86400),
+    hours: Math.floor((s % 86400) / 3600),
+    minutes: Math.floor((s % 3600) / 60),
+    seconds: s % 60,
+  };
 }
