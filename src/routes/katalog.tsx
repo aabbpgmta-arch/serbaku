@@ -242,7 +242,9 @@ function KatalogPage() {
                     {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
                   </p>
                 )}
-              </Link>
+                </Link>
+                <WishlistButton productId={p.id} className="absolute right-2 top-2" />
+              </div>
             );
           })}
         </div>
