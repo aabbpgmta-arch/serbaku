@@ -672,20 +672,20 @@ export type Database = {
           },
         ]
       }
-      store_stats: {
-        Row: {
-          total_customers: number | null
-          total_items_sold: number | null
-          total_orders_done: number | null
-          total_products: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       compute_membership_tier: {
         Args: { _spend: number }
         Returns: Database["public"]["Enums"]["membership_tier"]
+      }
+      get_store_stats: {
+        Args: never
+        Returns: {
+          total_customers: number
+          total_items_sold: number
+          total_orders_done: number
+          total_products: number
+        }[]
       }
       has_role: {
         Args: {
