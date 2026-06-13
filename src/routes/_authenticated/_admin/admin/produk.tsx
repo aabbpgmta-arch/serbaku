@@ -25,6 +25,7 @@ type ProductRow = {
   id: string; name: string; slug: string; price: number; stock: number;
   category: "serba_35" | "serba_75" | "lainnya";
   description: string | null; is_active: boolean; is_bestseller: boolean; is_new: boolean;
+  manual_badge: string | null;
   video_url: string | null;
   discount_type: "none" | "percent" | "nominal" | null;
   discount_value: number | null;
