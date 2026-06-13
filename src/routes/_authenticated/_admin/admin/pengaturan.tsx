@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
 import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
 import type { Json } from "@/integrations/supabase/types";
+import { BackupSection } from "@/components/admin/BackupSection";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pengaturan")({
   head: () => ({ meta: [{ title: "Pengaturan Website — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -69,6 +70,7 @@ function AdminSettings() {
           <TabsTrigger value="sections">Keunggulan</TabsTrigger>
           <TabsTrigger value="categories">Kategori</TabsTrigger>
           <TabsTrigger value="testimonials">Testimoni</TabsTrigger>
+          <TabsTrigger value="backup">Backup</TabsTrigger>
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
@@ -78,6 +80,7 @@ function AdminSettings() {
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
         <TabsContent value="categories"><CategoriesEditor /></TabsContent>
         <TabsContent value="testimonials"><TestimonialsEditor /></TabsContent>
+        <TabsContent value="backup"><BackupSection /></TabsContent>
       </Tabs>
     </div>
   );

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 });
 
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Target, BarChart3, Palette } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag, Megaphone, Zap, Target, BarChart3, Palette, ScrollText } from "lucide-react";
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
 
 type Item = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
@@ -32,6 +32,7 @@ const promoItems: Item[] = [
   { to: "/admin/voucher", label: "Voucher", icon: Tag },
 ];
 const settingItems: Item[] = [
+  { to: "/admin/audit", label: "Audit & Log", icon: ScrollText },
   { to: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

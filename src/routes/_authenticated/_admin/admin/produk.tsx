@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah, slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
+import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
+import { logAction } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -48,6 +50,7 @@ function AdminProduk() {
   const [openBulk, setOpenBulk] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [historyFor, setHistoryFor] = useState<ProductRow | null>(null);
   const [view, setView] = useState<"list" | "grid">(() => {
     if (typeof window === "undefined") return "list";
     return (localStorage.getItem("admin_products_view") as "list" | "grid") || "list";
@@ -74,12 +77,18 @@ function AdminProduk() {
 
   async function toggleActive(p: ProductRow) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
-    if (error) toast.error(error.message); else { toast.success("Status diperbarui"); refresh(); }
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Status diperbarui");
+      void logAction(p.is_active ? "deactivate_product" : "activate_product", "product", p.id, { name: p.name });
+      refresh();
+    }
   }
 
   async function deleteProduct(p: ProductRow) {
     if (!confirm(`Hapus produk "${p.name}"?`)) return;
-    await deleteProductsWithMedia([p.id]);
+    const ok = await deleteProductsWithMedia([p.id]);
+    if (ok) void logAction("delete_product", "product", p.id, { name: p.name });
     refresh();
   }
 
@@ -223,6 +232,7 @@ function AdminProduk() {
                       <td className="px-4 py-3 text-center"><Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} /></td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="Riwayat Harga" onClick={() => setHistoryFor(p)}><History className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => deleteProduct(p)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
@@ -275,6 +285,14 @@ function AdminProduk() {
 
       <ProductFormDialog key={editing?.id ?? "new"} open={openForm} onOpenChange={setOpenForm} product={editing} />
       <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />
+      {historyFor && (
+        <PriceHistoryDialog
+          productId={historyFor.id}
+          productName={historyFor.name}
+          open={!!historyFor}
+          onOpenChange={(o) => !o && setHistoryFor(null)}
+        />
+      )}
     </div>
   );
 }
@@ -316,11 +334,13 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Produk diperbarui");
+      void logAction("update_product", "product", product.id, { name, price });
     } else {
       slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
-      const { error } = await supabase.from("products").insert({ ...payload, slug }).select().single();
+      const { data: created, error } = await supabase.from("products").insert({ ...payload, slug }).select().single();
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Produk dibuat");
+      if (created?.id) void logAction("create_product", "product", created.id, { name, price });
     }
     setSaving(false);
     qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });

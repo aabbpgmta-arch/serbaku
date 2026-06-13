@@ -30,10 +30,11 @@ Tanpa ini, fitur lain (terlaris, badge, social proof) tidak punya angka.
 - **N. Produk Tidak Bergerak** — widget dashboard admin, ≥60 hari tanpa penjualan, via RPC `admin_idle_products`.
 - **Q. Global Search** — search bar di header admin, hasil grup: Produk / Pesanan / Pelanggan / Voucher / Flash Sale, debounce 250ms.
 
-## Fase 5 — Audit & Backup (K, O, P)
-- **K. Riwayat Perubahan Harga** — tabel `product_price_history` + trigger auto-log saat `products.price` berubah.
-- **O. Activity Log** — tabel `activity_logs`, dicatat dari server fn (add/edit/delete produk, ubah harga, buat flash sale/voucher).
-- **P. Backup Data** — di /admin/pengaturan, export Produk/Pelanggan/Pesanan ke XLSX/CSV.
+## Fase 5 — Audit & Backup (K, O, P) ✅
+- **K. Riwayat Perubahan Harga** — tabel `product_price_history` + trigger auto-log saat `products.price` berubah. Tombol 🕘 di tabel admin produk membuka dialog riwayat.
+- **O. Activity Log** — tabel `activity_logs` + RPC `log_admin_action`. Dicatat saat admin create/update/delete produk, voucher, flash sale, dan export backup.
+- **P. Backup Data** — tab **Backup** di /admin/pengaturan dengan tombol export Produk / Pelanggan / Pesanan / Backup Lengkap ke XLSX.
+- Halaman **/admin/audit** menampilkan Activity Log + Riwayat Harga global.
 
 ---
 

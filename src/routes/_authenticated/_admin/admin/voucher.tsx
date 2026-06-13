@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { logAction } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/voucher")({
   head: () => ({ meta: [{ title: "Admin Voucher — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -50,7 +51,11 @@ function AdminVoucher() {
     if (!confirm(`Hapus voucher "${v.code}"?`)) return;
     const { error } = await supabase.from("vouchers").delete().eq("id", v.id);
     if (error) toast.error(error.message);
-    else { toast.success("Voucher dihapus"); qc.invalidateQueries({ queryKey: ["admin_vouchers"] }); }
+    else {
+      toast.success("Voucher dihapus");
+      void logAction("delete_voucher", "voucher", v.id, { code: v.code });
+      qc.invalidateQueries({ queryKey: ["admin_vouchers"] });
+    }
   }
   async function toggle(v: VoucherRow) {
     const { error } = await supabase.from("vouchers").update({ is_active: !v.is_active }).eq("id", v.id);
@@ -150,10 +155,12 @@ function VoucherFormDialog({ open, onOpenChange, voucher }: { open: boolean; onO
       const { error } = await supabase.from("vouchers").update(payload).eq("id", voucher.id);
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Voucher diperbarui");
+      void logAction("update_voucher", "voucher", voucher.id, { code: payload.code });
     } else {
       const { error } = await supabase.from("vouchers").insert(payload);
       if (error) { toast.error(error.message); setSaving(false); return; }
       toast.success("Voucher dibuat");
+      void logAction("create_voucher", "voucher", null, { code: payload.code });
     }
     setSaving(false);
     qc.invalidateQueries({ queryKey: ["admin_vouchers"] });
