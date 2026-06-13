@@ -9,6 +9,7 @@ import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleIte
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { WishlistButton } from "@/components/site/WishlistButton";
 
 const searchSchema = z.object({
   cat: z.enum(["serba_35", "serba_75", "lainnya", "terlaris", "baru"]).optional(),
