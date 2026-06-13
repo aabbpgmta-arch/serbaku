@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
 import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pengaturan")({
   head: () => ({ meta: [{ title: "Pengaturan Website — Toko Serba" }, { name: "robots", content: "noindex" }] }),
