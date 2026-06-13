@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah, slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
+import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
+import { logAction } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
