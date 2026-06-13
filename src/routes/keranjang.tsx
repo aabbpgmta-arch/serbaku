@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Crown } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { useAuth } from "@/lib/auth-context";
+import { tierMeta, discountForTier, nextTier } from "@/lib/membership";
 import { formatRupiah, roundToSix } from "@/lib/format";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/keranjang")({
   head: () => ({ meta: [{ title: "Keranjang — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -10,7 +11,12 @@ export const Route = createFileRoute("/keranjang")({
 });
 
 function CartPage() {
-  const { items, setQty, remove, subtotal } = useCart();
+  const { items, setQty, remove, subtotal, totalQty } = useCart();
+  const { user, membershipTier, lifetimeSpend } = useAuth();
+  const tier = tierMeta(membershipTier);
+  const discount = user ? discountForTier(membershipTier, totalQty) : 0;
+  const grandTotal = Math.max(0, subtotal - discount);
+  const next = nextTier(membershipTier);
 
   if (items.length === 0) {
     return (
@@ -67,31 +73,62 @@ function CartPage() {
           ))}
         </div>
 
-        <aside className="h-fit rounded-2xl border border-border/60 bg-card p-6">
-          <h2 className="font-display text-lg font-semibold">Ringkasan</h2>
-          <div className="mt-4 flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="font-semibold">{formatRupiah(subtotal)}</span>
-          </div>
-          <div className="mt-1 flex justify-between text-sm">
-            <span className="text-muted-foreground">Ongkir</span>
-            <span className="text-muted-foreground">Dihitung saat checkout</span>
-          </div>
-          <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-bold">
-            <span>Total</span>
-            <span className="text-primary">{formatRupiah(subtotal)}</span>
-          </div>
-          {!allValid && (
-            <p className="mt-3 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
-              Quantity wajib kelipatan 6 pcs untuk lanjut checkout.
-            </p>
+        <aside className="h-fit space-y-4">
+          {user && (
+            <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary-soft/30 to-accent/40 p-4">
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${tier.color}`}>
+                  <Crown className="h-3 w-3" /> Member {tier.label}
+                </span>
+                <span className="ml-auto text-xs text-muted-foreground">Total belanja: {formatRupiah(lifetimeSpend)}</span>
+              </div>
+              {tier.discountPerPcs > 0 ? (
+                <p className="mt-2 text-xs">Diskon <b>{formatRupiah(tier.discountPerPcs)}/pcs</b> otomatis aktif.</p>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">Belum dapat diskon membership.</p>
+              )}
+              {next && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {formatRupiah(Math.max(0, next.minSpend - lifetimeSpend))} lagi untuk naik ke <b>{next.label}</b>.
+                </p>
+              )}
+            </div>
           )}
-          <Link to="/checkout" disabled={!allValid} className="btn-hero mt-5 w-full" aria-disabled={!allValid} onClick={(e) => { if (!allValid) e.preventDefault(); }}>
-            Lanjut ke Checkout
-          </Link>
-          <Link to="/katalog" className="mt-2 block w-full rounded-full border border-border bg-background py-2.5 text-center text-sm font-semibold hover:bg-accent">
-            Lanjut Belanja
-          </Link>
+
+          <div className="rounded-2xl border border-border/60 bg-card p-6">
+            <h2 className="font-display text-lg font-semibold">Ringkasan</h2>
+            <div className="mt-4 space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal ({totalQty} pcs)</span>
+                <span className="font-semibold">{formatRupiah(subtotal)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-600">
+                  <span>Diskon Member {tier.label} ({formatRupiah(tier.discountPerPcs)}×{totalQty} pcs)</span>
+                  <span className="font-semibold">-{formatRupiah(discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ongkir</span>
+                <span className="text-muted-foreground">Dihitung saat checkout</span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-bold">
+              <span>Total</span>
+              <span className="text-primary">{formatRupiah(grandTotal)}</span>
+            </div>
+            {!allValid && (
+              <p className="mt-3 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+                Quantity wajib kelipatan 6 pcs untuk lanjut checkout.
+              </p>
+            )}
+            <Link to="/checkout" disabled={!allValid} className="btn-hero mt-5 w-full" aria-disabled={!allValid} onClick={(e) => { if (!allValid) e.preventDefault(); }}>
+              Lanjut ke Checkout
+            </Link>
+            <Link to="/katalog" className="mt-2 block w-full rounded-full border border-border bg-background py-2.5 text-center text-sm font-semibold hover:bg-accent">
+              Lanjut Belanja
+            </Link>
+          </div>
         </aside>
       </div>
     </div>

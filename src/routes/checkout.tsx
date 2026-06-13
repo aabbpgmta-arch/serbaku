@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
+import { tierMeta, discountForTier } from "@/lib/membership";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +20,11 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function CheckoutPage() {
-  const { items, subtotal, clear } = useCart();
-  const { user, loading } = useAuth();
+  const { items, subtotal, clear, totalQty } = useCart();
+  const { user, loading, membershipTier, refreshMembership } = useAuth();
+  const tier = tierMeta(membershipTier);
+  const membershipDiscount = user ? discountForTier(membershipTier, totalQty) : 0;
+  const discountedSubtotal = Math.max(0, subtotal - membershipDiscount);
   const navigate = useNavigate();
   const [shippingPayer, setShippingPayer] = useState<"pengirim" | "penerima">("penerima");
   const [shippingCost, setShippingCost] = useState(0);
@@ -58,7 +63,7 @@ function CheckoutPage() {
     return <div className="container-page py-20 text-center text-muted-foreground">Keranjang kosong.</div>;
   }
 
-  const total = subtotal + (shippingPayer === "pengirim" ? shippingCost : 0);
+  const total = discountedSubtotal + (shippingPayer === "pengirim" ? shippingCost : 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,6 +106,8 @@ function CheckoutPage() {
         shipping_payer: shippingPayer,
         total,
         status: "menunggu_pembayaran",
+        membership_tier: membershipTier,
+        membership_discount: membershipDiscount,
       })
       .select()
       .single();
@@ -131,6 +138,7 @@ function CheckoutPage() {
       address: form.address, city: form.city, province: form.province, postal_code: form.postal_code,
     });
     clear();
+    await refreshMembership();
     toast.success("Pesanan berhasil dibuat!");
     navigate({ to: "/akun/pesanan/$id", params: { id: order.id } });
   }
@@ -196,8 +204,21 @@ function CheckoutPage() {
               </div>
             ))}
           </div>
+          {user && (
+            <div className={`mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${tier.color}`}>
+              <Crown className="h-3.5 w-3.5" />
+              <span className="font-bold">Member {tier.label}</span>
+              <span className="ml-auto">{tier.discountPerPcs > 0 ? `Diskon ${formatRupiah(tier.discountPerPcs)}/pcs` : "Belum ada diskon"}</span>
+            </div>
+          )}
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
-            <Row label="Subtotal" value={formatRupiah(subtotal)} />
+            <Row label={`Subtotal (${totalQty} pcs)`} value={formatRupiah(subtotal)} />
+            {membershipDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>Diskon Member {tier.label}</span>
+                <span className="font-semibold">-{formatRupiah(membershipDiscount)}</span>
+              </div>
+            )}
             <Row label={`Ongkir (${shippingPayer === "pengirim" ? "ditanggung pengirim" : "ditanggung penerima"})`} value={shippingPayer === "pengirim" ? formatRupiah(shippingCost) : "—"} />
           </div>
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
