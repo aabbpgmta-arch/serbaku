@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Minus, Plus, Trash2, ShoppingBag, Crown } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useEffect, useState } from "react";
+import { Minus, Plus, Trash2, ShoppingBag, Crown, Flame, Timer } from "lucide-react";
+import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
-import { tierMeta, discountForTier, nextTier } from "@/lib/membership";
+import { tierMeta, nextTier } from "@/lib/membership";
+import { bestUnitPrice, flashActive, formatCountdown } from "@/lib/promo";
 import { formatRupiah, roundToSix } from "@/lib/format";
 
 export const Route = createFileRoute("/keranjang")({
@@ -10,13 +12,31 @@ export const Route = createFileRoute("/keranjang")({
   component: CartPage,
 });
 
+function promoOf(i: CartItem) {
+  return {
+    price: i.price,
+    discountType: i.discountType ?? null,
+    discountValue: i.discountValue ?? null,
+    flashPrice: i.flashPrice ?? null,
+    flashStartAt: i.flashStartAt ?? null,
+    flashEndAt: i.flashEndAt ?? null,
+  };
+}
+
 function CartPage() {
-  const { items, setQty, remove, subtotal, totalQty } = useCart();
+  const { items, setQty, remove, totalQty } = useCart();
   const { user, membershipTier, lifetimeSpend } = useAuth();
   const tier = tierMeta(membershipTier);
-  const discount = user ? discountForTier(membershipTier, totalQty) : 0;
-  const grandTotal = Math.max(0, subtotal - discount);
+  const memberPerPcs = user ? tier.discountPerPcs : 0;
   const next = nextTier(membershipTier);
+
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const anyFlash = items.some((i) => flashActive(promoOf(i)));
+    if (!anyFlash) return;
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, [items]);
 
   if (items.length === 0) {
     return (
@@ -33,6 +53,20 @@ function CartPage() {
 
   const allValid = items.every((i) => i.qty % 6 === 0 && i.qty >= 6);
 
+  let subtotal = 0;
+  let totalDiscount = 0;
+  let promoSavings = 0;
+  let memberSavings = 0;
+  const enriched = items.map((i) => {
+    const best = bestUnitPrice(promoOf(i), memberPerPcs, now);
+    subtotal += i.price * i.qty;
+    totalDiscount += best.saved * i.qty;
+    if (best.basis === "promo") promoSavings += best.saved * i.qty;
+    if (best.basis === "member") memberSavings += best.saved * i.qty;
+    return { item: i, best, lineTotal: best.unit * i.qty };
+  });
+  const grandTotal = Math.max(0, subtotal - totalDiscount);
+
   return (
     <div className="container-page py-10">
       <h1 className="font-display text-3xl font-bold">Keranjang Belanja</h1>
@@ -40,37 +74,56 @@ function CartPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-4">
-          {items.map((i) => (
-            <div key={i.productId} className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4">
-              <Link to="/produk/$slug" params={{ slug: i.slug }} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-                {i.image && <img src={i.image} alt={i.name} className="h-full w-full object-cover" />}
-              </Link>
-              <div className="flex flex-1 flex-col justify-between">
-                <div>
-                  <Link to="/produk/$slug" params={{ slug: i.slug }} className="line-clamp-2 text-sm font-medium hover:text-primary">{i.name}</Link>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{formatRupiah(i.price)} / pcs</p>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="inline-flex items-center rounded-full border border-border">
-                    <button onClick={() => setQty(i.productId, Math.max(6, i.qty - 6))} className="grid h-9 w-9 place-items-center hover:bg-accent" aria-label="Kurang"><Minus className="h-4 w-4" /></button>
-                    <input
-                      type="number" min={6} step={6} value={i.qty}
-                      onChange={(e) => setQty(i.productId, Number(e.target.value) || 6)}
-                      onBlur={(e) => setQty(i.productId, roundToSix(Number(e.target.value) || 6))}
-                      className="w-12 bg-transparent text-center text-sm font-semibold outline-none"
-                    />
-                    <button onClick={() => setQty(i.productId, i.qty + 6)} className="grid h-9 w-9 place-items-center hover:bg-accent" aria-label="Tambah"><Plus className="h-4 w-4" /></button>
+          {enriched.map(({ item: i, best, lineTotal }) => {
+            const isFlash = flashActive(promoOf(i), now);
+            const countdown = isFlash ? formatCountdown(i.flashEndAt, now) : null;
+            const showStrike = best.unit < i.price;
+            return (
+              <div key={i.productId} className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4">
+                <Link to="/produk/$slug" params={{ slug: i.slug }} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  {i.image && <img src={i.image} alt={i.name} className="h-full w-full object-cover" />}
+                </Link>
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <Link to="/produk/$slug" params={{ slug: i.slug }} className="line-clamp-2 text-sm font-medium hover:text-primary">{i.name}</Link>
+                    <div className="mt-0.5 flex flex-wrap items-baseline gap-2 text-sm">
+                      <span className="font-semibold text-foreground">{formatRupiah(best.unit)} <span className="text-xs font-normal text-muted-foreground">/pcs</span></span>
+                      {showStrike && <span className="text-xs text-muted-foreground line-through">{formatRupiah(i.price)}</span>}
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {isFlash && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"><Flame className="h-2.5 w-2.5" /> Flash</span>
+                      )}
+                      {countdown && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700"><Timer className="h-2.5 w-2.5" /> {countdown}</span>
+                      )}
+                      {best.basis === "member" && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"><Crown className="h-2.5 w-2.5" /> Diskon Member</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-display text-base font-bold">{formatRupiah(i.price * i.qty)}</p>
-                    <button onClick={() => remove(i.productId)} className="mt-1 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
-                      <Trash2 className="h-3 w-3" /> Hapus
-                    </button>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="inline-flex items-center rounded-full border border-border">
+                      <button onClick={() => setQty(i.productId, Math.max(6, i.qty - 6))} className="grid h-9 w-9 place-items-center hover:bg-accent" aria-label="Kurang"><Minus className="h-4 w-4" /></button>
+                      <input
+                        type="number" min={6} step={6} value={i.qty}
+                        onChange={(e) => setQty(i.productId, Number(e.target.value) || 6)}
+                        onBlur={(e) => setQty(i.productId, roundToSix(Number(e.target.value) || 6))}
+                        className="w-12 bg-transparent text-center text-sm font-semibold outline-none"
+                      />
+                      <button onClick={() => setQty(i.productId, i.qty + 6)} className="grid h-9 w-9 place-items-center hover:bg-accent" aria-label="Tambah"><Plus className="h-4 w-4" /></button>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-display text-base font-bold">{formatRupiah(lineTotal)}</p>
+                      <button onClick={() => remove(i.productId)} className="mt-1 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
+                        <Trash2 className="h-3 w-3" /> Hapus
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <aside className="h-fit space-y-4">
@@ -83,7 +136,7 @@ function CartPage() {
                 <span className="ml-auto text-xs text-muted-foreground">Total belanja: {formatRupiah(lifetimeSpend)}</span>
               </div>
               {tier.discountPerPcs > 0 ? (
-                <p className="mt-2 text-xs">Diskon <b>{formatRupiah(tier.discountPerPcs)}/pcs</b> otomatis aktif.</p>
+                <p className="mt-2 text-xs">Diskon <b>{formatRupiah(tier.discountPerPcs)}/pcs</b> otomatis aktif (atau diskon promo, mana yang lebih besar).</p>
               ) : (
                 <p className="mt-2 text-xs text-muted-foreground">Belum dapat diskon membership.</p>
               )}
@@ -102,10 +155,16 @@ function CartPage() {
                 <span className="text-muted-foreground">Subtotal ({totalQty} pcs)</span>
                 <span className="font-semibold">{formatRupiah(subtotal)}</span>
               </div>
-              {discount > 0 && (
+              {promoSavings > 0 && (
+                <div className="flex justify-between text-rose-600">
+                  <span>Diskon Promo</span>
+                  <span className="font-semibold">-{formatRupiah(promoSavings)}</span>
+                </div>
+              )}
+              {memberSavings > 0 && (
                 <div className="flex justify-between text-emerald-600">
-                  <span>Diskon Member {tier.label} ({formatRupiah(tier.discountPerPcs)}×{totalQty} pcs)</span>
-                  <span className="font-semibold">-{formatRupiah(discount)}</span>
+                  <span>Diskon Member {tier.label}</span>
+                  <span className="font-semibold">-{formatRupiah(memberSavings)}</span>
                 </div>
               )}
               <div className="flex justify-between">
