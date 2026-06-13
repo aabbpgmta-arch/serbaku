@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useStoreStats, useTopProducts, badgeFor, type ProductCard } from "@/lib/homepage-stats";
 import { formatSold } from "@/lib/sales-stats";
 import { SocialProofTicker } from "@/components/site/SocialProofTicker";
+import { VoucherStripSection } from "@/components/site/VoucherStripSection";
 
 export const Route = createFileRoute("/")({
   head: () => ({
