@@ -451,3 +451,90 @@ function TestimonialDialog({ initial, onClose }: { initial: Testimonial | null; 
     </div>
   );
 }
+
+// ─── Custom Contact Settings Form with toggles ───
+
+const CONTACT_FIELDS: { key: string; label: string; isSocial: boolean }[] = [
+  { key: "whatsapp", label: "WhatsApp", isSocial: true },
+  { key: "email", label: "Email", isSocial: false },
+  { key: "address", label: "Alamat", isSocial: false },
+  { key: "instagram", label: "Instagram", isSocial: true },
+  { key: "tiktok", label: "TikTok", isSocial: true },
+  { key: "shopee", label: "Shopee", isSocial: true },
+  { key: "facebook", label: "Facebook", isSocial: true },
+  { key: "youtube", label: "YouTube", isSocial: true },
+  { key: "tokopedia", label: "Tokopedia", isSocial: true },
+];
+
+function ContactSettingsForm() {
+  const qc = useQueryClient();
+  const settingKey = "contact";
+  const { data } = useQuery({
+    queryKey: ["setting", settingKey],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", settingKey).maybeSingle();
+      const defaults = (siteSettingsDefaults() as unknown as Record<string, Record<string, unknown>>)[settingKey] ?? {};
+      return { ...defaults, ...((data?.value as Record<string, unknown>) ?? {}) };
+    },
+  });
+  const [form, setForm] = useState<Record<string, unknown>>({});
+  useEffect(() => { if (data) setForm(data); }, [data]);
+
+  async function save() {
+    const { error } = await supabase.from("site_settings").upsert({ key: settingKey, value: form });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tersimpan");
+      qc.invalidateQueries({ queryKey: ["site_settings"] });
+      qc.invalidateQueries({ queryKey: ["setting", settingKey] });
+    }
+  }
+
+  const socials = CONTACT_FIELDS.filter((f) => f.isSocial);
+  const basics = CONTACT_FIELDS.filter((f) => !f.isSocial);
+
+  return (
+    <div className="mt-4 space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+      {basics.map((f) => (
+        <div key={f.key}>
+          <Label>{f.label}</Label>
+          <Input value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+        </div>
+      ))}
+
+      <div className="pt-2">
+        <h4 className="font-display text-sm font-semibold text-foreground">Sosial Media & Marketplace</h4>
+        <p className="text-xs text-muted-foreground">Isi link dan aktifkan platform yang ingin ditampilkan di website.</p>
+      </div>
+
+      <div className="space-y-3">
+        {socials.map((f) => {
+          const activeKey = `${f.key}_active`;
+          const isActive = !!(form[activeKey] ?? false);
+          return (
+            <div key={f.key} className="flex items-start gap-3 rounded-xl border border-border/50 bg-muted/30 p-3">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">{f.label}</Label>
+                <Input
+                  className="mt-1"
+                  placeholder={`https://...`}
+                  value={String(form[f.key] ?? "")}
+                  onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-5">
+                <Switch
+                  checked={isActive}
+                  onCheckedChange={(checked) => setForm({ ...form, [activeKey]: checked })}
+                />
+                <span className="text-[10px] text-muted-foreground">{isActive ? "Aktif" : "Nonaktif"}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Button onClick={save}>Simpan</Button>
+    </div>
+  );
+}
