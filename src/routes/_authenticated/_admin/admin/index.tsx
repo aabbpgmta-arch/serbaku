@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Package, ShoppingBag, Users, Wallet } from "lucide-react";
+import { Package, ShoppingBag, Users, Wallet, AlertTriangle, Snowflake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
+import { useLowStock, useIdleProducts } from "@/lib/admin-widgets";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
   head: () => ({ meta: [{ title: "Dashboard Admin — Toko Serba" }, { name: "robots", content: "noindex" }] }),
