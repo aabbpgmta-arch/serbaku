@@ -14,9 +14,7 @@ export function Footer() {
         <div className="md:col-span-2">
           <Logo />
           <p className="mt-4 max-w-md text-sm text-muted-foreground">{f?.description}</p>
-          <div className="mt-4">
-            <SocialLinks />
-          </div>
+
         </div>
         <div>
           <h3 className="font-display text-base font-semibold">Menu</h3>
