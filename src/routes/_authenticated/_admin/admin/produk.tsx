@@ -287,6 +287,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [description, setDescription] = useState(product?.description ?? "");
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
   const [isNew, setIsNew] = useState(product?.is_new ?? false);
+  const [manualBadge, setManualBadge] = useState<string>(product?.manual_badge ?? "");
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [images, setImages] = useState(product?.product_images ?? []);
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
@@ -305,6 +306,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     const payload = {
       name, price, stock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
+      manual_badge: manualBadge.trim() || null,
       discount_type: discountType,
       discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
     };
@@ -474,6 +476,20 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <label className="flex items-center gap-2"><Switch checked={isNew} onCheckedChange={setIsNew} /> Produk Baru</label>
             <label className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label>
           </div>
+          <div>
+            <Label>Badge Manual (opsional)</Label>
+            <Input
+              value={manualBadge}
+              onChange={(e) => setManualBadge(e.target.value)}
+              placeholder="cth: Trending, Best Value, Limited"
+              maxLength={20}
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Jika diisi, badge ini menggantikan badge otomatis (Terlaris/Baru) di kartu produk.
+            </p>
+          </div>
+
+
 
           {/* PROMO PER PRODUK (tanpa batas waktu) */}
           <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
