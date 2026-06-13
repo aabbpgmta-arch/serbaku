@@ -199,6 +199,9 @@ function CheckoutPage() {
       setSubmitting(false);
       return;
     }
+  }
+
+
 
   return (
     <div className="container-page py-10">
