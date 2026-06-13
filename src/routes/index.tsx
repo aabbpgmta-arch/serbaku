@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles } from "lucide-react";
+import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/site-settings";
 import { formatRupiah } from "@/lib/format";
@@ -220,31 +220,10 @@ function HomePage() {
             <span className="badge-pink">Testimoni</span>
             <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Reseller Toko Serba</h2>
           </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {testimonials!.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-border/60 bg-card p-6 shadow-soft">
-                <div className="flex gap-0.5 text-primary">
-                  {Array.from({ length: t.rating ?? 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="mt-3 text-sm text-foreground/80">"{t.message}"</p>
-                <div className="mt-4 flex items-center gap-3">
-                  {t.avatar_url ? (
-                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary font-bold">
-                      {t.name.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold">{t.name}</div>
-                    {t.role && <div className="text-xs text-muted-foreground">{t.role}</div>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialSlider items={testimonials!} />
         </section>
       )}
+
 
       {/* CTA */}
       <section className="container-page py-14">
@@ -324,4 +303,66 @@ function HeroSlider({ images }: { images: string[] }) {
     </div>
   );
 }
+
+type TestimonialItem = {
+  id: string;
+  name: string;
+  message: string;
+  rating: number | null;
+  avatar_url: string | null;
+  city?: string | null;
+  role?: string | null;
+  verified?: boolean | null;
+  photos?: unknown;
+};
+
+function TestimonialSlider({ items }: { items: TestimonialItem[] }) {
+  const autoplay = useRef(Autoplay({ delay: 4500, stopOnInteraction: false }));
+  const [emblaRef] = useEmblaCarousel({ loop: items.length > 1, align: "start" }, [autoplay.current]);
+  return (
+    <div className="mt-10 overflow-hidden" ref={emblaRef}>
+      <div className="flex gap-5">
+        {items.map((t) => {
+          const photos = Array.isArray(t.photos) ? (t.photos as string[]).slice(0, 3) : [];
+          return (
+            <div key={t.id} className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%]">
+              <div className="h-full rounded-2xl border border-border/60 bg-card p-6 shadow-soft">
+                <div className="flex gap-0.5 text-primary">
+                  {Array.from({ length: t.rating ?? 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+                </div>
+                <p className="mt-3 text-sm text-foreground/80 line-clamp-5">"{t.message}"</p>
+                {photos.length > 0 && (
+                  <div className="mt-3 flex gap-2">
+                    {photos.map((p, i) => (
+                      <img key={i} src={p} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4 flex items-center gap-3">
+                  {t.avatar_url ? (
+                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary font-bold">
+                      {t.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1 text-sm font-semibold">
+                      <span className="truncate">{t.name}</span>
+                      {t.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+                    </div>
+                    {(t.city || t.role) && (
+                      <div className="text-xs text-muted-foreground">{t.city ?? t.role}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
