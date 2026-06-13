@@ -255,7 +255,7 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
           <div><Label>Nama Campaign</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Flash Sale Akhir Pekan" /></div>
 
           <div className="grid gap-3 md:grid-cols-3">
-            <div><Label>Mulai</Label><Input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} /></div>
+            <div><Label>Mulai</Label><Input type="datetime-local" value={startsAt} onChange={(e) => { const v = e.target.value; setStartsAt(v); if (selectedDurMs) setEndsAt(computeEnd(v, selectedDurMs)); }} /></div>
             <div><Label>Selesai</Label><Input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></div>
             <div className="flex items-end"><label className="flex items-center gap-2 text-sm"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label></div>
           </div>
