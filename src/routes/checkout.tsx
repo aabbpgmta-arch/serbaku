@@ -204,8 +204,21 @@ function CheckoutPage() {
               </div>
             ))}
           </div>
+          {user && (
+            <div className={`mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${tier.color}`}>
+              <Crown className="h-3.5 w-3.5" />
+              <span className="font-bold">Member {tier.label}</span>
+              <span className="ml-auto">{tier.discountPerPcs > 0 ? `Diskon ${formatRupiah(tier.discountPerPcs)}/pcs` : "Belum ada diskon"}</span>
+            </div>
+          )}
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
-            <Row label="Subtotal" value={formatRupiah(subtotal)} />
+            <Row label={`Subtotal (${totalQty} pcs)`} value={formatRupiah(subtotal)} />
+            {membershipDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>Diskon Member {tier.label}</span>
+                <span className="font-semibold">-{formatRupiah(membershipDiscount)}</span>
+              </div>
+            )}
             <Row label={`Ongkir (${shippingPayer === "pengirim" ? "ditanggung pengirim" : "ditanggung penerima"})`} value={shippingPayer === "pengirim" ? formatRupiah(shippingCost) : "—"} />
           </div>
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
