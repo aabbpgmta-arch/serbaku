@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
+import { Route as FlashSaleRouteImport } from './routes/flash-sale'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -26,6 +27,9 @@ import { Route as AuthenticatedAdminAdminProdukRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminPesananRouteImport } from './routes/_authenticated/_admin/admin/pesanan'
 import { Route as AuthenticatedAdminAdminPengaturanRouteImport } from './routes/_authenticated/_admin/admin/pengaturan'
 import { Route as AuthenticatedAdminAdminPelangganRouteImport } from './routes/_authenticated/_admin/admin/pelanggan'
+import { Route as AuthenticatedAdminAdminPromosiRekomendasiRouteImport } from './routes/_authenticated/_admin/admin/promosi.rekomendasi'
+import { Route as AuthenticatedAdminAdminPromosiFlashSaleRouteImport } from './routes/_authenticated/_admin/admin/promosi.flash-sale'
+import { Route as AuthenticatedAdminAdminPromosiAdsRouteImport } from './routes/_authenticated/_admin/admin/promosi.ads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -40,6 +44,11 @@ const KeranjangRoute = KeranjangRouteImport.update({
 const KatalogRoute = KatalogRouteImport.update({
   id: '/katalog',
   path: '/katalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlashSaleRoute = FlashSaleRouteImport.update({
+  id: '/flash-sale',
+  path: '/flash-sale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -118,11 +127,30 @@ const AuthenticatedAdminAdminPelangganRoute =
     path: '/admin/pelanggan',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAdminPromosiRekomendasiRoute =
+  AuthenticatedAdminAdminPromosiRekomendasiRouteImport.update({
+    id: '/admin/promosi/rekomendasi',
+    path: '/admin/promosi/rekomendasi',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPromosiFlashSaleRoute =
+  AuthenticatedAdminAdminPromosiFlashSaleRouteImport.update({
+    id: '/admin/promosi/flash-sale',
+    path: '/admin/promosi/flash-sale',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAdminPromosiAdsRoute =
+  AuthenticatedAdminAdminPromosiAdsRouteImport.update({
+    id: '/admin/promosi/ads',
+    path: '/admin/promosi/ads',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -135,11 +163,15 @@ export interface FileRoutesByFullPath {
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
+  '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
+  '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -152,6 +184,9 @@ export interface FileRoutesByTo {
   '/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/akun/pesanan': typeof AuthenticatedAkunPesananIndexRoute
+  '/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
+  '/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -172,6 +208,9 @@ export interface FileRoutesById {
   '/_authenticated/akun/pesanan/$id': typeof AuthenticatedAkunPesananIdRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/akun/pesanan/': typeof AuthenticatedAkunPesananIndexRoute
+  '/_authenticated/_admin/admin/promosi/ads': typeof AuthenticatedAdminAdminPromosiAdsRoute
+  '/_authenticated/_admin/admin/promosi/flash-sale': typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
+  '/_authenticated/_admin/admin/promosi/rekomendasi': typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,6 +218,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -191,11 +231,15 @@ export interface FileRouteTypes {
     | '/akun/pesanan/$id'
     | '/admin/'
     | '/akun/pesanan/'
+    | '/admin/promosi/ads'
+    | '/admin/promosi/flash-sale'
+    | '/admin/promosi/rekomendasi'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -208,12 +252,16 @@ export interface FileRouteTypes {
     | '/akun/pesanan/$id'
     | '/admin'
     | '/akun/pesanan'
+    | '/admin/promosi/ads'
+    | '/admin/promosi/flash-sale'
+    | '/admin/promosi/rekomendasi'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/checkout'
+    | '/flash-sale'
     | '/katalog'
     | '/keranjang'
     | '/sitemap.xml'
@@ -227,6 +275,9 @@ export interface FileRouteTypes {
     | '/_authenticated/akun/pesanan/$id'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/akun/pesanan/'
+    | '/_authenticated/_admin/admin/promosi/ads'
+    | '/_authenticated/_admin/admin/promosi/flash-sale'
+    | '/_authenticated/_admin/admin/promosi/rekomendasi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,6 +285,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
+  FlashSaleRoute: typeof FlashSaleRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -261,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/katalog'
       fullPath: '/katalog'
       preLoaderRoute: typeof KatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flash-sale': {
+      id: '/flash-sale'
+      path: '/flash-sale'
+      fullPath: '/flash-sale'
+      preLoaderRoute: typeof FlashSaleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -361,6 +420,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPelangganRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/_admin/admin/promosi/rekomendasi': {
+      id: '/_authenticated/_admin/admin/promosi/rekomendasi'
+      path: '/admin/promosi/rekomendasi'
+      fullPath: '/admin/promosi/rekomendasi'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiRekomendasiRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/promosi/flash-sale': {
+      id: '/_authenticated/_admin/admin/promosi/flash-sale'
+      path: '/admin/promosi/flash-sale'
+      fullPath: '/admin/promosi/flash-sale'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/_admin/admin/promosi/ads': {
+      id: '/_authenticated/_admin/admin/promosi/ads'
+      path: '/admin/promosi/ads'
+      fullPath: '/admin/promosi/ads'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPromosiAdsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
@@ -371,6 +451,9 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdminProdukRoute: typeof AuthenticatedAdminAdminProdukRoute
   AuthenticatedAdminAdminVoucherRoute: typeof AuthenticatedAdminAdminVoucherRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
+  AuthenticatedAdminAdminPromosiAdsRoute: typeof AuthenticatedAdminAdminPromosiAdsRoute
+  AuthenticatedAdminAdminPromosiFlashSaleRoute: typeof AuthenticatedAdminAdminPromosiFlashSaleRoute
+  AuthenticatedAdminAdminPromosiRekomendasiRoute: typeof AuthenticatedAdminAdminPromosiRekomendasiRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -383,6 +466,12 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminAdminProdukRoute: AuthenticatedAdminAdminProdukRoute,
     AuthenticatedAdminAdminVoucherRoute: AuthenticatedAdminAdminVoucherRoute,
     AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
+    AuthenticatedAdminAdminPromosiAdsRoute:
+      AuthenticatedAdminAdminPromosiAdsRoute,
+    AuthenticatedAdminAdminPromosiFlashSaleRoute:
+      AuthenticatedAdminAdminPromosiFlashSaleRoute,
+    AuthenticatedAdminAdminPromosiRekomendasiRoute:
+      AuthenticatedAdminAdminPromosiRekomendasiRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -410,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
+  FlashSaleRoute: FlashSaleRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

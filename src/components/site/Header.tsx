@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const nav = [
   { to: "/", label: "Beranda" },
   { to: "/katalog", label: "Katalog" },
+  { to: "/flash-sale", label: "Flash Sale" },
   { to: "/katalog?cat=serba_35", label: "Serba 35" },
   { to: "/katalog?cat=serba_75", label: "Serba 75" },
 ];

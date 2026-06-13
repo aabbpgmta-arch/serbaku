@@ -17,6 +17,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Toaster } from "@/components/ui/sonner";
+import { AdsPixels } from "@/components/site/AdsPixels";
 
 function NotFoundComponent() {
   return (
@@ -104,6 +105,7 @@ function RootComponent() {
             <WhatsAppFloat />
           </div>
           <Toaster richColors position="top-center" />
+          <AdsPixels />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>

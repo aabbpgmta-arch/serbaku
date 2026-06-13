@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      flash_sale_items: {
+        Row: {
+          created_at: string
+          discount_type: string
+          discount_value: number
+          flash_sale_id: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          flash_sale_id: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          flash_sale_id?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_sale_items_flash_sale_id_fkey"
+            columns: ["flash_sale_id"]
+            isOneToOne: false
+            referencedRelation: "flash_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flash_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_sales: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          is_active: boolean
+          name: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          name: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       homepage_banners: {
         Row: {
           created_at: string
@@ -264,9 +336,6 @@ export type Database = {
           description: string | null
           discount_type: string
           discount_value: number
-          flash_end_at: string | null
-          flash_price: number | null
-          flash_start_at: string | null
           id: string
           is_active: boolean
           is_bestseller: boolean
@@ -284,9 +353,6 @@ export type Database = {
           description?: string | null
           discount_type?: string
           discount_value?: number
-          flash_end_at?: string | null
-          flash_price?: number | null
-          flash_start_at?: string | null
           id?: string
           is_active?: boolean
           is_bestseller?: boolean
@@ -304,9 +370,6 @@ export type Database = {
           description?: string | null
           discount_type?: string
           discount_value?: number
-          flash_end_at?: string | null
-          flash_price?: number | null
-          flash_start_at?: string | null
           id?: string
           is_active?: boolean
           is_bestseller?: boolean
