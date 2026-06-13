@@ -266,9 +266,8 @@ function HomePage() {
 function StoreStatsSection() {
   const { data } = useStoreStats();
   if (!data) return null;
-  const hasAny =
-    data.total_products + data.total_customers + data.total_orders_done + data.total_items_sold > 0;
-  if (!hasAny) return null;
+  const meetsThreshold = data.total_customers >= 100 || data.total_items_sold >= 100;
+  if (!meetsThreshold) return null;
   const items: Array<{ icon: React.ComponentType<{ className?: string }>; label: string; value: number }> = [
     { icon: Package, label: "Produk Aktif", value: data.total_products },
     { icon: ShoppingBag, label: "Item Terjual", value: data.total_items_sold },
@@ -300,8 +299,11 @@ function StoreStatsSection() {
 }
 
 function TopProductsSection() {
+  const { data: stats } = useStoreStats();
   const [days, setDays] = useState<7 | 30>(7);
   const { data, isLoading } = useTopProducts(days, 8);
+  const meetsThreshold = stats && (stats.total_customers >= 100 || stats.total_items_sold >= 100);
+  if (!meetsThreshold) return null;
   return (
     <section className="container-page py-14">
       <div className="flex flex-wrap items-end justify-between gap-4">
