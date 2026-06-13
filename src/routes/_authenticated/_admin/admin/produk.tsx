@@ -232,6 +232,7 @@ function AdminProduk() {
                       <td className="px-4 py-3 text-center"><Switch checked={p.is_active} onCheckedChange={() => toggleActive(p)} /></td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="Riwayat Harga" onClick={() => setHistoryFor(p)}><History className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpenForm(true); }}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => deleteProduct(p)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
