@@ -95,6 +95,7 @@ export function Header() {
             {user ? (
               <>
                 <Link to="/akun/pesanan" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">Akun Saya</Link>
+                <Link to="/akun/wishlist" onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm hover:bg-accent">Wishlist Saya</Link>
                 <button onClick={() => { signOut(); setOpen(false); }} className="rounded-md px-3 py-2 text-left text-sm hover:bg-accent">Keluar</button>
               </>
             ) : (
