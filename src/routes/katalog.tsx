@@ -6,6 +6,7 @@ import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon 
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
+import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
