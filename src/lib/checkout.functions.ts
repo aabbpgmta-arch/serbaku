@@ -152,10 +152,12 @@ export const createOrder = createServerFn({ method: "POST" })
       subtotalAfterItem += lineTotal;
       if (basis === "member") membershipDiscount += memberSave * cartIt.qty;
 
+      const imgs = ((p as any).product_images ?? []) as Array<{ image_url: string; sort_order: number }>;
+      imgs.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
       itemsPayload.push({
         product_id: p.id,
         product_name: p.name,
-        product_image: (p as any).image_url ?? null,
+        product_image: imgs[0]?.image_url ?? null,
         unit_price: unit,
         quantity: cartIt.qty,
         subtotal: lineTotal,
