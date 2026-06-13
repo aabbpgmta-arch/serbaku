@@ -133,9 +133,12 @@ export const FONT_OPTIONS = [
   "Playfair Display", "Lora", "Bebas Neue", "Archivo Black",
 ];
 
-function withTheme(overrides: Partial<Theme> & {
-  light?: Partial<ThemeColorSet>; dark?: Partial<ThemeColorSet>;
-  typography?: Partial<ThemeTypography>; shape?: Partial<ThemeShape>;
+function withTheme(overrides: {
+  light?: Partial<ThemeColorSet>;
+  dark?: Partial<ThemeColorSet>;
+  typography?: Partial<ThemeTypography>;
+  shape?: Partial<ThemeShape>;
+  branding?: Partial<ThemeBranding>;
 }): Theme {
   return {
     light: { ...DEFAULT_LIGHT, ...(overrides.light ?? {}) },
