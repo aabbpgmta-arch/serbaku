@@ -13,13 +13,14 @@ export const Route = createFileRoute("/_authenticated/_admin")({
 });
 
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Package, ShoppingBag, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Settings, Tag } from "lucide-react";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/produk", label: "Produk", icon: Package },
   { to: "/admin/pesanan", label: "Pesanan", icon: ShoppingBag },
   { to: "/admin/pelanggan", label: "Pelanggan", icon: Users },
+  { to: "/admin/voucher", label: "Voucher", icon: Tag },
   { to: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 
