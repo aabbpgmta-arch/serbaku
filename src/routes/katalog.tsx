@@ -206,7 +206,8 @@ function KatalogPage() {
             const promoUnit = productPromoUnit(promo);
             const hasPromo = promoUnit < Number(p.price);
             return (
-              <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
+              <div key={p.id} className="group relative">
+                <Link to="/produk/$slug" params={{ slug: p.slug }}>
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                   {cover ? (
                     <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
