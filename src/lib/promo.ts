@@ -1,14 +1,45 @@
-// Promo helpers — flash sale, diskon produk, dan kombinasi dengan diskon membership.
+// Promo helpers — flash sale (dari tabel flash_sale_items), diskon produk, dan kombinasi dengan membership.
 // Aturan: ambil diskon yang LEBIH menguntungkan pelanggan (per pcs).
 
 export type ProductPromo = {
-  price: number; // harga normal per pcs
+  price: number;
   discountType?: "none" | "percent" | "nominal" | null;
   discountValue?: number | null;
   flashPrice?: number | null;
   flashStartAt?: string | null;
   flashEndAt?: string | null;
 };
+
+export type FlashSaleItemJoin = {
+  discount_type: "percent" | "nominal";
+  discount_value: number;
+  flash_sales: { starts_at: string; ends_at: string; is_active: boolean } | null;
+};
+
+// Pilih flash sale aktif terbaik (paling murah) untuk produk.
+export function resolveFlashFromItems(
+  price: number,
+  items: FlashSaleItemJoin[] | null | undefined,
+  now: Date = new Date(),
+): { flashPrice: number | null; flashStartAt: string | null; flashEndAt: string | null } {
+  if (!items?.length) return { flashPrice: null, flashStartAt: null, flashEndAt: null };
+  const t = now.getTime();
+  let best: { unit: number; start: string; end: string } | null = null;
+  for (const it of items) {
+    const fs = it.flash_sales;
+    if (!fs || !fs.is_active) continue;
+    const s = new Date(fs.starts_at).getTime();
+    const e = new Date(fs.ends_at).getTime();
+    if (t < s || t > e) continue;
+    const unit =
+      it.discount_type === "percent"
+        ? Math.max(0, Math.round(price * (1 - Number(it.discount_value) / 100)))
+        : Math.max(0, price - Number(it.discount_value));
+    if (!best || unit < best.unit) best = { unit, start: fs.starts_at, end: fs.ends_at };
+  }
+  if (!best) return { flashPrice: null, flashStartAt: null, flashEndAt: null };
+  return { flashPrice: best.unit, flashStartAt: best.start, flashEndAt: best.end };
+}
 
 export function flashActive(p: ProductPromo, now: Date = new Date()): boolean {
   if (!p.flashPrice || p.flashPrice <= 0) return false;
