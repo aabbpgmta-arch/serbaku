@@ -296,6 +296,27 @@ function CampaignDialog({ open, onOpenChange, campaign }: { open: boolean; onOpe
             )}
           </div>
 
+          {selected.size > 0 && (
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Preview Harga Setelah Diskon</p>
+              <div className="max-h-40 space-y-1 overflow-y-auto text-xs">
+                {Array.from(selected).map((pid) => {
+                  const p = (products ?? []).find((x) => x.id === pid);
+                  if (!p) return null;
+                  const pv = previewFor(p);
+                  return (
+                    <div key={pid} className="flex items-center justify-between gap-2">
+                      <span className="line-clamp-1 flex-1">{p.name}</span>
+                      <span className="text-muted-foreground line-through">{formatRupiah(p.price)}</span>
+                      <span className={`font-semibold ${pv.ok ? "text-primary" : "text-destructive"}`}>{formatRupiah(pv.unit)}</span>
+                      {!pv.ok && <Badge variant="destructive" className="text-[9px]">Invalid</Badge>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
             <Button onClick={save} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
