@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/site-settings";
 import { formatRupiah } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { SocialLinks } from "@/components/site/SocialLinks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
