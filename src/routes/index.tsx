@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles } from "lucide-react";
+import { ArrowRight, Package, Tag, Truck, Users, Star, Sparkles, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/lib/site-settings";
 import { formatRupiah } from "@/lib/format";
