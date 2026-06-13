@@ -85,7 +85,18 @@ function AdsPage() {
 
       <section className="rounded-2xl border border-border/60 bg-card p-5">
         <h2 className="font-semibold">UTM Link Builder</h2>
-        <p className="mb-4 text-xs text-muted-foreground">Buat link ber-UTM untuk dipasang di kampanye Google/Meta/TikTok/YouTube Ads.</p>
+        <p className="mb-3 text-xs text-muted-foreground">Buat link ber-UTM untuk dipasang di kampanye Google/Meta/TikTok/YouTube Ads.</p>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <span className="text-xs text-muted-foreground self-center">Preset:</span>
+          {[
+            { label: "Google Ads", source: "google", medium: "cpc" },
+            { label: "Facebook Ads", source: "facebook", medium: "cpc" },
+            { label: "TikTok Ads", source: "tiktok", medium: "cpc" },
+            { label: "YouTube Ads", source: "youtube", medium: "cpc" },
+          ].map((p) => (
+            <Button key={p.label} type="button" size="sm" variant="outline" onClick={() => setUtm({ ...utm, source: p.source, medium: p.medium })}>{p.label}</Button>
+          ))}
+        </div>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="md:col-span-2"><Label>URL Tujuan</Label><Input value={utm.url} onChange={(e) => setUtm({ ...utm, url: e.target.value })} /></div>
           <div><Label>utm_source</Label><Input value={utm.source} onChange={(e) => setUtm({ ...utm, source: e.target.value })} placeholder="google / facebook / tiktok / youtube" /></div>
