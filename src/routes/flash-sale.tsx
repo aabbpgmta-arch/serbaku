@@ -5,6 +5,7 @@ import { Flame, Timer, Package, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon }
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { resolveFlashFromItems, productPromoUnit, countdownParts, type FlashSaleItemJoin } from "@/lib/promo";
+import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/flash-sale")({
@@ -60,6 +61,10 @@ function FlashSalePage() {
     refetchInterval: 30_000,
   });
 
+  const productIds = (products ?? []).map((x) => x.product.id);
+  const { data: statsMap } = useSalesStats(productIds);
+
+
   return (
     <div className="container-page py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -100,10 +105,12 @@ function FlashSalePage() {
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
                     {cd && <p className="text-xs font-semibold text-rose-600"><Timer className="mr-1 inline h-3 w-3" />{cd.days}h {String(cd.hours).padStart(2,"0")}:{String(cd.minutes).padStart(2,"0")}:{String(cd.seconds).padStart(2,"0")}</p>}
+                    {statsMap?.get(p.id)?.total_sold ? <p className="text-[11px] text-muted-foreground">Terjual {formatSold(statsMap.get(p.id)!.total_sold)} pcs</p> : null}
                   </div>
                   <div className="text-right">
                     <p className="font-display text-base font-bold text-primary">{formatRupiah(unit)}</p>
                     <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>
+                    {p.price > unit && <p className="text-[11px] font-semibold text-rose-600">Hemat {Math.round(((p.price - unit) / p.price) * 100)}%</p>}
                   </div>
                 </Link>
               );
@@ -122,6 +129,7 @@ function FlashSalePage() {
                   <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                     {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>}
                     <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"><Flame className="h-3 w-3" /> Flash</span>
+                    {p.price > unit && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-rose-900 shadow">Hemat {Math.round(((p.price - unit) / p.price) * 100)}%</span>}
                     {cd && (
                       <div className="absolute bottom-2 left-2 right-2 grid grid-cols-4 gap-1 rounded-md bg-black/70 p-1 text-center text-white">
                         {[["Hari", cd.days], ["Jam", cd.hours], ["Mnt", cd.minutes], ["Dtk", cd.seconds]].map(([k, v]) => (
@@ -144,6 +152,9 @@ function FlashSalePage() {
                     <p className={`font-display font-bold text-primary ${view === "large" ? "text-xl" : view === "small" ? "text-sm" : "text-lg"}`}>{formatRupiah(unit)}</p>
                     <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>
                   </div>
+                  {view !== "small" && statsMap?.get(p.id)?.total_sold ? (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Terjual {formatSold(statsMap.get(p.id)!.total_sold)} pcs</p>
+                  ) : null}
                 </Link>
               );
             })}

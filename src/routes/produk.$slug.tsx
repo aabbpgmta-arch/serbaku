@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { flashActive, productPromoUnit, formatCountdown, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
+import { useSalesStats, formatSold } from "@/lib/sales-stats";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
@@ -150,7 +151,7 @@ function ProductPage() {
               <Timer className="h-3.5 w-3.5" /> Berakhir dalam {countdown}
             </div>
           )}
-          <p className="mt-2 text-sm text-muted-foreground">Stok tersedia: <span className="font-semibold text-foreground">{product.stock}</span></p>
+          <ProductSoldLine productId={product.id} stock={product.stock} />
 
           <div className="mt-6 rounded-2xl border border-primary/30 bg-primary-soft/20 p-4">
             <p className="text-sm font-semibold text-foreground">Minimal pembelian 6 pcs</p>
@@ -235,5 +236,16 @@ function ProductPage() {
         </section>
       )}
     </div>
+  );
+}
+
+function ProductSoldLine({ productId, stock }: { productId: string; stock: number }) {
+  const { data } = useSalesStats([productId]);
+  const sold = data?.get(productId)?.total_sold ?? 0;
+  return (
+    <p className="mt-2 text-sm text-muted-foreground">
+      Stok tersedia: <span className="font-semibold text-foreground">{stock}</span>
+      {sold > 0 ? <> · Terjual <span className="font-semibold text-foreground">{formatSold(sold)} pcs</span></> : null}
+    </p>
   );
 }

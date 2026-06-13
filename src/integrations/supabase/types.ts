@@ -152,6 +152,38 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_featured_products: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+          slot: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+          slot: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+          slot?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_featured_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -619,7 +651,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      product_sales_stats: {
+        Row: {
+          last_sold_at: string | null
+          product_id: string | null
+          sold_30d: number | null
+          sold_7d: number | null
+          total_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       compute_membership_tier: {

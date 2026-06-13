@@ -6,6 +6,7 @@ import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon 
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
+import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -79,6 +80,10 @@ function KatalogPage() {
       return data ?? [];
     },
   });
+
+  const productIds = (products ?? []).map((p) => p.id);
+  const { data: statsMap } = useSalesStats(productIds);
+
 
   return (
     <div className="container-page py-10">
@@ -177,7 +182,10 @@ function KatalogPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
-                  <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Stok: {p.stock}
+                    {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="font-display text-base font-bold text-primary">{formatRupiah(promoUnit)}</p>
@@ -226,7 +234,12 @@ function KatalogPage() {
                   <p className={`font-display font-bold text-primary ${view === "large" ? "text-xl" : view === "small" ? "text-sm" : "text-lg"}`}>{formatRupiah(promoUnit)}</p>
                   {hasPromo && <p className="text-xs text-muted-foreground line-through">{formatRupiah(p.price)}</p>}
                 </div>
-                {view !== "small" && <p className="text-xs text-muted-foreground">Stok: {p.stock}</p>}
+                {view !== "small" && (
+                  <p className="text-xs text-muted-foreground">
+                    Stok: {p.stock}
+                    {statsMap?.get(p.id)?.total_sold ? ` · Terjual ${formatSold(statsMap.get(p.id)!.total_sold)} pcs` : ""}
+                  </p>
+                )}
               </Link>
             );
           })}
