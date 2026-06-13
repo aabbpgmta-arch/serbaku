@@ -473,15 +473,15 @@ function ContactSettingsForm() {
     queryKey: ["setting", settingKey],
     queryFn: async () => {
       const { data } = await supabase.from("site_settings").select("value").eq("key", settingKey).maybeSingle();
-      const defaults = (siteSettingsDefaults() as unknown as Record<string, Record<string, unknown>>)[settingKey] ?? {};
-      return { ...defaults, ...((data?.value as Record<string, unknown>) ?? {}) };
+      const defaults = (siteSettingsDefaults() as unknown as Record<string, Record<string, Json>>)[settingKey] ?? {};
+      return { ...defaults, ...((data?.value as Record<string, Json> | null) ?? {}) };
     },
   });
-  const [form, setForm] = useState<Record<string, unknown>>({});
+  const [form, setForm] = useState<Record<string, Json>>({});
   useEffect(() => { if (data) setForm(data); }, [data]);
 
   async function save() {
-    const { error } = await supabase.from("site_settings").upsert({ key: settingKey, value: form });
+    const { error } = await supabase.from("site_settings").upsert({ key: settingKey, value: form as Record<string, Json> });
     if (error) toast.error(error.message);
     else {
       toast.success("Tersimpan");
