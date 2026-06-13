@@ -51,6 +51,30 @@ const CreateOrderSchema = z.object({
     .optional(),
 });
 
+const ValidateVoucherSchema = z.object({
+  code: z.string().trim().min(1).max(64),
+  subtotal: z.number().min(0).max(1_000_000_000),
+});
+
+export const validateVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ValidateVoucherSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await supabaseAdmin.rpc("validate_voucher", {
+      _code: data.code,
+      _subtotal: data.subtotal,
+    });
+
+    if (error) throw new Error("Voucher tidak bisa divalidasi");
+    const row = Array.isArray(result) ? result[0] : result;
+    return {
+      code: (row?.code as string | undefined) ?? data.code,
+      discount: Number(row?.discount ?? 0),
+      message: (row?.message as string | undefined) ?? "Voucher tidak valid",
+    };
+  });
+
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => CreateOrderSchema.parse(data))
