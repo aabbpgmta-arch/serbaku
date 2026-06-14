@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
 import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
+import { IconPicker } from "@/components/admin/IconPicker";
 import type { Json } from "@/integrations/supabase/types";
 import { BackupSection } from "@/components/admin/BackupSection";
 
@@ -144,7 +145,7 @@ function SectionsEditor() {
   return <CrudList table="homepage_sections" fields={[
     { name: "title", label: "Judul" },
     { name: "description", label: "Deskripsi", multiline: true },
-    { name: "icon", label: "Icon (tag, package, users, truck, sparkles, star)" },
+    { name: "icon", label: "Icon", type: "icon" },
     { name: "sort_order", label: "Urutan", type: "number" },
   ]} />;
 }
@@ -245,6 +246,14 @@ function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sect
                   preset={f.image.preset}
                   folder={f.image.folder}
                 />
+              ) : f.type === "icon" ? (
+                <>
+                  <Label>{f.label}</Label>
+                  <IconPicker
+                    value={String(form[f.name] ?? "")}
+                    onChange={(name) => setForm({ ...form, [f.name]: name })}
+                  />
+                </>
               ) : (
                 <>
                   <Label>{f.label}</Label>

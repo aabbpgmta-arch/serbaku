@@ -12,6 +12,7 @@ import { useStoreStats, useTopProducts, badgeFor, type ProductCard } from "@/lib
 import { formatSold } from "@/lib/sales-stats";
 import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 import { VoucherStripSection } from "@/components/site/VoucherStripSection";
+import { getIcon } from "@/lib/icon-map";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,10 +27,6 @@ export const Route = createFileRoute("/")({
   }),
   component: HomePage,
 });
-
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  tag: Tag, package: Package, users: Users, truck: Truck, star: Star, sparkles: Sparkles,
-};
 
 function HomePage() {
   const { data: settings } = useSiteSettings();
@@ -124,7 +121,7 @@ function HomePage() {
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(sections ?? []).map((s) => {
-            const Icon = ICONS[s.icon ?? "sparkles"] ?? Sparkles;
+            const Icon = getIcon(s.icon);
             return (
               <div key={s.id} className="rounded-2xl border border-border/60 bg-card p-6 transition hover:-translate-y-1 hover:shadow-soft">
                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary-soft/60 text-primary">
