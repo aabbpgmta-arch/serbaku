@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { siteSettingsDefaults } from "@/lib/site-settings";
 import { ImageUpload, MultiImageUpload, type ResizePreset } from "@/components/admin/ImageUpload";
+import { IconPicker } from "@/components/admin/IconPicker";
 import type { Json } from "@/integrations/supabase/types";
 import { BackupSection } from "@/components/admin/BackupSection";
 
