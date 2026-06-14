@@ -28,10 +28,6 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  tag: Tag, package: Package, users: Users, truck: Truck, star: Star, sparkles: Sparkles,
-};
-
 function HomePage() {
   const { data: settings } = useSiteSettings();
   const hero = settings?.hero;
