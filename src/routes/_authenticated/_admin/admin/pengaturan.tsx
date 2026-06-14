@@ -145,7 +145,7 @@ function SectionsEditor() {
   return <CrudList table="homepage_sections" fields={[
     { name: "title", label: "Judul" },
     { name: "description", label: "Deskripsi", multiline: true },
-    { name: "icon", label: "Icon (tag, package, users, truck, sparkles, star)" },
+    { name: "icon", label: "Icon", type: "icon" },
     { name: "sort_order", label: "Urutan", type: "number" },
   ]} />;
 }
