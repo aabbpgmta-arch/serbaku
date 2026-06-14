@@ -246,6 +246,14 @@ function CrudDialog({ table, fields, initial, onClose }: { table: "homepage_sect
                   preset={f.image.preset}
                   folder={f.image.folder}
                 />
+              ) : f.type === "icon" ? (
+                <>
+                  <Label>{f.label}</Label>
+                  <IconPicker
+                    value={String(form[f.name] ?? "")}
+                    onChange={(name) => setForm({ ...form, [f.name]: name })}
+                  />
+                </>
               ) : (
                 <>
                   <Label>{f.label}</Label>
