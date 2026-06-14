@@ -1,13 +1,13 @@
 import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { verifyAdminAccess } from "@/lib/admin-auth.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin")({
-  beforeLoad: async ({ context }) => {
-    const userId = (context as { user?: { id: string } }).user?.id;
-    if (!userId) throw redirect({ to: "/auth" });
-    const { data } = await supabase
-      .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
-    if (!data) throw redirect({ to: "/" });
+  beforeLoad: async () => {
+    try {
+      await verifyAdminAccess();
+    } catch {
+      throw redirect({ to: "/" });
+    }
   },
   component: AdminShell,
 });
