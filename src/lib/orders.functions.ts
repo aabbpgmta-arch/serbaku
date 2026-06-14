@@ -8,7 +8,23 @@ export const setOrderPaymentProof = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({
       orderId: z.string().uuid(),
-      url: z.string().min(1).max(4096),
+      url: z
+        .string()
+        .url()
+        .max(4096)
+        .refine((u) => {
+          try {
+            const parsed = new URL(u);
+            const supaUrl = new URL(process.env.SUPABASE_URL ?? "https://fnudwwfysbjrxbxoqmpv.supabase.co");
+            return (
+              parsed.protocol === "https:" &&
+              parsed.host === supaUrl.host &&
+              parsed.pathname.startsWith("/storage/v1/object/")
+            );
+          } catch {
+            return false;
+          }
+        }, { message: "URL bukti transfer tidak valid" }),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
