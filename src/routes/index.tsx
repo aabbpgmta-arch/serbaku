@@ -121,7 +121,7 @@ function HomePage() {
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(sections ?? []).map((s) => {
-            const Icon = ICONS[s.icon ?? "sparkles"] ?? Sparkles;
+            const Icon = getIcon(s.icon);
             return (
               <div key={s.id} className="rounded-2xl border border-border/60 bg-card p-6 transition hover:-translate-y-1 hover:shadow-soft">
                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary-soft/60 text-primary">
