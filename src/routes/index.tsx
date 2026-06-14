@@ -12,6 +12,7 @@ import { useStoreStats, useTopProducts, badgeFor, type ProductCard } from "@/lib
 import { formatSold } from "@/lib/sales-stats";
 import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 import { VoucherStripSection } from "@/components/site/VoucherStripSection";
+import { getIcon } from "@/lib/icon-map";
 
 export const Route = createFileRoute("/")({
   head: () => ({
