@@ -1,7 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Crown, Tag, Check, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Crown, Tag, Check, X, AlertTriangle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
@@ -55,6 +66,23 @@ function CheckoutPage() {
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherChecking, setVoucherChecking] = useState(false);
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
+  const [applyingVoucherCode, setApplyingVoucherCode] = useState<string | null>(null);
+  const [stockIssues, setStockIssues] = useState<Array<{ name: string; requested: number; available: number }>>([]);
+
+  const { data: activeVouchers } = useQuery({
+    queryKey: ["checkout_active_vouchers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_active_vouchers");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; code: string; description: string | null;
+        discount_type: string; discount_value: number;
+        min_subtotal: number; max_discount: number | null;
+        starts_at: string | null; expires_at: string | null;
+      }>;
+    },
+    staleTime: 60_000,
+  });
 
   const [form, setForm] = useState({
     full_name: "", whatsapp: "", email: "", address: "", city: "", province: "", postal_code: "", notes: "",
@@ -108,14 +136,26 @@ function CheckoutPage() {
   const voucherDiscount = voucher?.discount ?? 0;
   const subtotalAfterVoucher = Math.max(0, subtotalAfterItem - voucherDiscount);
   const total = subtotalAfterVoucher + (shippingPayer === "pengirim" ? shippingCost : 0);
+  const totalSavings = promoSavings + memberSavings + voucherDiscount;
 
-  async function applyVoucher() {
-    const code = voucherInput.trim();
-    if (!code) return;
+  function estimateVoucherDiscount(v: NonNullable<typeof activeVouchers>[number]): number {
+    if (subtotalAfterItem < Number(v.min_subtotal ?? 0)) return 0;
+    let d = v.discount_type === "percent"
+      ? Math.round(subtotalAfterItem * Number(v.discount_value) / 100)
+      : Number(v.discount_value);
+    if (v.max_discount != null) d = Math.min(d, Number(v.max_discount));
+    return Math.min(d, subtotalAfterItem);
+  }
+
+  async function applyVoucherCode(code: string) {
+    const c = code.trim();
+    if (!c) return;
+    setApplyingVoucherCode(c);
     setVoucherChecking(true);
     const { validateVoucher } = await import("@/lib/checkout.functions");
-    const row = await validateVoucher({ data: { code, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
+    const row = await validateVoucher({ data: { code: c, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
     setVoucherChecking(false);
+    setApplyingVoucherCode(null);
     if ("error" in row) { toast.error(row.error?.message ?? "Voucher tidak bisa divalidasi"); return; }
     if (!row || row.message !== "ok") {
       toast.error(row?.message ?? "Voucher tidak valid");
@@ -123,7 +163,12 @@ function CheckoutPage() {
       return;
     }
     setVoucher({ code: row.code, discount: Number(row.discount) });
+    setVoucherInput("");
     toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(Number(row.discount))})`);
+  }
+
+  async function applyVoucher() {
+    await applyVoucherCode(voucherInput);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -137,24 +182,26 @@ function CheckoutPage() {
 
     const ids = items.map((i) => i.productId);
     const { data: stockRows, error: stockErr } = await supabase
-      .from("products").select("id,stock,name,is_active").in("id", ids);
+      .from("products").select("id,stock,reserved_stock,name,is_active").in("id", ids);
     if (stockErr) {
       toast.error("Gagal mengecek stok: " + stockErr.message);
       setSubmitting(false);
       return;
     }
+    const issues: Array<{ name: string; requested: number; available: number }> = [];
     for (const i of items) {
       const row = stockRows?.find((r) => r.id === i.productId);
       if (!row || !row.is_active) {
-        toast.error(`Produk "${i.name}" tidak tersedia`);
-        setSubmitting(false);
-        return;
+        issues.push({ name: i.name, requested: i.qty, available: 0 });
+        continue;
       }
-      if (row.stock < i.qty) {
-        toast.error(`Stok produk tidak mencukupi untuk "${row.name}" (sisa ${row.stock})`);
-        setSubmitting(false);
-        return;
-      }
+      const avail = Math.max(0, (row.stock ?? 0) - (row.reserved_stock ?? 0));
+      if (avail < i.qty) issues.push({ name: row.name, requested: i.qty, available: avail });
+    }
+    if (issues.length > 0) {
+      setStockIssues(issues);
+      setSubmitting(false);
+      return;
     }
 
     const attribution = getAttribution();
@@ -249,10 +296,13 @@ function CheckoutPage() {
           <div className="mt-4 space-y-3">
             {enriched.map(({ item: i, unit, lineTotal }) => (
               <div key={i.productId} className="flex justify-between gap-3 text-sm">
-                <span className="line-clamp-2">
-                  {i.name} <span className="text-muted-foreground">×{i.qty}</span>
-                  {unit < i.price && <span className="ml-1 text-[10px] font-semibold text-rose-600">PROMO</span>}
-                </span>
+                <div className="min-w-0">
+                  <div className="font-medium line-clamp-2">
+                    {i.name}
+                    {unit < i.price && <span className="ml-1 align-middle text-[10px] font-semibold text-rose-600">PROMO</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{i.qty} pcs × {formatRupiah(unit)}</div>
+                </div>
                 <span className="shrink-0 text-right">
                   <div className="font-semibold">{formatRupiah(lineTotal)}</div>
                   {unit < i.price && <div className="text-[10px] text-muted-foreground line-through">{formatRupiah(i.price * i.qty)}</div>}
@@ -268,26 +318,106 @@ function CheckoutPage() {
             </div>
           )}
 
-          {/* Voucher */}
+          {/* Voucher input + applied */}
           <div className="mt-4 rounded-xl border border-dashed border-border p-3">
             <Label className="flex items-center gap-1.5 text-xs"><Tag className="h-3.5 w-3.5" /> Kode Voucher</Label>
             {voucher ? (
-              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm">
-                <span className="font-semibold text-emerald-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" /> {voucher.code}</span>
-                <span className="text-emerald-700">-{formatRupiah(voucher.discount)}</span>
-                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="text-xs text-muted-foreground hover:text-destructive">
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm dark:bg-emerald-950/40">
+                <span className="font-semibold text-emerald-700 inline-flex items-center gap-1 dark:text-emerald-300">
+                  <Check className="h-3.5 w-3.5" /> {voucher.code}
+                  <Badge className="ml-1 bg-emerald-600 text-white hover:bg-emerald-600">Voucher Digunakan</Badge>
+                </span>
+                <span className="text-emerald-700 dark:text-emerald-300">-{formatRupiah(voucher.discount)}</span>
+                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="text-xs text-muted-foreground hover:text-destructive" aria-label="Hapus voucher">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : (
               <div className="mt-2 flex gap-2">
-                <Input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} placeholder="MISAL: HEMAT10" className="uppercase" />
+                <Input value={voucherInput} onChange={(e) => setVoucherInput(e.target.value.toUpperCase())} placeholder="Voucher rahasia / promosi" className="uppercase" />
                 <Button type="button" variant="outline" onClick={applyVoucher} disabled={voucherChecking || !voucherInput.trim()}>
-                  {voucherChecking ? "..." : "Pakai"}
+                  {voucherChecking && applyingVoucherCode === voucherInput.trim() ? "..." : "Pakai"}
                 </Button>
               </div>
             )}
+            {voucher && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="mt-2 h-7 w-full text-xs text-muted-foreground hover:text-destructive">
+                Hapus Voucher
+              </Button>
+            )}
           </div>
+
+          {/* Voucher Tersedia */}
+          {(activeVouchers ?? []).length > 0 && (
+            <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Voucher Tersedia
+              </div>
+              <div className="space-y-2">
+                {activeVouchers!.map((v) => {
+                  const min = Number(v.min_subtotal ?? 0);
+                  const eligible = subtotalAfterItem >= min;
+                  const isApplied = voucher?.code?.toUpperCase() === v.code.toUpperCase();
+                  const otherApplied = !!voucher && !isApplied;
+                  const est = estimateVoucherDiscount(v);
+                  const shortMissing = Math.max(0, min - subtotalAfterItem);
+                  return (
+                    <div
+                      key={v.id}
+                      className={`flex items-start justify-between gap-2 rounded-lg border p-2.5 text-xs transition ${
+                        isApplied ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
+                          : eligible && !otherApplied ? "border-border bg-card"
+                          : "border-border/50 bg-muted/40 opacity-70"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-primary">{v.code}</span>
+                          {isApplied && <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-[10px]">Digunakan</Badge>}
+                        </div>
+                        <div className="mt-0.5 font-semibold">
+                          Diskon {v.discount_type === "percent" ? `${v.discount_value}%` : formatRupiah(v.discount_value)}
+                          {v.max_discount ? ` · maks ${formatRupiah(v.max_discount)}` : ""}
+                        </div>
+                        {v.description && <div className="text-muted-foreground line-clamp-1">{v.description}</div>}
+                        <div className="mt-0.5 text-muted-foreground">
+                          {min > 0 ? `Min. belanja ${formatRupiah(min)}` : "Tanpa minimum"}
+                        </div>
+                        {!eligible && shortMissing > 0 && (
+                          <div className="mt-0.5 font-medium text-amber-700 dark:text-amber-400">
+                            Belanja kurang {formatRupiah(shortMissing)} lagi
+                          </div>
+                        )}
+                        {eligible && est > 0 && !isApplied && (
+                          <div className="mt-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                            Hemat {formatRupiah(est)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="shrink-0">
+                        {isApplied ? (
+                          <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+                            onClick={() => { setVoucher(null); setVoucherInput(""); }}>
+                            Lepas
+                          </Button>
+                        ) : !eligible ? (
+                          <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled>
+                            Belum Memenuhi
+                          </Button>
+                        ) : (
+                          <Button type="button" size="sm" className="h-7 text-xs"
+                            disabled={voucherChecking || otherApplied}
+                            onClick={() => applyVoucherCode(v.code)}>
+                            {voucherChecking && applyingVoucherCode === v.code ? "..." : "Pakai"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
             <Row label={`Subtotal (${totalQty} pcs)`} value={formatRupiah(subtotal)} />
@@ -310,15 +440,51 @@ function CheckoutPage() {
               </div>
             )}
             <Row label={`Ongkir (${shippingPayer === "pengirim" ? "ditanggung pengirim" : "ditanggung penerima"})`} value={shippingPayer === "pengirim" ? formatRupiah(shippingCost) : "—"} />
+            {totalSavings > 0 && (
+              <div className="flex justify-between rounded-lg bg-emerald-50 px-2 py-1.5 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <span className="font-medium">Total Penghematan</span>
+                <span className="font-bold">-{formatRupiah(totalSavings)}</span>
+              </div>
+            )}
           </div>
           <div className="mt-3 flex justify-between border-t border-border pt-3 text-base font-bold">
-            <span>Total</span><span className="text-primary">{formatRupiah(total)}</span>
+            <span>Total Bayar</span><span className="text-primary">{formatRupiah(total)}</span>
           </div>
           <Button type="submit" size="lg" className="mt-5 w-full" disabled={submitting}>
             {submitting ? "Memproses..." : "Buat Pesanan"}
           </Button>
         </aside>
       </form>
+
+      <AlertDialog open={stockIssues.length > 0} onOpenChange={(o) => { if (!o) setStockIssues([]); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> Stok Tidak Mencukupi
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Sebagian produk sudah tidak tersedia atau stok telah berubah. Silakan perbaiki jumlah di keranjang.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-lg border border-border">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-border bg-muted/50 px-3 py-2 text-xs font-semibold">
+              <span>Produk</span><span>Diminta</span><span>Tersedia</span>
+            </div>
+            {stockIssues.map((s, idx) => (
+              <div key={idx} className="grid grid-cols-[1fr_auto_auto] gap-3 px-3 py-2 text-sm">
+                <span className="line-clamp-2">{s.name}</span>
+                <span className="text-right">{s.requested}</span>
+                <span className={`text-right font-semibold ${s.available === 0 ? "text-destructive" : "text-amber-600"}`}>{s.available}</span>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => { setStockIssues([]); navigate({ to: "/keranjang" }); }}>
+              Perbaiki di Keranjang
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
