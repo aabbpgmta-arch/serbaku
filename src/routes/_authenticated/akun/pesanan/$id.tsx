@@ -320,6 +320,28 @@ function OrderDetail() {
           )}
         </aside>
       </div>
+
+      <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
+        <h2 className="font-display text-lg font-semibold">Riwayat Status</h2>
+        <ol className="mt-3 space-y-3">
+          {(history ?? []).map((h) => (
+            <li key={h.id} className="flex gap-3">
+              <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+              <div>
+                <p className="text-sm font-medium">
+                  {h.from_status ? `${STATUS_LABEL[h.from_status] ?? h.from_status} → ` : ""}
+                  {STATUS_LABEL[h.to_status] ?? h.to_status}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(h.created_at).toLocaleString("id-ID")}{h.note ? ` · ${h.note}` : ""}
+                </p>
+              </div>
+            </li>
+          ))}
+          {(!history || history.length === 0) && <li className="text-xs text-muted-foreground">Belum ada riwayat.</li>}
+        </ol>
+      </section>
     </div>
   );
 }
+
