@@ -136,14 +136,26 @@ function CheckoutPage() {
   const voucherDiscount = voucher?.discount ?? 0;
   const subtotalAfterVoucher = Math.max(0, subtotalAfterItem - voucherDiscount);
   const total = subtotalAfterVoucher + (shippingPayer === "pengirim" ? shippingCost : 0);
+  const totalSavings = promoSavings + memberSavings + voucherDiscount;
 
-  async function applyVoucher() {
-    const code = voucherInput.trim();
-    if (!code) return;
+  function estimateVoucherDiscount(v: NonNullable<typeof activeVouchers>[number]): number {
+    if (subtotalAfterItem < Number(v.min_subtotal ?? 0)) return 0;
+    let d = v.discount_type === "percent"
+      ? Math.round(subtotalAfterItem * Number(v.discount_value) / 100)
+      : Number(v.discount_value);
+    if (v.max_discount != null) d = Math.min(d, Number(v.max_discount));
+    return Math.min(d, subtotalAfterItem);
+  }
+
+  async function applyVoucherCode(code: string) {
+    const c = code.trim();
+    if (!c) return;
+    setApplyingVoucherCode(c);
     setVoucherChecking(true);
     const { validateVoucher } = await import("@/lib/checkout.functions");
-    const row = await validateVoucher({ data: { code, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
+    const row = await validateVoucher({ data: { code: c, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
     setVoucherChecking(false);
+    setApplyingVoucherCode(null);
     if ("error" in row) { toast.error(row.error?.message ?? "Voucher tidak bisa divalidasi"); return; }
     if (!row || row.message !== "ok") {
       toast.error(row?.message ?? "Voucher tidak valid");
@@ -151,7 +163,12 @@ function CheckoutPage() {
       return;
     }
     setVoucher({ code: row.code, discount: Number(row.discount) });
+    setVoucherInput("");
     toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(Number(row.discount))})`);
+  }
+
+  async function applyVoucher() {
+    await applyVoucherCode(voucherInput);
   }
 
   async function handleSubmit(e: React.FormEvent) {
