@@ -95,7 +95,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const { data: products, error: prodErr } = await supabaseAdmin
       .from("products")
       .select(
-        "id,name,price,discount_type,discount_value,stock,is_active,product_images(image_url,sort_order),flash_sale_items(discount_type,discount_value,flash_sales(starts_at,ends_at,is_active))",
+        "id,name,price,discount_type,discount_value,stock,is_active,product_images(url,sort_order,is_cover),flash_sale_items(discount_type,discount_value,flash_sales(starts_at,ends_at,is_active))",
       )
       .in("id", ids);
     if (prodErr) throw new Error("Gagal memuat produk: " + prodErr.message);
@@ -176,12 +176,12 @@ export const createOrder = createServerFn({ method: "POST" })
       subtotalAfterItem += lineTotal;
       if (basis === "member") membershipDiscount += memberSave * cartIt.qty;
 
-      const imgs = ((p as any).product_images ?? []) as Array<{ image_url: string; sort_order: number }>;
-      imgs.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      const imgs = ((p as any).product_images ?? []) as Array<{ url: string; sort_order: number; is_cover?: boolean }>;
+      imgs.sort((a, b) => (Number(b.is_cover) - Number(a.is_cover)) || ((a.sort_order ?? 0) - (b.sort_order ?? 0)));
       itemsPayload.push({
         product_id: p.id,
         product_name: p.name,
-        product_image: imgs[0]?.image_url ?? null,
+        product_image: imgs[0]?.url ?? null,
         unit_price: unit,
         quantity: cartIt.qty,
         subtotal: lineTotal,
