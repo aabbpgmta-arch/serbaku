@@ -265,10 +265,50 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address: string
+          cancelled_at: string | null
           city: string
+          completed_at: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -278,10 +318,14 @@ export type Database = {
           membership_tier: Database["public"]["Enums"]["membership_tier"] | null
           notes: string | null
           order_number: string
+          paid_at: string | null
+          payment_expires_at: string | null
           payment_proof_url: string | null
           postal_code: string | null
           province: string
           referrer: string | null
+          shipped_at: string | null
+          shipped_courier: string | null
           shipping_cost: number
           shipping_payer: Database["public"]["Enums"]["shipping_payer"]
           status: Database["public"]["Enums"]["order_status"]
@@ -303,7 +347,9 @@ export type Database = {
         }
         Insert: {
           address: string
+          cancelled_at?: string | null
           city: string
+          completed_at?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -315,10 +361,14 @@ export type Database = {
             | null
           notes?: string | null
           order_number?: string
+          paid_at?: string | null
+          payment_expires_at?: string | null
           payment_proof_url?: string | null
           postal_code?: string | null
           province: string
           referrer?: string | null
+          shipped_at?: string | null
+          shipped_courier?: string | null
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -340,7 +390,9 @@ export type Database = {
         }
         Update: {
           address?: string
+          cancelled_at?: string | null
           city?: string
+          completed_at?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -352,10 +404,14 @@ export type Database = {
             | null
           notes?: string | null
           order_number?: string
+          paid_at?: string | null
+          payment_expires_at?: string | null
           payment_proof_url?: string | null
           postal_code?: string | null
           province?: string
           referrer?: string | null
+          shipped_at?: string | null
+          shipped_courier?: string | null
           shipping_cost?: number
           shipping_payer?: Database["public"]["Enums"]["shipping_payer"]
           status?: Database["public"]["Enums"]["order_status"]
@@ -461,6 +517,8 @@ export type Database = {
           manual_badge: string | null
           name: string
           price: number
+          reserved_stock: number
+          sku: string | null
           slug: string
           stock: number
           updated_at: string
@@ -479,6 +537,8 @@ export type Database = {
           manual_badge?: string | null
           name: string
           price: number
+          reserved_stock?: number
+          sku?: string | null
           slug: string
           stock?: number
           updated_at?: string
@@ -497,6 +557,8 @@ export type Database = {
           manual_badge?: string | null
           name?: string
           price?: number
+          reserved_stock?: number
+          sku?: string | null
           slug?: string
           stock?: number
           updated_at?: string
@@ -802,6 +864,7 @@ export type Database = {
           qty_sold: number
         }[]
       }
+      expire_pending_orders: { Args: { _hours?: number }; Returns: number }
       get_product_price_history: {
         Args: { _limit?: number; _product_id: string }
         Returns: {
