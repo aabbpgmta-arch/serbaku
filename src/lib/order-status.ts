@@ -14,4 +14,33 @@ export const STATUS_COLOR: Record<string, string> = {
   dibatalkan: "bg-red-100 text-red-800",
 };
 
-export const STATUS_ORDER = ["menunggu_pembayaran", "diproses", "dikirim", "selesai", "dibatalkan"] as const;
+export const STATUS_ORDER = [
+  "menunggu_pembayaran",
+  "diproses",
+  "dikirim",
+  "selesai",
+  "dibatalkan",
+] as const;
+
+export type OrderStatus = (typeof STATUS_ORDER)[number];
+
+/**
+ * Allowed forward transitions. Mirrors the DB trigger
+ * `tg_orders_validate_status_transition` so the UI never offers an option
+ * the server will reject.
+ */
+const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  menunggu_pembayaran: ["diproses", "dibatalkan"],
+  diproses: ["dikirim", "dibatalkan"],
+  dikirim: ["selesai"],
+  selesai: [],
+  dibatalkan: [],
+};
+
+export function nextStatuses(current: string): OrderStatus[] {
+  return TRANSITIONS[current as OrderStatus] ?? [];
+}
+
+export function isFinalStatus(s: string): boolean {
+  return s === "selesai" || s === "dibatalkan";
+}
