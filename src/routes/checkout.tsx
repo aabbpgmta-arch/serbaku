@@ -113,9 +113,12 @@ function CheckoutPage() {
     }
   }, [user]);
 
-  // Re-validate voucher when subtotal changes
+  // Re-validate voucher when subtotal changes. Skip when the cart is empty
+  // (e.g. immediately after a successful order clears the cart) to avoid a
+  // false "Voucher tidak lagi berlaku" toast on success.
   useEffect(() => {
     if (!voucher) return;
+    if (items.length === 0 || subtotalAfterItem <= 0) return;
     (async () => {
       const { validateVoucher } = await import("@/lib/checkout.functions");
       const row = await validateVoucher({ data: { code: voucher.code, subtotal: subtotalAfterItem } });
@@ -127,7 +130,8 @@ function CheckoutPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotalAfterItem]);
+  }, [subtotalAfterItem, items.length]);
+
 
   if (items.length === 0) {
     return <div className="container-page py-20 text-center text-muted-foreground">Keranjang kosong.</div>;
