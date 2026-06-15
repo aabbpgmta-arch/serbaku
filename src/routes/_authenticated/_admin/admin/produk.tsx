@@ -308,6 +308,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
   const [isNew, setIsNew] = useState(product?.is_new ?? false);
   const [manualBadge, setManualBadge] = useState<string>(product?.manual_badge ?? "");
+  const [sku, setSku] = useState<string>(product?.sku ?? "");
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [images, setImages] = useState(product?.product_images ?? []);
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
