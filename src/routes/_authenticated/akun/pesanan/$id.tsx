@@ -53,6 +53,19 @@ function OrderDetail() {
     },
   });
 
+  const { data: history } = useQuery({
+    queryKey: ["order_history_customer", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_status_history")
+        .select("id,from_status,to_status,created_at,note")
+        .eq("order_id", id)
+        .order("created_at", { ascending: true });
+      if (error) return [];
+      return data ?? [];
+    },
+  });
+
   useEffect(() => {
     if (!user) return;
 
