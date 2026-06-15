@@ -176,12 +176,12 @@ export const createOrder = createServerFn({ method: "POST" })
       subtotalAfterItem += lineTotal;
       if (basis === "member") membershipDiscount += memberSave * cartIt.qty;
 
-      const imgs = ((p as any).product_images ?? []) as Array<{ image_url: string; sort_order: number }>;
-      imgs.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      const imgs = ((p as any).product_images ?? []) as Array<{ url: string; sort_order: number; is_cover?: boolean }>;
+      imgs.sort((a, b) => (Number(b.is_cover) - Number(a.is_cover)) || ((a.sort_order ?? 0) - (b.sort_order ?? 0)));
       itemsPayload.push({
         product_id: p.id,
         product_name: p.name,
-        product_image: imgs[0]?.image_url ?? null,
+        product_image: imgs[0]?.url ?? null,
         unit_price: unit,
         quantity: cartIt.qty,
         subtotal: lineTotal,
