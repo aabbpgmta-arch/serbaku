@@ -111,8 +111,10 @@ export const createOrder = createServerFn({ method: "POST" })
     const memberPerPcs = TIER_DISCOUNT_PER_PCS[tier] ?? 0;
 
     const now = Date.now();
+    let subtotalRaw = 0;
     let subtotalAfterItem = 0;
     let membershipDiscount = 0;
+
     const itemsPayload: Array<{
       product_id: string;
       product_name: string;
