@@ -1,7 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Crown, Tag, Check, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Crown, Tag, Check, X, AlertTriangle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
