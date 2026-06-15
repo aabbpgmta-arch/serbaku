@@ -120,8 +120,7 @@ function AdminPesanan() {
   }, [qc]);
 
   async function applyStatusChange(id: string, newStatus: OrderStatus) {
-    const patch: Record<string, unknown> = { status: newStatus };
-    if (newStatus === "dikirim") patch.shipped_at = new Date().toISOString();
+    const patch = { status: newStatus, ...(newStatus === "dikirim" ? { shipped_at: new Date().toISOString() } : {}) };
     const { error } = await supabase.from("orders").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message ?? "Status gagal diperbarui");
