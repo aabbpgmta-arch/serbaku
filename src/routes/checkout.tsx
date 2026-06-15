@@ -182,24 +182,26 @@ function CheckoutPage() {
 
     const ids = items.map((i) => i.productId);
     const { data: stockRows, error: stockErr } = await supabase
-      .from("products").select("id,stock,name,is_active").in("id", ids);
+      .from("products").select("id,stock,reserved_stock,name,is_active").in("id", ids);
     if (stockErr) {
       toast.error("Gagal mengecek stok: " + stockErr.message);
       setSubmitting(false);
       return;
     }
+    const issues: Array<{ name: string; requested: number; available: number }> = [];
     for (const i of items) {
       const row = stockRows?.find((r) => r.id === i.productId);
       if (!row || !row.is_active) {
-        toast.error(`Produk "${i.name}" tidak tersedia`);
-        setSubmitting(false);
-        return;
+        issues.push({ name: i.name, requested: i.qty, available: 0 });
+        continue;
       }
-      if (row.stock < i.qty) {
-        toast.error(`Stok produk tidak mencukupi untuk "${row.name}" (sisa ${row.stock})`);
-        setSubmitting(false);
-        return;
-      }
+      const avail = Math.max(0, (row.stock ?? 0) - (row.reserved_stock ?? 0));
+      if (avail < i.qty) issues.push({ name: row.name, requested: i.qty, available: avail });
+    }
+    if (issues.length > 0) {
+      setStockIssues(issues);
+      setSubmitting(false);
+      return;
     }
 
     const attribution = getAttribution();
