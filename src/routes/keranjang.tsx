@@ -40,6 +40,28 @@ function CartPage() {
     return () => clearInterval(t);
   }, [items]);
 
+  // Live stock check — fetch real-time stock & reserved_stock for cart items
+  const productIds = useMemo(() => items.map((i) => i.productId), [items]);
+  const { data: stockMap } = useQuery({
+    queryKey: ["cart_stock_check", productIds.join(",")],
+    enabled: productIds.length > 0,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, stock, reserved_stock, is_active")
+        .in("id", productIds);
+      const m: Record<string, { available: number; active: boolean }> = {};
+      for (const p of data ?? []) {
+        m[p.id] = {
+          available: Math.max(0, (p.stock ?? 0) - (p.reserved_stock ?? 0)),
+          active: !!p.is_active,
+        };
+      }
+      return m;
+    },
+  });
+
   if (items.length === 0) {
     return (
       <div className="container-page py-20 text-center">
@@ -54,6 +76,13 @@ function CartPage() {
   }
 
   const allValid = items.every((i) => i.qty % 6 === 0 && i.qty >= 6);
+  const stockIssues = items.filter((i) => {
+    const s = stockMap?.[i.productId];
+    if (!s) return false;
+    return !s.active || i.qty > s.available;
+  });
+  const stockOk = stockIssues.length === 0;
+  const canCheckout = allValid && stockOk;
 
   let subtotal = 0;
   let totalDiscount = 0;
