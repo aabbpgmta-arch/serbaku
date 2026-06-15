@@ -406,10 +406,7 @@ function OrderDetailDialog({
   });
 
   async function saveTrackingAndCourier() {
-    const patch: Record<string, unknown> = {
-      tracking_number: tracking || null,
-      shipped_courier: courier || null,
-    };
+    const patch = { tracking_number: tracking || null, shipped_courier: courier || null };
     const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Resi & kurir tersimpan");
