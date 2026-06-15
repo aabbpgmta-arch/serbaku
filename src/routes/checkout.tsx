@@ -362,15 +362,16 @@ function CheckoutPage() {
           {(activeVouchers ?? []).length > 0 && (() => {
             const enrichedVouchers = (activeVouchers ?? []).map((v) => {
               const min = Number(v.min_subtotal ?? 0);
-              const eligible = subtotalAfterItem >= min;
+              const eligible = subtotal >= min;
               const est = estimateVoucherDiscount(v);
-              return { v, min, eligible, est, shortMissing: Math.max(0, min - subtotalAfterItem) };
+              return { v, min, eligible, est, shortMissing: Math.max(0, min - subtotal) };
             }).sort((a, b) => {
               if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
               if (a.eligible) return b.est - a.est;
               return a.shortMissing - b.shortMissing;
             });
             const bestEligibleCode = enrichedVouchers.find((x) => x.eligible && x.est > 0)?.v.code ?? null;
+
             return (
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
