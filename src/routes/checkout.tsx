@@ -118,19 +118,21 @@ function CheckoutPage() {
   // false "Voucher tidak lagi berlaku" toast on success.
   useEffect(() => {
     if (!voucher) return;
-    if (items.length === 0 || subtotalAfterItem <= 0) return;
+    if (items.length === 0 || subtotal <= 0) return;
     (async () => {
       const { validateVoucher } = await import("@/lib/checkout.functions");
-      const row = await validateVoucher({ data: { code: voucher.code, subtotal: subtotalAfterItem } });
+      const row = await validateVoucher({ data: { code: voucher.code, subtotal } });
       if (!row || row.message !== "ok") {
         setVoucher(null);
         toast.error("Voucher tidak lagi berlaku: " + (row?.message ?? "error"));
-      } else if (Number(row.discount) !== voucher.discount) {
-        setVoucher({ code: row.code, discount: Number(row.discount) });
+      } else {
+        const newDiscount = Math.min(Number(row.discount), subtotalAfterItem);
+        if (newDiscount !== voucher.discount) setVoucher({ code: row.code, discount: newDiscount });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotalAfterItem, items.length]);
+  }, [subtotal, subtotalAfterItem, items.length]);
+
 
 
   if (items.length === 0) {
