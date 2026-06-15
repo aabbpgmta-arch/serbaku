@@ -175,8 +175,10 @@ export const createOrder = createServerFn({ method: "POST" })
       }
 
       const lineTotal = unit * cartIt.qty;
+      subtotalRaw += basePrice * cartIt.qty;
       subtotalAfterItem += lineTotal;
       if (basis === "member") membershipDiscount += memberSave * cartIt.qty;
+
 
       const imgs = ((p as any).product_images ?? []) as Array<{ url: string; sort_order: number; is_cover?: boolean }>;
       imgs.sort((a, b) => (Number(b.is_cover) - Number(a.is_cover)) || ((a.sort_order ?? 0) - (b.sort_order ?? 0)));
