@@ -111,8 +111,10 @@ export const createOrder = createServerFn({ method: "POST" })
     const memberPerPcs = TIER_DISCOUNT_PER_PCS[tier] ?? 0;
 
     const now = Date.now();
+    let subtotalRaw = 0;
     let subtotalAfterItem = 0;
     let membershipDiscount = 0;
+
     const itemsPayload: Array<{
       product_id: string;
       product_name: string;
@@ -173,8 +175,10 @@ export const createOrder = createServerFn({ method: "POST" })
       }
 
       const lineTotal = unit * cartIt.qty;
+      subtotalRaw += basePrice * cartIt.qty;
       subtotalAfterItem += lineTotal;
       if (basis === "member") membershipDiscount += memberSave * cartIt.qty;
+
 
       const imgs = ((p as any).product_images ?? []) as Array<{ url: string; sort_order: number; is_cover?: boolean }>;
       imgs.sort((a, b) => (Number(b.is_cover) - Number(a.is_cover)) || ((a.sort_order ?? 0) - (b.sort_order ?? 0)));
@@ -188,13 +192,16 @@ export const createOrder = createServerFn({ method: "POST" })
       });
     }
 
-    // Validate voucher server-side via existing SQL function
+    // Validate voucher server-side via existing SQL function. Voucher
+    // eligibility (min belanja) is checked against the RAW subtotal to match
+    // the customer-facing UI; final discount is capped at the
+    // already-discounted subtotal so we never owe the customer money.
     let voucherCode: string | null = null;
     let voucherDiscount = 0;
     if (data.voucher_code) {
       const { data: vRes, error: vErr } = await supabaseAdmin.rpc("validate_voucher", {
         _code: data.voucher_code,
-        _subtotal: subtotalAfterItem,
+        _subtotal: subtotalRaw,
       });
       if (vErr) throw new Error("Voucher: " + vErr.message);
       const row = Array.isArray(vRes) ? vRes[0] : vRes;
@@ -202,8 +209,9 @@ export const createOrder = createServerFn({ method: "POST" })
         throw new Error(row?.message ?? "Voucher tidak valid");
       }
       voucherCode = row.code as string;
-      voucherDiscount = Number(row.discount) || 0;
+      voucherDiscount = Math.min(Number(row.discount) || 0, subtotalAfterItem);
     }
+
 
     const subtotalAfterVoucher = Math.max(0, subtotalAfterItem - voucherDiscount);
     const shippingCost = data.shipping_payer === "pengirim" ? Math.max(0, data.shipping_cost) : 0;

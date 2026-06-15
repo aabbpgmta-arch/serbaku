@@ -113,21 +113,27 @@ function CheckoutPage() {
     }
   }, [user]);
 
-  // Re-validate voucher when subtotal changes
+  // Re-validate voucher when subtotal changes. Skip when the cart is empty
+  // (e.g. immediately after a successful order clears the cart) to avoid a
+  // false "Voucher tidak lagi berlaku" toast on success.
   useEffect(() => {
     if (!voucher) return;
+    if (items.length === 0 || subtotal <= 0) return;
     (async () => {
       const { validateVoucher } = await import("@/lib/checkout.functions");
-      const row = await validateVoucher({ data: { code: voucher.code, subtotal: subtotalAfterItem } });
+      const row = await validateVoucher({ data: { code: voucher.code, subtotal } });
       if (!row || row.message !== "ok") {
         setVoucher(null);
         toast.error("Voucher tidak lagi berlaku: " + (row?.message ?? "error"));
-      } else if (Number(row.discount) !== voucher.discount) {
-        setVoucher({ code: row.code, discount: Number(row.discount) });
+      } else {
+        const newDiscount = Math.min(Number(row.discount), subtotalAfterItem);
+        if (newDiscount !== voucher.discount) setVoucher({ code: row.code, discount: newDiscount });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotalAfterItem]);
+  }, [subtotal, subtotalAfterItem, items.length]);
+
+
 
   if (items.length === 0) {
     return <div className="container-page py-20 text-center text-muted-foreground">Keranjang kosong.</div>;
@@ -138,10 +144,13 @@ function CheckoutPage() {
   const total = subtotalAfterVoucher + (shippingPayer === "pengirim" ? shippingCost : 0);
   const totalSavings = promoSavings + memberSavings + voucherDiscount;
 
+  // Voucher eligibility & discount are computed against the RAW subtotal
+  // (before any item discount), so the minimum-belanja check reflects what
+  // the customer actually puts in the cart — matching the server logic.
   function estimateVoucherDiscount(v: NonNullable<typeof activeVouchers>[number]): number {
-    if (subtotalAfterItem < Number(v.min_subtotal ?? 0)) return 0;
+    if (subtotal < Number(v.min_subtotal ?? 0)) return 0;
     let d = v.discount_type === "percent"
-      ? Math.round(subtotalAfterItem * Number(v.discount_value) / 100)
+      ? Math.round(subtotal * Number(v.discount_value) / 100)
       : Number(v.discount_value);
     if (v.max_discount != null) d = Math.min(d, Number(v.max_discount));
     return Math.min(d, subtotalAfterItem);
@@ -153,7 +162,7 @@ function CheckoutPage() {
     setApplyingVoucherCode(c);
     setVoucherChecking(true);
     const { validateVoucher } = await import("@/lib/checkout.functions");
-    const row = await validateVoucher({ data: { code: c, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
+    const row = await validateVoucher({ data: { code: c, subtotal } }).catch((error) => ({ error }));
     setVoucherChecking(false);
     setApplyingVoucherCode(null);
     if ("error" in row) { toast.error(row.error?.message ?? "Voucher tidak bisa divalidasi"); return; }
@@ -162,14 +171,16 @@ function CheckoutPage() {
       setVoucher(null);
       return;
     }
-    setVoucher({ code: row.code, discount: Number(row.discount) });
+    const finalDiscount = Math.min(Number(row.discount), subtotalAfterItem);
+    setVoucher({ code: row.code, discount: finalDiscount });
     setVoucherInput("");
-    toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(Number(row.discount))})`);
+    toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(finalDiscount)})`);
   }
 
   async function applyVoucher() {
     await applyVoucherCode(voucherInput);
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -351,15 +362,16 @@ function CheckoutPage() {
           {(activeVouchers ?? []).length > 0 && (() => {
             const enrichedVouchers = (activeVouchers ?? []).map((v) => {
               const min = Number(v.min_subtotal ?? 0);
-              const eligible = subtotalAfterItem >= min;
+              const eligible = subtotal >= min;
               const est = estimateVoucherDiscount(v);
-              return { v, min, eligible, est, shortMissing: Math.max(0, min - subtotalAfterItem) };
+              return { v, min, eligible, est, shortMissing: Math.max(0, min - subtotal) };
             }).sort((a, b) => {
               if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
               if (a.eligible) return b.est - a.est;
               return a.shortMissing - b.shortMissing;
             });
             const bestEligibleCode = enrichedVouchers.find((x) => x.eligible && x.est > 0)?.v.code ?? null;
+
             return (
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">

@@ -3,14 +3,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { ArrowLeft, Upload, Copy, Truck, CheckCircle2, AlertTriangle, Info, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
 import { STATUS_LABEL, STATUS_COLOR } from "@/lib/order-status";
-import { setOrderPaymentProof } from "@/lib/orders.functions";
+import { setOrderPaymentProof, cancelOrder } from "@/lib/orders.functions";
 import { useSiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 const TIMELINE_STEPS = [
   { status: "menunggu_pembayaran", label: "Menunggu Pembayaran" },
@@ -27,6 +40,14 @@ const ACTIVE_STEP_INDEX: Record<string, number> = {
   dibatalkan: -1,
 };
 
+const CANCEL_REASONS = [
+  "Berubah pikiran",
+  "Salah pilih produk",
+  "Salah jumlah pesanan",
+  "Ingin membuat pesanan baru",
+  "Lainnya",
+] as const;
+
 export const Route = createFileRoute("/_authenticated/akun/pesanan/$id")({
   head: () => ({ meta: [{ title: "Detail Pesanan — Toko Serba" }, { name: "robots", content: "noindex" }] }),
   component: OrderDetail,
@@ -39,8 +60,15 @@ function OrderDetail() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const savePaymentProof = useServerFn(setOrderPaymentProof);
+  const cancelOrderFn = useServerFn(cancelOrder);
   const { data: settings } = useSiteSettings();
   const payment = settings?.payment;
+  const adminWhatsapp = settings?.contact?.whatsapp;
+
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>(CANCEL_REASONS[0]);
+  const [cancelNote, setCancelNote] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["order", id],
@@ -93,6 +121,13 @@ function OrderDetail() {
 
   const activeStepIndex = ACTIVE_STEP_INDEX[data.status] ?? 0;
 
+  function buildWaLink(phone: string | undefined, msg: string) {
+    if (!phone) return null;
+    const clean = phone.replace(/\D/g, "");
+    if (!clean) return null;
+    return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+  }
+
   async function uploadProof(file: File) {
     if (!user) return;
     setUploading(true);
@@ -109,10 +144,50 @@ function OrderDetail() {
       setUploading(false);
       return;
     }
-    toast.success("Bukti transfer terkirim");
+    toast.success("Bukti pembayaran berhasil dikirim. Admin akan segera memverifikasi pembayaran Anda.");
     qc.invalidateQueries({ queryKey: ["order", id] });
     setUploading(false);
+
+    // Open WhatsApp to admin with a pre-filled notification
+    const msg =
+      `Halo Admin, ada bukti transfer baru masuk.\n\n` +
+      `No Pesanan: ${data!.order_number}\n` +
+      `Nama Customer: ${data!.full_name}\n` +
+      `Total: ${formatRupiah(data!.total)}\n\n` +
+      `Silakan cek dan verifikasi pembayaran di halaman Admin Pesanan.`;
+    const url = buildWaLink(adminWhatsapp, msg);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
+
+  async function handleCancel() {
+    if (!data) return;
+    const reasonText = cancelReason === "Lainnya"
+      ? (cancelNote.trim() || "Lainnya")
+      : cancelReason;
+    setCancelling(true);
+    try {
+      await cancelOrderFn({ data: { orderId: id, reason: reasonText } });
+      toast.success("Pesanan berhasil dibatalkan");
+      setCancelOpen(false);
+      qc.invalidateQueries({ queryKey: ["order", id] });
+      qc.invalidateQueries({ queryKey: ["order_history_customer", id] });
+
+      // Notify admin via WhatsApp
+      const msg =
+        `Halo Admin, pesanan dibatalkan oleh customer.\n\n` +
+        `No Pesanan: ${data.order_number}\n` +
+        `Nama Customer: ${data.full_name}\n` +
+        `Alasan: ${reasonText}`;
+      const url = buildWaLink(adminWhatsapp, msg);
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membatalkan pesanan");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  const canCancel = data.status === "menunggu_pembayaran";
 
   return (
     <div className="container-page py-10">
@@ -136,6 +211,9 @@ function OrderDetail() {
             <div>
               <h2 className="font-display text-lg font-semibold">Timeline Status</h2>
               <p className="mt-1 text-sm text-muted-foreground">Pesanan ini tidak dilanjutkan.</p>
+              {data.cancel_reason && (
+                <p className="mt-1 text-xs text-muted-foreground">Alasan: <span className="font-medium text-foreground">{data.cancel_reason}</span></p>
+              )}
             </div>
             <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">Pesanan Dibatalkan</span>
           </div>
@@ -196,6 +274,7 @@ function OrderDetail() {
         </div>
 
         <aside className="space-y-4">
+          {/* 1. Total */}
           <div className="rounded-2xl border border-border/60 bg-card p-5">
             <h2 className="font-display text-lg font-semibold">Total</h2>
             <div className="mt-3 space-y-1.5 text-sm">
@@ -207,6 +286,7 @@ function OrderDetail() {
 
           {data.status === "menunggu_pembayaran" && payment && (
             <>
+              {/* 2. Informasi Pembayaran */}
               <div className="overflow-hidden rounded-2xl border-2 border-primary/20 bg-white shadow-elegant">
                 <div className="bg-gradient-to-br from-primary/10 to-accent/40 p-5">
                   <h2 className="font-display text-lg font-bold text-foreground">Informasi Pembayaran</h2>
@@ -245,6 +325,23 @@ function OrderDetail() {
                 </div>
               </div>
 
+              {/* 3. Bukti Transfer (moved up so customer doesn't need to scroll) */}
+              <div className="rounded-2xl border-2 border-primary/30 bg-card p-5 shadow-sm">
+                <h2 className="font-display text-base font-semibold">Bukti Transfer</h2>
+                {data.payment_proof_url ? (
+                  <div className="mt-3">
+                    <a href={data.payment_proof_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Lihat bukti terkirim</a>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">Upload bukti pembayaran agar pesanan diproses.</p>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadProof(e.target.files[0])} />
+                <Button type="button" className="mt-3 w-full gap-2" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4" /> {uploading ? "Mengupload..." : "Upload Bukti"}
+                </Button>
+              </div>
+
+              {/* 4. Panduan Pembayaran */}
               <div className="rounded-2xl border border-primary/15 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Info className="h-4 w-4 text-primary" />
@@ -259,6 +356,7 @@ function OrderDetail() {
                 </ol>
               </div>
 
+              {/* 5. Penting */}
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -276,20 +374,17 @@ function OrderDetail() {
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-card p-5">
-                <h2 className="font-display text-base font-semibold">Bukti Transfer</h2>
-                {data.payment_proof_url ? (
-                  <div className="mt-3">
-                    <a href={data.payment_proof_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Lihat bukti terkirim</a>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-xs text-muted-foreground">Upload bukti pembayaran agar pesanan diproses.</p>
-                )}
-                <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadProof(e.target.files[0])} />
-                <Button type="button" variant="outline" className="mt-3 w-full gap-2" disabled={uploading} onClick={() => fileRef.current?.click()}>
-                  <Upload className="h-4 w-4" /> {uploading ? "Mengupload..." : "Upload Bukti"}
+              {/* Cancel button — only for menunggu_pembayaran */}
+              {canCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  <XCircle className="h-4 w-4" /> Batalkan Pesanan
                 </Button>
-              </div>
+              )}
             </>
           )}
 
@@ -321,6 +416,7 @@ function OrderDetail() {
         </aside>
       </div>
 
+      {/* 6. Riwayat Status */}
       <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
         <h2 className="font-display text-lg font-semibold">Riwayat Status</h2>
         <ol className="mt-3 space-y-3">
@@ -341,7 +437,51 @@ function OrderDetail() {
           {(!history || history.length === 0) && <li className="text-xs text-muted-foreground">Belum ada riwayat.</li>}
         </ol>
       </section>
+
+      <AlertDialog open={cancelOpen} onOpenChange={(o) => { if (!cancelling) setCancelOpen(o); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Yakin ingin membatalkan pesanan ini?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pesanan yang dibatalkan tidak dapat dipulihkan dan stok akan dikembalikan ke sistem.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Alasan pembatalan</Label>
+            <RadioGroup value={cancelReason} onValueChange={setCancelReason} className="space-y-1.5">
+              {CANCEL_REASONS.map((r) => (
+                <label key={r} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border p-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary-soft/10">
+                  <RadioGroupItem value={r} />
+                  <span>{r}</span>
+                </label>
+              ))}
+            </RadioGroup>
+            {cancelReason === "Lainnya" && (
+              <div>
+                <Label htmlFor="cancel-note" className="text-xs">Catatan</Label>
+                <Textarea
+                  id="cancel-note"
+                  value={cancelNote}
+                  onChange={(e) => setCancelNote(e.target.value)}
+                  rows={2}
+                  placeholder="Tuliskan alasan Anda..."
+                  maxLength={500}
+                />
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelling}>Tidak</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleCancel(); }}
+              disabled={cancelling || (cancelReason === "Lainnya" && !cancelNote.trim())}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? "Membatalkan..." : "Ya, Batalkan Pesanan"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
