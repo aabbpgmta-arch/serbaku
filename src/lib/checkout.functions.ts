@@ -192,13 +192,16 @@ export const createOrder = createServerFn({ method: "POST" })
       });
     }
 
-    // Validate voucher server-side via existing SQL function
+    // Validate voucher server-side via existing SQL function. Voucher
+    // eligibility (min belanja) is checked against the RAW subtotal to match
+    // the customer-facing UI; final discount is capped at the
+    // already-discounted subtotal so we never owe the customer money.
     let voucherCode: string | null = null;
     let voucherDiscount = 0;
     if (data.voucher_code) {
       const { data: vRes, error: vErr } = await supabaseAdmin.rpc("validate_voucher", {
         _code: data.voucher_code,
-        _subtotal: subtotalAfterItem,
+        _subtotal: subtotalRaw,
       });
       if (vErr) throw new Error("Voucher: " + vErr.message);
       const row = Array.isArray(vRes) ? vRes[0] : vRes;
@@ -206,8 +209,9 @@ export const createOrder = createServerFn({ method: "POST" })
         throw new Error(row?.message ?? "Voucher tidak valid");
       }
       voucherCode = row.code as string;
-      voucherDiscount = Number(row.discount) || 0;
+      voucherDiscount = Math.min(Number(row.discount) || 0, subtotalAfterItem);
     }
+
 
     const subtotalAfterVoucher = Math.max(0, subtotalAfterItem - voucherDiscount);
     const shippingCost = data.shipping_payer === "pengirim" ? Math.max(0, data.shipping_cost) : 0;
