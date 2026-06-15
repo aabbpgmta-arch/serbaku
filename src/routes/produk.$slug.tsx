@@ -221,7 +221,7 @@ function ProductPage() {
 
       {related && related.length > 0 && (
         <section className="mt-16">
-          <h2 className="font-display text-2xl font-bold">Customer Juga Membeli</h2>
+          <h2 className="font-display text-2xl font-bold">⭐ Rekomendasi Untuk Anda</h2>
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((r) => {
               const c = r.product_images?.find((i) => i.is_cover)?.url ?? r.product_images?.[0]?.url ?? null;
