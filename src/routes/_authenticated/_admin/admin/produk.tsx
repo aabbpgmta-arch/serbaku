@@ -500,17 +500,31 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <label className="flex items-center gap-2"><Switch checked={isNew} onCheckedChange={setIsNew} /> Produk Baru</label>
             <label className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label>
           </div>
-          <div>
-            <Label>Badge Manual (opsional)</Label>
-            <Input
-              value={manualBadge}
-              onChange={(e) => setManualBadge(e.target.value)}
-              placeholder="cth: Trending, Best Value, Limited"
-              maxLength={20}
-            />
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Jika diisi, badge ini menggantikan badge otomatis (Terlaris/Baru) di kartu produk.
-            </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>SKU / Kode Produk (opsional)</Label>
+              <Input
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="cth: TS-MUG-001"
+                maxLength={32}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Tampil di Packing Slip & detail pesanan untuk mempercepat packing.
+              </p>
+            </div>
+            <div>
+              <Label>Badge Manual (opsional)</Label>
+              <Input
+                value={manualBadge}
+                onChange={(e) => setManualBadge(e.target.value)}
+                placeholder="cth: Trending, Best Value, Limited"
+                maxLength={20}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Jika diisi, badge ini menggantikan badge otomatis di kartu produk.
+              </p>
+            </div>
           </div>
 
 
