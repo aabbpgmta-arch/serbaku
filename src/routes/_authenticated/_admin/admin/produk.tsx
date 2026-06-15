@@ -28,6 +28,7 @@ type ProductRow = {
   category: "serba_35" | "serba_75" | "lainnya";
   description: string | null; is_active: boolean; is_bestseller: boolean; is_new: boolean;
   manual_badge: string | null;
+  sku: string | null;
   video_url: string | null;
   discount_type: "none" | "percent" | "nominal" | null;
   discount_value: number | null;
@@ -307,6 +308,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
   const [isNew, setIsNew] = useState(product?.is_new ?? false);
   const [manualBadge, setManualBadge] = useState<string>(product?.manual_badge ?? "");
+  const [sku, setSku] = useState<string>(product?.sku ?? "");
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [images, setImages] = useState(product?.product_images ?? []);
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
@@ -326,6 +328,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       name, price, stock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
       manual_badge: manualBadge.trim() || null,
+      sku: sku.trim().toUpperCase() || null,
       discount_type: discountType,
       discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
     };
@@ -497,17 +500,31 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <label className="flex items-center gap-2"><Switch checked={isNew} onCheckedChange={setIsNew} /> Produk Baru</label>
             <label className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /> Aktif</label>
           </div>
-          <div>
-            <Label>Badge Manual (opsional)</Label>
-            <Input
-              value={manualBadge}
-              onChange={(e) => setManualBadge(e.target.value)}
-              placeholder="cth: Trending, Best Value, Limited"
-              maxLength={20}
-            />
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Jika diisi, badge ini menggantikan badge otomatis (Terlaris/Baru) di kartu produk.
-            </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>SKU / Kode Produk (opsional)</Label>
+              <Input
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="cth: TS-MUG-001"
+                maxLength={32}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Tampil di Packing Slip & detail pesanan untuk mempercepat packing.
+              </p>
+            </div>
+            <div>
+              <Label>Badge Manual (opsional)</Label>
+              <Input
+                value={manualBadge}
+                onChange={(e) => setManualBadge(e.target.value)}
+                placeholder="cth: Trending, Best Value, Limited"
+                maxLength={20}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Jika diisi, badge ini menggantikan badge otomatis di kartu produk.
+              </p>
+            </div>
           </div>
 
 

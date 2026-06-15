@@ -78,16 +78,42 @@ function rangeBounds(range: DateRange, customFrom?: string, customTo?: string): 
   }
 }
 
+type WaTemplates = { diproses: string; dikirim: string; selesai: string; dibatalkan: string };
+const WA_DEFAULTS: WaTemplates = {
+  diproses:  "Halo {nama} 👋\n\nPembayaran pesanan *{nomor}* sudah kami terima. Pesanan Anda sedang kami *PROSES* untuk dipacking. Terima kasih 🙏",
+  dikirim:   "Halo {nama} 👋\n\nPesanan *{nomor}* sudah kami *KIRIM* via {kurir}. No. resi: *{resi}*. Mohon ditunggu ya 🚚",
+  selesai:   "Halo {nama} 👋\n\nTerima kasih, pesanan *{nomor}* telah *SELESAI*. Semoga berkenan kembali belanja di toko kami ❤️",
+  dibatalkan:"Halo {nama} 🙏\n\nMohon maaf pesanan *{nomor}* telah *DIBATALKAN*. Jika ini keliru, silakan balas pesan ini.",
+};
+function fillTemplate(tpl: string, o: Order): string {
+  return tpl
+    .replace(/\{nama\}/g, o.full_name || "")
+    .replace(/\{nomor\}/g, o.order_number || "")
+    .replace(/\{kurir\}/g, o.shipped_courier || "-")
+    .replace(/\{resi\}/g, o.tracking_number || "-")
+    .replace(/\{total\}/g, new Intl.NumberFormat("id-ID").format(o.total || 0));
+}
+
 function AdminPesanan() {
   const qc = useQueryClient();
   const [detail, setDetail] = useState<Order | null>(null);
   const [pendingChange, setPendingChange] = useState<{ id: string; to: OrderStatus; orderNumber: string } | null>(null);
+  const [waPrompt, setWaPrompt] = useState<{ order: Order; status: OrderStatus } | null>(null);
 
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [range, setRange] = useState<DateRange>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [search, setSearch] = useState("");
+
+  const { data: waTemplates } = useQuery({
+    queryKey: ["setting", "orders"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "orders").maybeSingle();
+      const raw = (data?.value as { wa_templates?: Partial<WaTemplates> } | null) ?? {};
+      return { ...WA_DEFAULTS, ...(raw.wa_templates ?? {}) } as WaTemplates;
+    },
+  });
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin_orders"],
@@ -128,6 +154,13 @@ function AdminPesanan() {
     }
     qc.invalidateQueries({ queryKey: ["admin_orders"] });
     toast.success("Status diperbarui");
+    // Offer to send WA notification (if template exists for the new status)
+    if (newStatus === "diproses" || newStatus === "dikirim" || newStatus === "selesai" || newStatus === "dibatalkan") {
+      const order = (orders ?? []).find((o) => o.id === id);
+      if (order) {
+        setWaPrompt({ order: { ...order, status: newStatus }, status: newStatus });
+      }
+    }
   }
 
   // Stats
@@ -340,6 +373,32 @@ function AdminPesanan() {
               setPendingChange(null);
               await applyStatusChange(p.id, p.to);
             }}>Ya, ubah status</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!waPrompt} onOpenChange={(o) => !o && setWaPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kirim notifikasi WhatsApp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Status pesanan <b className="font-mono">{waPrompt?.order.order_number}</b> sudah diubah ke{" "}
+              <b>{waPrompt ? STATUS_LABEL[waPrompt.status] : ""}</b>. Kirim pesan WhatsApp ke pelanggan?
+              {waPrompt && waTemplates && (
+                <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-2 text-[11px] text-foreground">
+                  {fillTemplate(waTemplates[waPrompt.status as keyof WaTemplates] ?? "", waPrompt.order)}
+                </pre>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nanti saja</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (!waPrompt || !waTemplates) return;
+              const msg = fillTemplate(waTemplates[waPrompt.status as keyof WaTemplates] ?? "", waPrompt.order);
+              window.open(waLink(waPrompt.order.whatsapp, msg), "_blank", "noopener,noreferrer");
+              setWaPrompt(null);
+            }}>Buka WhatsApp</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

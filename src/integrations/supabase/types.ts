@@ -857,6 +857,7 @@ export type Database = {
         Args: { _spend: number }
         Returns: Database["public"]["Enums"]["membership_tier"]
       }
+      cron_expire_pending_orders: { Args: never; Returns: number }
       customer_also_bought: {
         Args: { p_limit?: number; p_product_id: string }
         Returns: {

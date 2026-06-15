@@ -67,6 +67,7 @@ function AdminSettings() {
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
           <TabsTrigger value="payment">Pembayaran</TabsTrigger>
+          <TabsTrigger value="orders">Pesanan</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
           <TabsTrigger value="sections">Keunggulan</TabsTrigger>
           <TabsTrigger value="categories">Kategori</TabsTrigger>
@@ -77,12 +78,114 @@ function AdminSettings() {
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
         <TabsContent value="contact"><ContactSettingsForm /></TabsContent>
         <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
+        <TabsContent value="orders"><OrdersSettingsForm /></TabsContent>
         <TabsContent value="footer"><SettingForm settingKey="footer" fields={["description", "copyright"]} multiline={["description"]} /></TabsContent>
         <TabsContent value="sections"><SectionsEditor /></TabsContent>
         <TabsContent value="categories"><CategoriesEditor /></TabsContent>
         <TabsContent value="testimonials"><TestimonialsEditor /></TabsContent>
         <TabsContent value="backup"><BackupSection /></TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+type OrdersSettings = {
+  payment_expire_hours: number;
+  auto_expire_enabled: boolean;
+  wa_templates: {
+    diproses: string;
+    dikirim: string;
+    selesai: string;
+    dibatalkan: string;
+  };
+};
+
+const ORDERS_DEFAULTS: OrdersSettings = {
+  payment_expire_hours: 24,
+  auto_expire_enabled: true,
+  wa_templates: {
+    diproses:  "Halo {nama} 👋\n\nPembayaran pesanan *{nomor}* sudah kami terima. Pesanan Anda sedang kami *PROSES* untuk dipacking. Terima kasih 🙏",
+    dikirim:   "Halo {nama} 👋\n\nPesanan *{nomor}* sudah kami *KIRIM* via {kurir}. No. resi: *{resi}*. Mohon ditunggu ya 🚚",
+    selesai:   "Halo {nama} 👋\n\nTerima kasih, pesanan *{nomor}* telah *SELESAI*. Semoga berkenan kembali belanja di toko kami ❤️",
+    dibatalkan:"Halo {nama} 🙏\n\nMohon maaf pesanan *{nomor}* telah *DIBATALKAN*. Jika ini keliru, silakan balas pesan ini.",
+  },
+};
+
+function OrdersSettingsForm() {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["setting", "orders"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "orders").maybeSingle();
+      const raw = (data?.value as Partial<OrdersSettings>) ?? {};
+      return {
+        ...ORDERS_DEFAULTS,
+        ...raw,
+        wa_templates: { ...ORDERS_DEFAULTS.wa_templates, ...(raw.wa_templates ?? {}) },
+      } as OrdersSettings;
+    },
+  });
+  const [form, setForm] = useState<OrdersSettings>(ORDERS_DEFAULTS);
+  useEffect(() => { if (data) setForm(data); }, [data]);
+
+  async function save() {
+    const payload: OrdersSettings = {
+      payment_expire_hours: Math.max(1, Math.min(168, Number(form.payment_expire_hours) || 24)),
+      auto_expire_enabled: !!form.auto_expire_enabled,
+      wa_templates: form.wa_templates,
+    };
+    const { error } = await supabase.from("site_settings").upsert({ key: "orders", value: payload as unknown as Json });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Pengaturan pesanan tersimpan");
+      qc.invalidateQueries({ queryKey: ["setting", "orders"] });
+      qc.invalidateQueries({ queryKey: ["site_settings"] });
+    }
+  }
+
+  function setTpl(key: keyof OrdersSettings["wa_templates"], v: string) {
+    setForm((f) => ({ ...f, wa_templates: { ...f.wa_templates, [key]: v } }));
+  }
+
+  return (
+    <div className="mt-4 space-y-5">
+      <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+        <h2 className="font-semibold">Batas Waktu Pembayaran</h2>
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <Label>Batas waktu pembayaran (jam)</Label>
+            <Input
+              type="number" min={1} max={168}
+              value={form.payment_expire_hours}
+              onChange={(e) => setForm((f) => ({ ...f, payment_expire_hours: Number(e.target.value) || 24 }))}
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Pesanan yang melewati batas ini akan otomatis dibatalkan & stok dikembalikan. Cek otomatis berjalan tiap 15 menit.
+            </p>
+          </div>
+          <label className="flex items-center gap-2 pb-2">
+            <Switch checked={form.auto_expire_enabled} onCheckedChange={(v) => setForm((f) => ({ ...f, auto_expire_enabled: v }))} />
+            <span className="text-sm">Aktifkan auto-batal</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+        <div>
+          <h2 className="font-semibold">Template Pesan WhatsApp</h2>
+          <p className="text-xs text-muted-foreground">
+            Variabel tersedia: <code>{"{nama}"}</code>, <code>{"{nomor}"}</code>, <code>{"{kurir}"}</code>, <code>{"{resi}"}</code>, <code>{"{total}"}</code>.
+          </p>
+        </div>
+        {(["diproses", "dikirim", "selesai", "dibatalkan"] as const).map((k) => (
+          <div key={k}>
+            <Label className="capitalize">Notifikasi {k}</Label>
+            <Textarea rows={4} value={form.wa_templates[k]} onChange={(e) => setTpl(k, e.target.value)} />
+          </div>
+        ))}
+      </div>
+
+      <Button onClick={save}>Simpan Pengaturan Pesanan</Button>
     </div>
   );
 }
