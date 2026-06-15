@@ -109,8 +109,12 @@ function CartPage() {
             const isFlash = flashActive(promoOf(i), now);
             const countdown = isFlash ? formatCountdown(i.flashEndAt, now) : null;
             const showStrike = best.unit < i.price;
+            const s = stockMap?.[i.productId];
+            const inactive = s && !s.active;
+            const overSold = s && s.active && i.qty > s.available;
+            const lowStock = s && s.active && !overSold && s.available > 0 && s.available <= 12;
             return (
-              <div key={i.productId} className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4">
+              <div key={i.productId} className={`flex gap-4 rounded-2xl border bg-card p-4 ${overSold || inactive ? "border-destructive/60 bg-destructive/5" : "border-border/60"}`}>
                 <Link to="/produk/$slug" params={{ slug: i.slug }} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
                   {i.image && <img src={i.image} alt={i.name} className="h-full w-full object-cover" />}
                 </Link>
@@ -131,6 +135,15 @@ function CartPage() {
                       {best.basis === "member" && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"><Crown className="h-2.5 w-2.5" /> Diskon Member</span>
                       )}
+                      {inactive && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive"><AlertTriangle className="h-2.5 w-2.5" /> Produk Tidak Tersedia</span>
+                      )}
+                      {overSold && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive"><AlertTriangle className="h-2.5 w-2.5" /> Stok Tidak Cukup (sisa {s!.available})</span>
+                      )}
+                      {lowStock && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Sisa {s!.available} pcs</span>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
@@ -146,9 +159,16 @@ function CartPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-display text-base font-bold">{formatRupiah(lineTotal)}</p>
-                      <button onClick={() => remove(i.productId)} className="mt-1 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
-                        <Trash2 className="h-3 w-3" /> Hapus
-                      </button>
+                      <div className="mt-1 flex items-center justify-end gap-2">
+                        {overSold && s && (
+                          <button onClick={() => setQty(i.productId, Math.max(6, Math.floor(s.available / 6) * 6))} className="text-[11px] text-primary hover:underline">
+                            Sesuaikan ke {Math.max(6, Math.floor(s.available / 6) * 6)}
+                          </button>
+                        )}
+                        <button onClick={() => remove(i.productId)} className="inline-flex items-center gap-1 text-xs text-destructive hover:underline">
+                          <Trash2 className="h-3 w-3" /> Hapus
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
