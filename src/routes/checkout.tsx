@@ -348,76 +348,90 @@ function CheckoutPage() {
           </div>
 
           {/* Voucher Tersedia */}
-          {(activeVouchers ?? []).length > 0 && (
-            <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Voucher Tersedia
-              </div>
-              <div className="space-y-2">
-                {activeVouchers!.map((v) => {
-                  const min = Number(v.min_subtotal ?? 0);
-                  const eligible = subtotalAfterItem >= min;
-                  const isApplied = voucher?.code?.toUpperCase() === v.code.toUpperCase();
-                  const otherApplied = !!voucher && !isApplied;
-                  const est = estimateVoucherDiscount(v);
-                  const shortMissing = Math.max(0, min - subtotalAfterItem);
-                  return (
-                    <div
-                      key={v.id}
-                      className={`flex items-start justify-between gap-2 rounded-lg border p-2.5 text-xs transition ${
-                        isApplied ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
-                          : eligible && !otherApplied ? "border-border bg-card"
-                          : "border-border/50 bg-muted/40 opacity-70"
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-primary">{v.code}</span>
-                          {isApplied && <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-[10px]">Digunakan</Badge>}
-                        </div>
-                        <div className="mt-0.5 font-semibold">
-                          Diskon {v.discount_type === "percent" ? `${v.discount_value}%` : formatRupiah(v.discount_value)}
-                          {v.max_discount ? ` · maks ${formatRupiah(v.max_discount)}` : ""}
-                        </div>
-                        {v.description && <div className="text-muted-foreground line-clamp-1">{v.description}</div>}
-                        <div className="mt-0.5 text-muted-foreground">
-                          {min > 0 ? `Min. belanja ${formatRupiah(min)}` : "Tanpa minimum"}
-                        </div>
-                        {!eligible && shortMissing > 0 && (
-                          <div className="mt-0.5 font-medium text-amber-700 dark:text-amber-400">
-                            Belanja kurang {formatRupiah(shortMissing)} lagi
+          {(activeVouchers ?? []).length > 0 && (() => {
+            const enrichedVouchers = (activeVouchers ?? []).map((v) => {
+              const min = Number(v.min_subtotal ?? 0);
+              const eligible = subtotalAfterItem >= min;
+              const est = estimateVoucherDiscount(v);
+              return { v, min, eligible, est, shortMissing: Math.max(0, min - subtotalAfterItem) };
+            }).sort((a, b) => {
+              if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
+              if (a.eligible) return b.est - a.est;
+              return a.shortMissing - b.shortMissing;
+            });
+            const bestEligibleCode = enrichedVouchers.find((x) => x.eligible && x.est > 0)?.v.code ?? null;
+            return (
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" /> Voucher Tersedia
+                </div>
+                <div className="space-y-2">
+                  {enrichedVouchers.map(({ v, min, eligible, est, shortMissing }) => {
+                    const isApplied = voucher?.code?.toUpperCase() === v.code.toUpperCase();
+                    const otherApplied = !!voucher && !isApplied;
+                    const isRecommended = bestEligibleCode === v.code;
+                    return (
+                      <div
+                        key={v.id}
+                        className={`flex items-start justify-between gap-2 rounded-lg border p-2.5 text-xs transition ${
+                          isApplied ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
+                            : isRecommended ? "border-primary/60 bg-primary-soft/20"
+                            : eligible ? "border-border bg-card"
+                            : "border-border/50 bg-muted/40 opacity-70"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono font-bold text-primary">{v.code}</span>
+                            {isApplied && <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-[10px]">Dipilih</Badge>}
+                            {!isApplied && isRecommended && <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px]">⭐ Rekomendasi</Badge>}
                           </div>
-                        )}
-                        {eligible && est > 0 && !isApplied && (
-                          <div className="mt-0.5 font-medium text-emerald-700 dark:text-emerald-400">
-                            Hemat {formatRupiah(est)}
+                          <div className="mt-0.5 font-semibold">
+                            Diskon {v.discount_type === "percent" ? `${v.discount_value}%` : formatRupiah(v.discount_value)}
+                            {v.max_discount ? ` · maks ${formatRupiah(v.max_discount)}` : ""}
                           </div>
-                        )}
+                          {v.description && <div className="text-muted-foreground line-clamp-1">{v.description}</div>}
+                          <div className="mt-0.5 text-muted-foreground">
+                            {min > 0 ? `Min. belanja ${formatRupiah(min)}` : "Tanpa minimum"}
+                          </div>
+                          {!eligible && shortMissing > 0 && (
+                            <div className="mt-0.5 font-medium text-amber-700 dark:text-amber-400">
+                              Belanja kurang {formatRupiah(shortMissing)} lagi
+                            </div>
+                          )}
+                          {eligible && est > 0 && !isApplied && (
+                            <div className="mt-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                              Hemat {formatRupiah(est)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="shrink-0">
+                          {isApplied ? (
+                            <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+                              onClick={() => { setVoucher(null); setVoucherInput(""); }}>
+                              Lepas
+                            </Button>
+                          ) : !eligible ? (
+                            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled>
+                              Belum Memenuhi
+                            </Button>
+                          ) : (
+                            <Button type="button" size="sm" className="h-7 text-xs"
+                              disabled={voucherChecking}
+                              onClick={() => applyVoucherCode(v.code)}>
+                              {voucherChecking && applyingVoucherCode === v.code ? "..." : otherApplied ? "Ganti" : "Pilih"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="shrink-0">
-                        {isApplied ? (
-                          <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
-                            onClick={() => { setVoucher(null); setVoucherInput(""); }}>
-                            Lepas
-                          </Button>
-                        ) : !eligible ? (
-                          <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled>
-                            Belum Memenuhi
-                          </Button>
-                        ) : (
-                          <Button type="button" size="sm" className="h-7 text-xs"
-                            disabled={voucherChecking || otherApplied}
-                            onClick={() => applyVoucherCode(v.code)}>
-                            {voucherChecking && applyingVoucherCode === v.code ? "..." : "Pakai"}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground">Hanya 1 voucher dapat digunakan per pesanan. Memilih voucher lain akan otomatis mengganti yang sebelumnya.</p>
               </div>
-            </div>
-          )}
+            );
+          })()}
+
 
           <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
             <Row label={`Subtotal (${totalQty} pcs)`} value={formatRupiah(subtotal)} />
