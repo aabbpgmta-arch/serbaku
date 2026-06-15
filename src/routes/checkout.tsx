@@ -66,6 +66,23 @@ function CheckoutPage() {
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherChecking, setVoucherChecking] = useState(false);
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
+  const [applyingVoucherCode, setApplyingVoucherCode] = useState<string | null>(null);
+  const [stockIssues, setStockIssues] = useState<Array<{ name: string; requested: number; available: number }>>([]);
+
+  const { data: activeVouchers } = useQuery({
+    queryKey: ["checkout_active_vouchers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_active_vouchers");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; code: string; description: string | null;
+        discount_type: string; discount_value: number;
+        min_subtotal: number; max_discount: number | null;
+        starts_at: string | null; expires_at: string | null;
+      }>;
+    },
+    staleTime: 60_000,
+  });
 
   const [form, setForm] = useState({
     full_name: "", whatsapp: "", email: "", address: "", city: "", province: "", postal_code: "", notes: "",
