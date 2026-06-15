@@ -376,6 +376,32 @@ function AdminPesanan() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!waPrompt} onOpenChange={(o) => !o && setWaPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kirim notifikasi WhatsApp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Status pesanan <b className="font-mono">{waPrompt?.order.order_number}</b> sudah diubah ke{" "}
+              <b>{waPrompt ? STATUS_LABEL[waPrompt.status] : ""}</b>. Kirim pesan WhatsApp ke pelanggan?
+              {waPrompt && waTemplates && (
+                <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-2 text-[11px] text-foreground">
+                  {fillTemplate(waTemplates[waPrompt.status as keyof WaTemplates] ?? "", waPrompt.order)}
+                </pre>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nanti saja</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (!waPrompt || !waTemplates) return;
+              const msg = fillTemplate(waTemplates[waPrompt.status as keyof WaTemplates] ?? "", waPrompt.order);
+              window.open(waLink(waPrompt.order.whatsapp, msg), "_blank", "noopener,noreferrer");
+              setWaPrompt(null);
+            }}>Buka WhatsApp</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
