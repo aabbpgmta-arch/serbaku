@@ -232,7 +232,22 @@ function CartPage() {
                 Quantity wajib kelipatan 6 pcs untuk lanjut checkout.
               </p>
             )}
-            <Link to="/checkout" disabled={!allValid} className="btn-hero mt-5 w-full" aria-disabled={!allValid} onClick={(e) => { if (!allValid) e.preventDefault(); }}>
+            {!stockOk && (
+              <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive">
+                <p className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="h-3.5 w-3.5" /> Ada masalah stok</p>
+                <ul className="mt-1 list-disc pl-5 leading-relaxed">
+                  {stockIssues.map((i) => {
+                    const s = stockMap?.[i.productId];
+                    return (
+                      <li key={i.productId}>
+                        <b>{i.name}</b>: {s && !s.active ? "produk tidak aktif" : `stok tinggal ${s?.available ?? 0}, Anda pesan ${i.qty}`}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+            <Link to="/checkout" disabled={!canCheckout} className="btn-hero mt-5 w-full" aria-disabled={!canCheckout} onClick={(e) => { if (!canCheckout) e.preventDefault(); }}>
               Lanjut ke Checkout
             </Link>
             <Link to="/katalog" className="mt-2 block w-full rounded-full border border-border bg-background py-2.5 text-center text-sm font-semibold hover:bg-accent">
