@@ -142,10 +142,13 @@ function CheckoutPage() {
   const total = subtotalAfterVoucher + (shippingPayer === "pengirim" ? shippingCost : 0);
   const totalSavings = promoSavings + memberSavings + voucherDiscount;
 
+  // Voucher eligibility & discount are computed against the RAW subtotal
+  // (before any item discount), so the minimum-belanja check reflects what
+  // the customer actually puts in the cart — matching the server logic.
   function estimateVoucherDiscount(v: NonNullable<typeof activeVouchers>[number]): number {
-    if (subtotalAfterItem < Number(v.min_subtotal ?? 0)) return 0;
+    if (subtotal < Number(v.min_subtotal ?? 0)) return 0;
     let d = v.discount_type === "percent"
-      ? Math.round(subtotalAfterItem * Number(v.discount_value) / 100)
+      ? Math.round(subtotal * Number(v.discount_value) / 100)
       : Number(v.discount_value);
     if (v.max_discount != null) d = Math.min(d, Number(v.max_discount));
     return Math.min(d, subtotalAfterItem);
@@ -157,7 +160,7 @@ function CheckoutPage() {
     setApplyingVoucherCode(c);
     setVoucherChecking(true);
     const { validateVoucher } = await import("@/lib/checkout.functions");
-    const row = await validateVoucher({ data: { code: c, subtotal: subtotalAfterItem } }).catch((error) => ({ error }));
+    const row = await validateVoucher({ data: { code: c, subtotal } }).catch((error) => ({ error }));
     setVoucherChecking(false);
     setApplyingVoucherCode(null);
     if ("error" in row) { toast.error(row.error?.message ?? "Voucher tidak bisa divalidasi"); return; }
@@ -166,14 +169,16 @@ function CheckoutPage() {
       setVoucher(null);
       return;
     }
-    setVoucher({ code: row.code, discount: Number(row.discount) });
+    const finalDiscount = Math.min(Number(row.discount), subtotalAfterItem);
+    setVoucher({ code: row.code, discount: finalDiscount });
     setVoucherInput("");
-    toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(Number(row.discount))})`);
+    toast.success(`Voucher ${row.code} berhasil dipakai (-${formatRupiah(finalDiscount)})`);
   }
 
   async function applyVoucher() {
     await applyVoucherCode(voucherInput);
   }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
