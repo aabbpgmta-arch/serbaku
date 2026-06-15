@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag, Crown, Flame, Timer } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Minus, Plus, Trash2, ShoppingBag, Crown, Flame, Timer, AlertTriangle } from "lucide-react";
 import { useCart, type CartItem } from "@/lib/cart";
 import { useAuth } from "@/lib/auth-context";
 import { tierMeta, nextTier } from "@/lib/membership";
 import { bestUnitPrice, flashActive, formatCountdown } from "@/lib/promo";
 import { formatRupiah, roundToSix } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/keranjang")({
   head: () => ({ meta: [{ title: "Keranjang — Toko Serba" }, { name: "robots", content: "noindex" }] }),
