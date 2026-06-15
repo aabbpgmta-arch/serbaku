@@ -95,7 +95,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const { data: products, error: prodErr } = await supabaseAdmin
       .from("products")
       .select(
-        "id,name,price,discount_type,discount_value,stock,is_active,product_images(image_url,sort_order),flash_sale_items(discount_type,discount_value,flash_sales(starts_at,ends_at,is_active))",
+        "id,name,price,discount_type,discount_value,stock,is_active,product_images(url,sort_order,is_cover),flash_sale_items(discount_type,discount_value,flash_sales(starts_at,ends_at,is_active))",
       )
       .in("id", ids);
     if (prodErr) throw new Error("Gagal memuat produk: " + prodErr.message);
