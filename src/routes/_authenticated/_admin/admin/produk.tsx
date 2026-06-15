@@ -328,6 +328,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
       name, price, stock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
       manual_badge: manualBadge.trim() || null,
+      sku: sku.trim().toUpperCase() || null,
       discount_type: discountType,
       discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
     };
