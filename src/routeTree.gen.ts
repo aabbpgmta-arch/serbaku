@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
 import { Route as FlashSaleRouteImport } from './routes/flash-sale'
+import { Route as FaviconDoticoRouteImport } from './routes/favicon[.]ico'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -58,6 +59,11 @@ const KatalogRoute = KatalogRouteImport.update({
 const FlashSaleRoute = FlashSaleRouteImport.update({
   id: '/flash-sale',
   path: '/flash-sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaviconDoticoRoute = FaviconDoticoRouteImport.update({
+  id: '/favicon.ico',
+  path: '/favicon.ico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/favicon.ico': typeof FaviconDoticoRoute
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/favicon.ico': typeof FaviconDoticoRoute
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/favicon.ico': typeof FaviconDoticoRoute
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/favicon.ico'
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/favicon.ico'
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/checkout'
+    | '/favicon.ico'
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
+  FaviconDoticoRoute: typeof FaviconDoticoRoute
   FlashSaleRoute: typeof FlashSaleRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/flash-sale'
       fullPath: '/flash-sale'
       preLoaderRoute: typeof FlashSaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favicon.ico': {
+      id: '/favicon.ico'
+      path: '/favicon.ico'
+      fullPath: '/favicon.ico'
+      preLoaderRoute: typeof FaviconDoticoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -586,6 +606,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
+  FaviconDoticoRoute: FaviconDoticoRoute,
   FlashSaleRoute: FlashSaleRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
@@ -596,13 +617,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

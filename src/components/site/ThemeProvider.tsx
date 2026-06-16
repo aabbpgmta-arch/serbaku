@@ -55,6 +55,18 @@ export function ThemeProvider() {
     staleTime: 60_000,
   });
 
+  // Load brand settings (favicon uploaded via Pengaturan Website)
+  const { data: brandFavicon } = useQuery({
+    queryKey: ["site_settings_brand_favicon"],
+    queryFn: async (): Promise<string | null> => {
+      const { data } = await supabase
+        .from("site_settings").select("value").eq("key", "brand").maybeSingle();
+      const v = data?.value as { favicon_url?: string | null } | null;
+      return v?.favicon_url || null;
+    },
+    staleTime: 60_000,
+  });
+
   // Initial mode + listener
   useEffect(() => {
     setMode(getStoredMode());
