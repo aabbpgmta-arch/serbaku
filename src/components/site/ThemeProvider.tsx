@@ -55,6 +55,18 @@ export function ThemeProvider() {
     staleTime: 60_000,
   });
 
+  // Load brand settings (favicon uploaded via Pengaturan Website)
+  const { data: brandFavicon } = useQuery({
+    queryKey: ["site_settings_brand_favicon"],
+    queryFn: async (): Promise<string | null> => {
+      const { data } = await supabase
+        .from("site_settings").select("value").eq("key", "brand").maybeSingle();
+      const v = data?.value as { favicon_url?: string | null } | null;
+      return v?.favicon_url || null;
+    },
+    staleTime: 60_000,
+  });
+
   // Initial mode + listener
   useEffect(() => {
     setMode(getStoredMode());
@@ -99,17 +111,23 @@ export function ThemeProvider() {
       }
       if (link.href !== url) link.href = url;
     }
-    // Favicon
-    if (theme.branding.faviconUrl) {
-      let icon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
-      if (!icon) {
-        icon = document.createElement("link");
-        icon.rel = "icon";
-        document.head.appendChild(icon);
-      }
-      icon.href = theme.branding.faviconUrl;
+    // Favicon — prefer brand favicon (uploaded in Pengaturan), fallback to theme branding
+    const faviconUrl = brandFavicon || theme.branding.faviconUrl;
+    if (faviconUrl) {
+      const ensureLink = (rel: string) => {
+        let el = document.querySelector(`link[rel='${rel}']`) as HTMLLinkElement | null;
+        if (!el) {
+          el = document.createElement("link");
+          el.rel = rel;
+          document.head.appendChild(el);
+        }
+        if (el.href !== faviconUrl) el.href = faviconUrl;
+      };
+      ensureLink("icon");
+      ensureLink("shortcut icon");
+      ensureLink("apple-touch-icon");
     }
-  }, [savedTheme, mode, previewTheme, previewMode]);
+  }, [savedTheme, mode, previewTheme, previewMode, brandFavicon]);
 
   return null;
 }
