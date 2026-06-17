@@ -86,6 +86,29 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
   const csvRef = useRef<HTMLInputElement>(null);
+  const analyzeFn = useServerFn(analyzeProductImage);
+
+  async function runAiForRow(i: number, file: File) {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, aiStatus: "analyzing" } : r)));
+    try {
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
+      });
+      const out = await analyzeFn({ data: { imageDataUrl: dataUrl } });
+      setRows((rs) => rs.map((r, idx) => idx === i ? {
+        ...r,
+        name: r.name.trim() ? r.name : (out.name || r.name),
+        description: r.description.trim() ? r.description : (out.description || r.description),
+        aiStatus: "ok",
+      } : r));
+    } catch (e) {
+      console.error("[bulk ai]", e);
+      setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, aiStatus: "fail" } : r)));
+    }
+  }
 
   function update(i: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
