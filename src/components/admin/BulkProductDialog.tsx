@@ -28,11 +28,13 @@ type Row = {
   file: File | null;
   imageUrl: string; // optional URL from CSV
   preview: string;
+  aiStatus: "idle" | "analyzing" | "ok" | "fail";
 };
 
 const emptyRow = (): Row => ({
   name: "", category: "serba_35", price: 0, stock: 0, description: "",
   isActive: true, label: "none", file: null, imageUrl: "", preview: "",
+  aiStatus: "idle",
 });
 
 const TEMPLATE_CSV =
