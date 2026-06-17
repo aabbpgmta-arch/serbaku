@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Download, Plus, Trash2, Upload, FileSpreadsheet } from "lucide-react";
+import { Download, Plus, Trash2, Upload, FileSpreadsheet, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/format";
+import { analyzeProductImage } from "@/lib/ai-analyze.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
