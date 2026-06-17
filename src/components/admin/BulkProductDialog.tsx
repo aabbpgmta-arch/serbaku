@@ -256,7 +256,22 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
                     <input type="file" hidden accept="image/*" onChange={(e) => onFileChange(i, e.target.files?.[0] ?? null)} />
                     Pilih foto
                   </label>
+                  {r.aiStatus === "analyzing" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-primary"><Loader2 className="h-2.5 w-2.5 animate-spin" /> Menganalisis...</span>
+                  )}
+                  {r.aiStatus === "ok" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600"><CheckCircle2 className="h-2.5 w-2.5" /> AI berhasil</span>
+                  )}
+                  {r.aiStatus === "fail" && (
+                    <span className="text-[10px] text-amber-600">Gagal AI, isi manual</span>
+                  )}
+                  {r.file && r.aiStatus !== "analyzing" && (
+                    <button type="button" onClick={() => runAiForRow(i, r.file!)} className="inline-flex items-center gap-1 text-[10px] text-primary underline">
+                      <Sparkles className="h-2.5 w-2.5" /> Generate Ulang AI
+                    </button>
+                  )}
                 </div>
+
 
                 <div className="grid flex-1 gap-2 md:grid-cols-12">
                   <div className="md:col-span-4">
