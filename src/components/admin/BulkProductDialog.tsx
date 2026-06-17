@@ -154,9 +154,12 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
   }
 
   function onFileChange(i: number, f: File | null) {
-    if (!f) { update(i, { file: null, preview: rows[i].imageUrl }); return; }
+    if (!f) { update(i, { file: null, preview: rows[i].imageUrl, aiStatus: "idle" }); return; }
     const reader = new FileReader();
-    reader.onload = () => update(i, { file: f, preview: String(reader.result) });
+    reader.onload = () => {
+      update(i, { file: f, preview: String(reader.result) });
+      void runAiForRow(i, f);
+    };
     reader.readAsDataURL(f);
   }
 
