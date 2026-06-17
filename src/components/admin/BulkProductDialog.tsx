@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Download, Plus, Trash2, Upload, FileSpreadsheet } from "lucide-react";
+import { Download, Plus, Trash2, Upload, FileSpreadsheet, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/format";
+import { analyzeProductImage } from "@/lib/ai-analyze.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,11 +28,13 @@ type Row = {
   file: File | null;
   imageUrl: string; // optional URL from CSV
   preview: string;
+  aiStatus: "idle" | "analyzing" | "ok" | "fail";
 };
 
 const emptyRow = (): Row => ({
   name: "", category: "serba_35", price: 0, stock: 0, description: "",
   isActive: true, label: "none", file: null, imageUrl: "", preview: "",
+  aiStatus: "idle",
 });
 
 const TEMPLATE_CSV =
@@ -82,6 +86,29 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
   const csvRef = useRef<HTMLInputElement>(null);
+  const analyzeFn = useServerFn(analyzeProductImage);
+
+  async function runAiForRow(i: number, file: File) {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, aiStatus: "analyzing" } : r)));
+    try {
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
+      });
+      const out = await analyzeFn({ data: { imageDataUrl: dataUrl } });
+      setRows((rs) => rs.map((r, idx) => idx === i ? {
+        ...r,
+        name: r.name.trim() ? r.name : (out.name || r.name),
+        description: r.description.trim() ? r.description : (out.description || r.description),
+        aiStatus: "ok",
+      } : r));
+    } catch (e) {
+      console.error("[bulk ai]", e);
+      setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, aiStatus: "fail" } : r)));
+    }
+  }
 
   function update(i: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -127,9 +154,12 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
   }
 
   function onFileChange(i: number, f: File | null) {
-    if (!f) { update(i, { file: null, preview: rows[i].imageUrl }); return; }
+    if (!f) { update(i, { file: null, preview: rows[i].imageUrl, aiStatus: "idle" }); return; }
     const reader = new FileReader();
-    reader.onload = () => update(i, { file: f, preview: String(reader.result) });
+    reader.onload = () => {
+      update(i, { file: f, preview: String(reader.result) });
+      void runAiForRow(i, f);
+    };
     reader.readAsDataURL(f);
   }
 
@@ -226,7 +256,22 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
                     <input type="file" hidden accept="image/*" onChange={(e) => onFileChange(i, e.target.files?.[0] ?? null)} />
                     Pilih foto
                   </label>
+                  {r.aiStatus === "analyzing" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-primary"><Loader2 className="h-2.5 w-2.5 animate-spin" /> Menganalisis...</span>
+                  )}
+                  {r.aiStatus === "ok" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600"><CheckCircle2 className="h-2.5 w-2.5" /> AI berhasil</span>
+                  )}
+                  {r.aiStatus === "fail" && (
+                    <span className="text-[10px] text-amber-600">Gagal AI, isi manual</span>
+                  )}
+                  {r.file && r.aiStatus !== "analyzing" && (
+                    <button type="button" onClick={() => runAiForRow(i, r.file!)} className="inline-flex items-center gap-1 text-[10px] text-primary underline">
+                      <Sparkles className="h-2.5 w-2.5" /> Generate Ulang AI
+                    </button>
+                  )}
                 </div>
+
 
                 <div className="grid flex-1 gap-2 md:grid-cols-12">
                   <div className="md:col-span-4">
