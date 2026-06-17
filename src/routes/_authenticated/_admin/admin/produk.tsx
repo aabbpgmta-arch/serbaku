@@ -300,8 +300,20 @@ function AdminProduk() {
   );
 }
 
+type StagedImage = { tmpId: string; file: File; preview: string; is_cover: boolean };
+
+function fileToDataUrl(f: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = rej;
+    r.readAsDataURL(f);
+  });
+}
+
 function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onOpenChange: (o: boolean) => void; product: ProductRow | null }) {
   const qc = useQueryClient();
+  const isCreate = !product;
   const [name, setName] = useState(product?.name ?? "");
   const [price, setPrice] = useState(product?.price ?? 0);
   const [stock, setStock] = useState(product?.stock ?? 0);
@@ -322,50 +334,89 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [uploading, setUploading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
 
-  async function save() {
-    if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
-    setSaving(true);
-    let slug = slugify(name);
-    const payload = {
-      name, price, stock, category, description,
-      is_bestseller: isBestseller, is_new: isNew, is_active: isActive, video_url: videoUrl,
-      manual_badge: manualBadge.trim() || null,
-      sku: sku.trim().toUpperCase() || null,
-      discount_type: discountType,
-      discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
-    };
+  // Staging (create mode only)
+  const [stagedImages, setStagedImages] = useState<StagedImage[]>([]);
+  const [stagedVideo, setStagedVideo] = useState<{ file: File; url: string } | null>(null);
 
-    if (product) {
-      const { error } = await supabase.from("products").update(payload).eq("id", product.id);
-      if (error) { toast.error(error.message); setSaving(false); return; }
-      toast.success("Produk diperbarui");
-      void logAction("update_product", "product", product.id, { name, price });
-    } else {
-      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
-      const { data: created, error } = await supabase.from("products").insert({ ...payload, slug }).select().single();
-      if (error) { toast.error(error.message); setSaving(false); return; }
-      toast.success("Produk dibuat");
-      if (created?.id) void logAction("create_product", "product", created.id, { name, price });
+  // AI
+  const analyzeFn = useServerFn(analyzeProductImage);
+  const [aiStatus, setAiStatus] = useState<"idle" | "analyzing" | "ok" | "fail">("idle");
+
+  async function runAiOnFile(file: File) {
+    setAiStatus("analyzing");
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const out = await analyzeFn({ data: { imageDataUrl: dataUrl } });
+      if (out.name) setName(out.name);
+      if (out.description) setDescription(out.description);
+      setAiStatus("ok");
+      toast.success("Nama dan deskripsi berhasil dibuat");
+    } catch (e) {
+      console.error("[ai-analyze]", e);
+      setAiStatus("fail");
+      toast.error("Gagal analisis, isi manual. " + ((e as Error).message ?? ""));
     }
-    setSaving(false);
-    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
-    onOpenChange(false);
+  }
+
+  function regenerateAi() {
+    const first = stagedImages[0]?.file;
+    if (first) return void runAiOnFile(first);
+    // Edit mode: use first image URL via fetch -> base64
+    const url = images[0]?.url;
+    if (!url) { toast.error("Belum ada foto"); return; }
+    (async () => {
+      setAiStatus("analyzing");
+      try {
+        const r = await fetch(url);
+        const blob = await r.blob();
+        const dataUrl = await fileToDataUrl(new File([blob], "img", { type: blob.type }));
+        const out = await analyzeFn({ data: { imageDataUrl: dataUrl } });
+        if (out.name) setName(out.name);
+        if (out.description) setDescription(out.description);
+        setAiStatus("ok");
+        toast.success("Nama dan deskripsi diperbarui dari foto");
+      } catch (e) {
+        setAiStatus("fail");
+        toast.error("Gagal analisis foto");
+      }
+    })();
   }
 
   async function uploadFiles(files: FileList) {
-    if (!product) { toast.error("Simpan produk terlebih dahulu sebelum upload foto"); return; }
-    if (images.length + files.length > 8) { toast.error("Maksimum 8 foto"); return; }
+    const total = (isCreate ? stagedImages.length : images.length) + files.length;
+    if (total > 8) { toast.error("Maksimum 8 foto"); return; }
+
+    if (isCreate) {
+      // Stage locally
+      const wasEmpty = stagedImages.length === 0;
+      const newStaged: StagedImage[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        if (!f.type.startsWith("image/")) continue;
+        newStaged.push({
+          tmpId: `${Date.now()}-${i}-${Math.random().toString(36).slice(-4)}`,
+          file: f,
+          preview: URL.createObjectURL(f),
+          is_cover: wasEmpty && i === 0,
+        });
+      }
+      setStagedImages((prev) => [...prev, ...newStaged]);
+      if (wasEmpty && newStaged.length > 0) void runAiOnFile(newStaged[0].file);
+      return;
+    }
+
+    // Edit mode: upload directly (existing behavior)
     setUploading(true);
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       const ext = f.name.split(".").pop();
-      const path = `${product.id}/${Date.now()}-${i}.${ext}`;
+      const path = `${product!.id}/${Date.now()}-${i}.${ext}`;
       const { error: upErr } = await supabase.storage.from("product-images").upload(path, f);
       if (upErr) { toast.error(upErr.message); continue; }
       const { data: signed } = await supabase.storage.from("product-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
       const isCover = images.length === 0 && i === 0;
       const { data: img } = await supabase.from("product_images").insert({
-        product_id: product.id, url: signed?.signedUrl ?? path, is_cover: isCover, sort_order: images.length + i,
+        product_id: product!.id, url: signed?.signedUrl ?? path, is_cover: isCover, sort_order: images.length + i,
       }).select().single();
       if (img) setImages((prev) => [...prev, img]);
     }
@@ -374,21 +425,24 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   }
 
   async function uploadVideo(file: File) {
-    if (!product) { toast.error("Simpan produk terlebih dahulu sebelum upload video"); return; }
     if (file.size > 50 * 1024 * 1024) { toast.error("Ukuran video maksimum 50MB"); return; }
+    if (isCreate) {
+      if (stagedVideo) URL.revokeObjectURL(stagedVideo.url);
+      setStagedVideo({ file, url: URL.createObjectURL(file) });
+      return;
+    }
     setVideoUploading(true);
-    // remove old video first
     if (videoUrl) {
       const m = videoUrl.match(/\/product-videos\/([^?]+)/);
       if (m?.[1]) await supabase.storage.from("product-videos").remove([decodeURIComponent(m[1])]);
     }
     const ext = file.name.split(".").pop();
-    const path = `${product.id}/${Date.now()}.${ext}`;
+    const path = `${product!.id}/${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("product-videos").upload(path, file);
     if (upErr) { toast.error(upErr.message); setVideoUploading(false); return; }
     const { data: signed } = await supabase.storage.from("product-videos").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
     const url = signed?.signedUrl ?? null;
-    const { error: dbErr } = await supabase.from("products").update({ video_url: url }).eq("id", product.id);
+    const { error: dbErr } = await supabase.from("products").update({ video_url: url }).eq("id", product!.id);
     if (dbErr) { toast.error(dbErr.message); setVideoUploading(false); return; }
     setVideoUrl(url);
     setVideoUploading(false);
@@ -397,6 +451,11 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   }
 
   async function removeVideo() {
+    if (isCreate) {
+      if (stagedVideo) URL.revokeObjectURL(stagedVideo.url);
+      setStagedVideo(null);
+      return;
+    }
     if (!product || !videoUrl) return;
     const m = videoUrl.match(/\/product-videos\/([^?]+)/);
     if (m?.[1]) await supabase.storage.from("product-videos").remove([decodeURIComponent(m[1])]);
@@ -407,6 +466,10 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   }
 
   async function setCover(imgId: string) {
+    if (isCreate) {
+      setStagedImages((prev) => prev.map((i) => ({ ...i, is_cover: i.tmpId === imgId })));
+      return;
+    }
     if (!product) return;
     await supabase.from("product_images").update({ is_cover: false }).eq("product_id", product.id);
     await supabase.from("product_images").update({ is_cover: true }).eq("id", imgId);
@@ -415,6 +478,17 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   }
 
   async function removeImg(imgId: string) {
+    if (isCreate) {
+      setStagedImages((prev) => {
+        const removed = prev.find((i) => i.tmpId === imgId);
+        if (removed) URL.revokeObjectURL(removed.preview);
+        const rest = prev.filter((i) => i.tmpId !== imgId);
+        // Ensure a cover exists
+        if (!rest.some((i) => i.is_cover) && rest[0]) rest[0].is_cover = true;
+        return [...rest];
+      });
+      return;
+    }
     const img = images.find((i) => i.id === imgId);
     if (img) {
       const m = img.url.match(/\/product-images\/([^?]+)/);
@@ -425,51 +499,139 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
   }
 
+  async function save() {
+    if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
+    setSaving(true);
+    let slug = slugify(name);
+    const payload = {
+      name, price, stock, category, description,
+      is_bestseller: isBestseller, is_new: isNew, is_active: isActive,
+      manual_badge: manualBadge.trim() || null,
+      sku: sku.trim().toUpperCase() || null,
+      discount_type: discountType,
+      discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
+    };
+
+    if (product) {
+      const { error } = await supabase.from("products").update({ ...payload, video_url: videoUrl }).eq("id", product.id);
+      if (error) { toast.error(error.message); setSaving(false); return; }
+      toast.success("Produk diperbarui");
+      void logAction("update_product", "product", product.id, { name, price });
+    } else {
+      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+      // Create product first WITHOUT media, then upload & attach. If media fails, roll back.
+      const { data: created, error } = await supabase.from("products").insert({ ...payload, slug, video_url: null }).select().single();
+      if (error || !created) { toast.error(error?.message ?? "Gagal simpan"); setSaving(false); return; }
+
+      try {
+        // Upload staged images
+        for (let i = 0; i < stagedImages.length; i++) {
+          const s = stagedImages[i];
+          const ext = s.file.name.split(".").pop() || "jpg";
+          const path = `${created.id}/${Date.now()}-${i}.${ext}`;
+          const { error: upErr } = await supabase.storage.from("product-images").upload(path, s.file);
+          if (upErr) throw upErr;
+          const { data: signed } = await supabase.storage.from("product-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+          await supabase.from("product_images").insert({
+            product_id: created.id, url: signed?.signedUrl ?? path, is_cover: s.is_cover, sort_order: i,
+          });
+        }
+        // Upload staged video
+        if (stagedVideo) {
+          const ext = stagedVideo.file.name.split(".").pop() || "mp4";
+          const path = `${created.id}/${Date.now()}.${ext}`;
+          const { error: vErr } = await supabase.storage.from("product-videos").upload(path, stagedVideo.file);
+          if (vErr) throw vErr;
+          const { data: signed } = await supabase.storage.from("product-videos").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+          await supabase.from("products").update({ video_url: signed?.signedUrl ?? null }).eq("id", created.id);
+        }
+      } catch (e) {
+        // Rollback: delete the empty product so no orphan is left
+        await supabase.from("products").delete().eq("id", created.id);
+        toast.error("Gagal upload media: " + ((e as Error).message ?? ""));
+        setSaving(false);
+        return;
+      }
+
+      toast.success("Produk dibuat");
+      void logAction("create_product", "product", created.id, { name, price });
+    }
+    setSaving(false);
+    qc.invalidateQueries({ queryKey: ["admin_products"] }); qc.invalidateQueries({ queryKey: ["products"] });
+    onOpenChange(false);
+  }
+
+  const displayImages = isCreate
+    ? stagedImages.map((s) => ({ id: s.tmpId, url: s.preview, is_cover: s.is_cover }))
+    : images.map((i) => ({ id: i.id, url: i.url, is_cover: i.is_cover }));
+  const displayVideoUrl = isCreate ? stagedVideo?.url ?? null : videoUrl;
+  const canShowAiButton = displayImages.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader><DialogTitle>{product ? "Edit Produk" : "Tambah Produk"}</DialogTitle></DialogHeader>
         <div className="grid gap-5">
-          {/* MEDIA — foto & video di atas */}
+          {/* MEDIA */}
           <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
-            {!product && (
-              <p className="mb-3 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
-                Simpan produk terlebih dahulu, lalu upload foto & video di sini.
-              </p>
-            )}
             <div className="flex items-center justify-between">
               <Label>Foto Produk (max 8)</Label>
-              <Button type="button" variant="outline" size="sm" disabled={!product || uploading || images.length >= 8} onClick={() => fileRef.current?.click()} className="gap-1.5">
-                <Upload className="h-3.5 w-3.5" /> {uploading ? "Mengupload..." : "Upload Foto"}
+              <Button type="button" variant="outline" size="sm" disabled={uploading || displayImages.length >= 8} onClick={() => fileRef.current?.click()} className="gap-1.5">
+                <Upload className="h-3.5 w-3.5" /> {uploading ? "Mengupload..." : "Pilih Foto"}
               </Button>
-              <input ref={fileRef} type="file" hidden accept="image/*" multiple onChange={(e) => e.target.files && uploadFiles(e.target.files)} />
+              <input ref={fileRef} type="file" hidden accept="image/*" multiple onChange={(e) => { if (e.target.files) void uploadFiles(e.target.files); e.target.value = ""; }} />
             </div>
+
+            {/* AI status */}
+            {canShowAiButton && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {aiStatus === "analyzing" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Menganalisis foto...
+                  </span>
+                )}
+                {aiStatus === "ok" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                    <CheckCircle2 className="h-3 w-3" /> Nama & deskripsi berhasil dibuat
+                  </span>
+                )}
+                {aiStatus === "fail" && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                    Gagal analisis, isi manual
+                  </span>
+                )}
+                <Button type="button" variant="ghost" size="sm" onClick={regenerateAi} disabled={aiStatus === "analyzing"} className="gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" /> Generate Ulang AI dari Foto
+                </Button>
+              </div>
+            )}
+
             <div className="mt-3 grid grid-cols-4 gap-2">
-              {images.map((img) => (
+              {displayImages.map((img) => (
                 <div key={img.id} className={`group relative aspect-square overflow-hidden rounded-lg border-2 ${img.is_cover ? "border-primary" : "border-transparent"}`}>
                   <img src={img.url} alt="" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 hidden items-center justify-center gap-1 bg-black/50 group-hover:flex">
-                    <button onClick={() => setCover(img.id)} title="Jadikan cover" className="rounded-full bg-white/90 p-1.5"><Star className={`h-3.5 w-3.5 ${img.is_cover ? "fill-primary text-primary" : ""}`} /></button>
-                    <button onClick={() => removeImg(img.id)} title="Hapus" className="rounded-full bg-white/90 p-1.5"><X className="h-3.5 w-3.5 text-destructive" /></button>
+                    <button type="button" onClick={() => setCover(img.id)} title="Jadikan cover" className="rounded-full bg-white/90 p-1.5"><Star className={`h-3.5 w-3.5 ${img.is_cover ? "fill-primary text-primary" : ""}`} /></button>
+                    <button type="button" onClick={() => removeImg(img.id)} title="Hapus" className="rounded-full bg-white/90 p-1.5"><X className="h-3.5 w-3.5 text-destructive" /></button>
                   </div>
                 </div>
               ))}
-              {images.length === 0 && <div className="col-span-4 rounded-lg border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Belum ada foto.</div>}
+              {displayImages.length === 0 && <div className="col-span-4 rounded-lg border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Belum ada foto. Pilih foto dulu — AI akan otomatis mengisi nama & deskripsi.</div>}
             </div>
 
             <div className="mt-5 flex items-center justify-between">
               <Label>Video Produk (opsional, max 50MB)</Label>
               <div className="flex gap-2">
-                {videoUrl && <Button type="button" variant="ghost" size="sm" onClick={removeVideo} className="gap-1.5 text-destructive"><X className="h-3.5 w-3.5" /> Hapus</Button>}
-                <Button type="button" variant="outline" size="sm" disabled={!product || videoUploading} onClick={() => videoRef.current?.click()} className="gap-1.5">
-                  <Video className="h-3.5 w-3.5" /> {videoUploading ? "Mengupload..." : videoUrl ? "Ganti Video" : "Upload Video"}
+                {displayVideoUrl && <Button type="button" variant="ghost" size="sm" onClick={removeVideo} className="gap-1.5 text-destructive"><X className="h-3.5 w-3.5" /> Hapus</Button>}
+                <Button type="button" variant="outline" size="sm" disabled={videoUploading} onClick={() => videoRef.current?.click()} className="gap-1.5">
+                  <Video className="h-3.5 w-3.5" /> {videoUploading ? "Mengupload..." : displayVideoUrl ? "Ganti Video" : "Pilih Video"}
                 </Button>
-                <input ref={videoRef} type="file" hidden accept="video/*" onChange={(e) => e.target.files?.[0] && uploadVideo(e.target.files[0])} />
+                <input ref={videoRef} type="file" hidden accept="video/*" onChange={(e) => { if (e.target.files?.[0]) void uploadVideo(e.target.files[0]); e.target.value = ""; }} />
               </div>
             </div>
             <div className="mt-3">
-              {videoUrl ? (
-                <video src={videoUrl} controls className="aspect-video w-full rounded-lg bg-black" />
+              {displayVideoUrl ? (
+                <video src={displayVideoUrl} controls className="aspect-video w-full rounded-lg bg-black" />
               ) : (
                 <div className="rounded-lg border border-dashed border-border bg-card p-6 text-center text-xs text-muted-foreground">Belum ada video.</div>
               )}
@@ -529,9 +691,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             </div>
           </div>
 
-
-
-          {/* PROMO PER PRODUK (tanpa batas waktu) */}
+          {/* PROMO PER PRODUK */}
           <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
             <p className="mb-1 text-sm font-semibold">Diskon Produk</p>
             <p className="mb-3 text-[11px] text-muted-foreground">Untuk promo terbatas waktu (countdown), gunakan menu <b>Promosi → Flash Sale</b>.</p>
@@ -557,10 +717,11 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-            <Button onClick={save} disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Menyimpan..." : "Simpan Produk"}</Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
