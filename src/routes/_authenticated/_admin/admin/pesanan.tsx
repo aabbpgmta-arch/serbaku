@@ -366,7 +366,9 @@ function AdminPesanan() {
               })}
           </tbody>
         </table>
+        <TablePagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} onPageSizeChange={setPageSize} itemLabel="pesanan" />
       </div>
+
 
       {detail && <OrderDetailDialog order={detail} onClose={() => setDetail(null)} onRequestStatusChange={(to) => setPendingChange({ id: detail.id, to, orderNumber: detail.order_number })} />}
 
