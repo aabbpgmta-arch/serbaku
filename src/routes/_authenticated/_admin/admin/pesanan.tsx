@@ -198,9 +198,9 @@ function AdminPesanan() {
     }
   }
 
-  // Stats
+  // Stats (lightweight: status + created_at across ALL orders)
   const stats = useMemo(() => {
-    const list = orders ?? [];
+    const list = statsRows ?? [];
     const todayBounds = rangeBounds("today");
     const today = list.filter((o) => {
       const d = new Date(o.created_at);
@@ -215,30 +215,11 @@ function AdminPesanan() {
       selesai: by("selesai"),
       dibatalkan: by("dibatalkan"),
     };
-  }, [orders]);
+  }, [statsRows]);
 
-  // Filtered list
-  const filtered = useMemo(() => {
-    const list = orders ?? [];
-    const [from, to] = rangeBounds(range, customFrom, customTo);
-    const q = search.trim().toLowerCase();
-    return list.filter((o) => {
-      if (filterStatus !== "all" && o.status !== filterStatus) return false;
-      if (from || to) {
-        const d = new Date(o.created_at);
-        if (from && d < from) return false;
-        if (to && d > to) return false;
-      }
-      if (q) {
-        const hay = [
-          o.order_number, o.full_name, o.whatsapp, o.email ?? "",
-          ...(o.order_items ?? []).flatMap((i) => [i.product_name, i.product_id ?? ""]),
-        ].join(" ").toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [orders, filterStatus, range, customFrom, customTo, search]);
+  // Page rows already filtered server-side
+  const filtered = orders ?? [];
+
 
   function exportXlsx() {
     if (filtered.length === 0) { toast.error("Tidak ada data untuk diexport"); return; }
