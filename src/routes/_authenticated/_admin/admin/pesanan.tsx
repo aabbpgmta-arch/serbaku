@@ -146,7 +146,7 @@ function AdminPesanan() {
         .from("orders")
         .select("*, order_items(id,product_id,product_name,product_image,quantity,unit_price,subtotal)", { count: "exact" })
         .order("created_at", { ascending: false });
-      if (filterStatus !== "all") q = q.eq("status", filterStatus);
+      if (filterStatus !== "all") q = q.eq("status", filterStatus as OrderStatus);
       const [from, to] = rangeBounds(range, customFrom, customTo);
       if (from) q = q.gte("created_at", from.toISOString());
       if (to) q = q.lte("created_at", to.toISOString());
