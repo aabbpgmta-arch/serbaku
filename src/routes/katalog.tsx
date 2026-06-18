@@ -112,6 +112,7 @@ function KatalogPage() {
           e.preventDefault();
           const url = new URL(window.location.href);
           if (q) url.searchParams.set("q", q); else url.searchParams.delete("q");
+          url.searchParams.delete("page");
           window.history.replaceState({}, "", url.toString());
           window.location.search = url.search;
         }}
@@ -119,6 +120,7 @@ function KatalogPage() {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari produk..." className="pl-9" />
       </form>
+
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
