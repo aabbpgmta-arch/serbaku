@@ -106,6 +106,16 @@ function AdminPesanan() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => { setPage(1); }, [debouncedSearch, filterStatus, range, customFrom, customTo, pageSize]);
 
   const { data: waTemplates } = useQuery({
     queryKey: ["setting", "orders"],
@@ -116,18 +126,43 @@ function AdminPesanan() {
     },
   });
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["admin_orders"],
-    refetchInterval: 10_000,
+  // Lightweight stats query (status + created_at only) across all orders for the stat cards.
+  const { data: statsRows } = useQuery({
+    queryKey: ["admin_orders_stats"],
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*, order_items(id,product_id,product_name,product_image,quantity,unit_price,subtotal)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("orders").select("status, created_at");
       if (error) throw error;
-      return (data ?? []) as Order[];
+      return (data ?? []) as { status: string; created_at: string }[];
     },
   });
+
+  const { data: ordersPage, isLoading } = useQuery({
+    queryKey: ["admin_orders", { debouncedSearch, filterStatus, range, customFrom, customTo, page, pageSize }],
+    placeholderData: keepPreviousData,
+    refetchInterval: 10_000,
+    queryFn: async () => {
+      let q = supabase
+        .from("orders")
+        .select("*, order_items(id,product_id,product_name,product_image,quantity,unit_price,subtotal)", { count: "exact" })
+        .order("created_at", { ascending: false });
+      if (filterStatus !== "all") q = q.eq("status", filterStatus);
+      const [from, to] = rangeBounds(range, customFrom, customTo);
+      if (from) q = q.gte("created_at", from.toISOString());
+      if (to) q = q.lte("created_at", to.toISOString());
+      if (debouncedSearch) {
+        const s = debouncedSearch.replace(/[%,]/g, " ");
+        q = q.or(`order_number.ilike.%${s}%,full_name.ilike.%${s}%,whatsapp.ilike.%${s}%,email.ilike.%${s}%`);
+      }
+      const fromIdx = (page - 1) * pageSize;
+      const toIdx = fromIdx + pageSize - 1;
+      const { data, error, count } = await q.range(fromIdx, toIdx);
+      if (error) throw error;
+      return { rows: (data ?? []) as Order[], total: count ?? 0 };
+    },
+  });
+  const orders = ordersPage?.rows;
+  const total = ordersPage?.total ?? 0;
 
   useEffect(() => {
     const channel = supabase
@@ -135,16 +170,15 @@ function AdminPesanan() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
         const nextOrder = payload.new as Partial<Order> | null;
         if (nextOrder?.id) {
-          qc.setQueryData<Order[]>(["admin_orders"], (current) =>
-            current?.map((order) => (order.id === nextOrder.id ? { ...order, ...nextOrder } : order)),
-          );
           setDetail((current) => (current?.id === nextOrder.id ? ({ ...current, ...nextOrder } as Order) : current));
         }
         qc.invalidateQueries({ queryKey: ["admin_orders"] });
+        qc.invalidateQueries({ queryKey: ["admin_orders_stats"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
+
 
   async function applyStatusChange(id: string, newStatus: OrderStatus) {
     const patch = { status: newStatus, ...(newStatus === "dikirim" ? { shipped_at: new Date().toISOString() } : {}) };
