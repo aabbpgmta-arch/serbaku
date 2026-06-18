@@ -263,6 +263,36 @@ function KatalogPage() {
           })}
         </div>
       )}
+
+      {!isLoading && !error && total > 0 && (
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Menampilkan <b>{(page - 1) * PAGE_SIZE + 1}</b>–<b>{Math.min(page * PAGE_SIZE, total)}</b> dari <b>{total}</b> produk
+          </p>
+          <div className="flex items-center gap-1">
+            <Button asChild={page > 1} variant="outline" size="sm" className="h-8 gap-1 px-2" disabled={page <= 1}>
+              {page > 1 ? (
+                <Link to="/katalog" search={{ ...search, page: page - 1 }}>
+                  <ChevronLeft className="h-3.5 w-3.5" /> Sebelumnya
+                </Link>
+              ) : (
+                <span><ChevronLeft className="h-3.5 w-3.5" /> Sebelumnya</span>
+              )}
+            </Button>
+            <span className="px-2 text-xs text-muted-foreground">Halaman {page} dari {totalPages}</span>
+            <Button asChild={page < totalPages} variant="outline" size="sm" className="h-8 gap-1 px-2" disabled={page >= totalPages}>
+              {page < totalPages ? (
+                <Link to="/katalog" search={{ ...search, page: page + 1 }}>
+                  Berikutnya <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              ) : (
+                <span>Berikutnya <ChevronRight className="h-3.5 w-3.5" /></span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
