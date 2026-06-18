@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { TablePagination } from "@/components/admin/TablePagination";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pesanan")({
   head: () => ({ meta: [{ title: "Admin Pesanan — Toko Serba" }, { name: "robots", content: "noindex" }] }),
