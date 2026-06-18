@@ -298,7 +298,7 @@ function AdminPesanan() {
             <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-9 w-36 text-xs" />
           </>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} pesanan</span>
+        <span className="ml-auto text-xs text-muted-foreground">{total} pesanan</span>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border/60 bg-card">
