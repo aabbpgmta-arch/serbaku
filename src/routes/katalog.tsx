@@ -130,7 +130,7 @@ function KatalogPage() {
               <Link
                 key={f.label}
                 to="/katalog"
-                search={{ ...search, cat: f.id }}
+                search={{ ...search, cat: f.id, page: undefined }}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                   active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"
                 }`}
