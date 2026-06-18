@@ -37,12 +37,7 @@ function AuthPage() {
           <p className="mt-1 text-sm text-muted-foreground">Masuk untuk lanjut belanja grosir</p>
         </div>
 
-        <GoogleButton />
-        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> atau <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <Tabs defaultValue="login">
+        <Tabs defaultValue="login" className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Masuk</TabsTrigger>
             <TabsTrigger value="signup">Daftar</TabsTrigger>
