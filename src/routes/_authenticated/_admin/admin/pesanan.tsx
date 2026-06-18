@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { TablePagination } from "@/components/admin/TablePagination";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/pesanan")({
   head: () => ({ meta: [{ title: "Admin Pesanan — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -105,6 +106,16 @@ function AdminPesanan() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => { setPage(1); }, [debouncedSearch, filterStatus, range, customFrom, customTo, pageSize]);
 
   const { data: waTemplates } = useQuery({
     queryKey: ["setting", "orders"],
@@ -115,18 +126,43 @@ function AdminPesanan() {
     },
   });
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["admin_orders"],
-    refetchInterval: 10_000,
+  // Lightweight stats query (status + created_at only) across all orders for the stat cards.
+  const { data: statsRows } = useQuery({
+    queryKey: ["admin_orders_stats"],
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*, order_items(id,product_id,product_name,product_image,quantity,unit_price,subtotal)")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("orders").select("status, created_at");
       if (error) throw error;
-      return (data ?? []) as Order[];
+      return (data ?? []) as { status: string; created_at: string }[];
     },
   });
+
+  const { data: ordersPage, isLoading } = useQuery({
+    queryKey: ["admin_orders", { debouncedSearch, filterStatus, range, customFrom, customTo, page, pageSize }],
+    placeholderData: keepPreviousData,
+    refetchInterval: 10_000,
+    queryFn: async () => {
+      let q = supabase
+        .from("orders")
+        .select("*, order_items(id,product_id,product_name,product_image,quantity,unit_price,subtotal)", { count: "exact" })
+        .order("created_at", { ascending: false });
+      if (filterStatus !== "all") q = q.eq("status", filterStatus as OrderStatus);
+      const [from, to] = rangeBounds(range, customFrom, customTo);
+      if (from) q = q.gte("created_at", from.toISOString());
+      if (to) q = q.lte("created_at", to.toISOString());
+      if (debouncedSearch) {
+        const s = debouncedSearch.replace(/[%,]/g, " ");
+        q = q.or(`order_number.ilike.%${s}%,full_name.ilike.%${s}%,whatsapp.ilike.%${s}%,email.ilike.%${s}%`);
+      }
+      const fromIdx = (page - 1) * pageSize;
+      const toIdx = fromIdx + pageSize - 1;
+      const { data, error, count } = await q.range(fromIdx, toIdx);
+      if (error) throw error;
+      return { rows: (data ?? []) as Order[], total: count ?? 0 };
+    },
+  });
+  const orders = ordersPage?.rows;
+  const total = ordersPage?.total ?? 0;
 
   useEffect(() => {
     const channel = supabase
@@ -134,16 +170,15 @@ function AdminPesanan() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
         const nextOrder = payload.new as Partial<Order> | null;
         if (nextOrder?.id) {
-          qc.setQueryData<Order[]>(["admin_orders"], (current) =>
-            current?.map((order) => (order.id === nextOrder.id ? { ...order, ...nextOrder } : order)),
-          );
           setDetail((current) => (current?.id === nextOrder.id ? ({ ...current, ...nextOrder } as Order) : current));
         }
         qc.invalidateQueries({ queryKey: ["admin_orders"] });
+        qc.invalidateQueries({ queryKey: ["admin_orders_stats"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
+
 
   async function applyStatusChange(id: string, newStatus: OrderStatus) {
     const patch = { status: newStatus, ...(newStatus === "dikirim" ? { shipped_at: new Date().toISOString() } : {}) };
@@ -163,9 +198,9 @@ function AdminPesanan() {
     }
   }
 
-  // Stats
+  // Stats (lightweight: status + created_at across ALL orders)
   const stats = useMemo(() => {
-    const list = orders ?? [];
+    const list = statsRows ?? [];
     const todayBounds = rangeBounds("today");
     const today = list.filter((o) => {
       const d = new Date(o.created_at);
@@ -180,30 +215,11 @@ function AdminPesanan() {
       selesai: by("selesai"),
       dibatalkan: by("dibatalkan"),
     };
-  }, [orders]);
+  }, [statsRows]);
 
-  // Filtered list
-  const filtered = useMemo(() => {
-    const list = orders ?? [];
-    const [from, to] = rangeBounds(range, customFrom, customTo);
-    const q = search.trim().toLowerCase();
-    return list.filter((o) => {
-      if (filterStatus !== "all" && o.status !== filterStatus) return false;
-      if (from || to) {
-        const d = new Date(o.created_at);
-        if (from && d < from) return false;
-        if (to && d > to) return false;
-      }
-      if (q) {
-        const hay = [
-          o.order_number, o.full_name, o.whatsapp, o.email ?? "",
-          ...(o.order_items ?? []).flatMap((i) => [i.product_name, i.product_id ?? ""]),
-        ].join(" ").toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [orders, filterStatus, range, customFrom, customTo, search]);
+  // Page rows already filtered server-side
+  const filtered = orders ?? [];
+
 
   function exportXlsx() {
     if (filtered.length === 0) { toast.error("Tidak ada data untuk diexport"); return; }
@@ -282,7 +298,7 @@ function AdminPesanan() {
             <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-9 w-36 text-xs" />
           </>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length} pesanan</span>
+        <span className="ml-auto text-xs text-muted-foreground">{total} pesanan</span>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border/60 bg-card">
@@ -350,7 +366,9 @@ function AdminPesanan() {
               })}
           </tbody>
         </table>
+        <TablePagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} onPageSizeChange={setPageSize} itemLabel="pesanan" />
       </div>
+
 
       {detail && <OrderDetailDialog order={detail} onClose={() => setDetail(null)} onRequestStatusChange={(to) => setPendingChange({ id: detail.id, to, orderNumber: detail.order_number })} />}
 

@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video, History, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Star, X, ImageIcon, ChevronDown, CheckSquare, Square, LayoutGrid, List, Video, History, Sparkles, Loader2, CheckCircle2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeProductImage } from "@/lib/ai-analyze.functions";
 import { formatRupiah, slugify } from "@/lib/format";
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
 import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
+import { TablePagination } from "@/components/admin/TablePagination";
 import { logAction } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
@@ -39,14 +40,51 @@ type ProductRow = {
 
 function AdminProduk() {
   const qc = useQueryClient();
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["admin_products"],
+
+  // Filters / pagination state
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState<"all" | "serba_35" | "serba_75" | "lainnya">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name_asc" | "price_asc" | "price_desc" | "stock_asc">("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 1 when any filter/sort/search changes
+  useEffect(() => { setPage(1); }, [debouncedSearch, filterCategory, filterStatus, sort, pageSize]);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin_products", { debouncedSearch, filterCategory, filterStatus, sort, page, pageSize }],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*, product_images(*)").order("created_at", { ascending: false });
+      let q = supabase.from("products").select("*, product_images(*)", { count: "exact" });
+      if (filterCategory !== "all") q = q.eq("category", filterCategory);
+      if (filterStatus === "active") q = q.eq("is_active", true);
+      else if (filterStatus === "inactive") q = q.eq("is_active", false);
+      if (debouncedSearch) q = q.ilike("name", `%${debouncedSearch}%`);
+      switch (sort) {
+        case "oldest": q = q.order("created_at", { ascending: true }); break;
+        case "name_asc": q = q.order("name", { ascending: true }); break;
+        case "price_asc": q = q.order("price", { ascending: true }); break;
+        case "price_desc": q = q.order("price", { ascending: false }); break;
+        case "stock_asc": q = q.order("stock", { ascending: true }); break;
+        default: q = q.order("created_at", { ascending: false });
+      }
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await q.range(from, to);
       if (error) { console.error("[admin produk] gagal memuat", error); throw error; }
-      return (data ?? []) as ProductRow[];
+      return { rows: (data ?? []) as ProductRow[], total: count ?? 0 };
     },
   });
+  const products = data?.rows;
+  const total = data?.total ?? 0;
 
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [openForm, setOpenForm] = useState(false);
@@ -182,8 +220,45 @@ function AdminProduk() {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama produk…" className="h-9 w-64 pl-8 text-xs" />
+        </div>
+        <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v as typeof filterCategory)}>
+          <SelectTrigger className="h-9 w-36 text-xs"><SelectValue placeholder="Kategori" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Kategori</SelectItem>
+            <SelectItem value="serba_35">Serba 35</SelectItem>
+            <SelectItem value="serba_75">Serba 75</SelectItem>
+            <SelectItem value="lainnya">Lainnya</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
+          <SelectTrigger className="h-9 w-32 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Status</SelectItem>
+            <SelectItem value="active">Aktif</SelectItem>
+            <SelectItem value="inactive">Nonaktif</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+          <SelectTrigger className="h-9 w-40 text-xs"><SelectValue placeholder="Urutkan" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Terbaru</SelectItem>
+            <SelectItem value="oldest">Terlama</SelectItem>
+            <SelectItem value="name_asc">Nama A–Z</SelectItem>
+            <SelectItem value="price_asc">Harga Termurah</SelectItem>
+            <SelectItem value="price_desc">Harga Tertinggi</SelectItem>
+            <SelectItem value="stock_asc">Stok Terkecil</SelectItem>
+          </SelectContent>
+        </Select>
+        {isFetching && !isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+      </div>
+
       {view === "list" ? (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-border/60 bg-card">
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-border/60 bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
               <tr>
@@ -202,7 +277,7 @@ function AdminProduk() {
             </thead>
             <tbody>
               {isLoading ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Memuat...</td></tr>
-                : (products ?? []).length === 0 ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Belum ada produk.</td></tr>
+                : (products ?? []).length === 0 ? <tr><td colSpan={7} className="py-10 text-center text-muted-foreground">Tidak ada produk sesuai filter.</td></tr>
                 : products!.map((p) => {
                   const cover = p.product_images?.find((i) => i.is_cover)?.url ?? p.product_images?.[0]?.url ?? null;
                   const checked = selected.has(p.id);
@@ -212,7 +287,7 @@ function AdminProduk() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-muted">
-                            {cover ? <img src={cover} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="m-2 h-6 w-6 text-muted-foreground" />}
+                            {cover ? <img src={cover} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <ImageIcon className="m-2 h-6 w-6 text-muted-foreground" />}
                             {p.video_url && <span className="absolute bottom-0 right-0 grid h-4 w-4 place-content-center rounded-tl bg-black/70"><Video className="h-2.5 w-2.5 text-white" /></span>}
                           </div>
                           <div>
@@ -245,11 +320,12 @@ function AdminProduk() {
                 })}
             </tbody>
           </table>
+          <TablePagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} onPageSizeChange={setPageSize} itemLabel="produk" />
         </div>
       ) : (
-        <div className="mt-6">
+        <div className="mt-4">
           {isLoading ? <p className="py-10 text-center text-muted-foreground">Memuat...</p>
-            : (products ?? []).length === 0 ? <p className="py-10 text-center text-muted-foreground">Belum ada produk.</p>
+            : (products ?? []).length === 0 ? <p className="py-10 text-center text-muted-foreground">Tidak ada produk sesuai filter.</p>
             : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {products!.map((p) => {
@@ -264,7 +340,7 @@ function AdminProduk() {
                         {p.video_url && <span className="grid h-6 w-6 place-content-center rounded-full bg-black/70 text-white"><Video className="h-3 w-3" /></span>}
                       </div>
                       <div className="aspect-square w-full bg-muted">
-                        {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover" /> : <div className="grid h-full place-content-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>}
+                        {cover ? <img src={cover} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="grid h-full place-content-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>}
                       </div>
                       <div className="space-y-1.5 p-3">
                         <p className="line-clamp-2 text-sm font-medium leading-tight">{p.name}</p>
@@ -283,8 +359,12 @@ function AdminProduk() {
                 })}
               </div>
             )}
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card">
+            <TablePagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} onPageSizeChange={setPageSize} itemLabel="produk" />
+          </div>
         </div>
       )}
+
 
       <ProductFormDialog key={editing?.id ?? "new"} open={openForm} onOpenChange={setOpenForm} product={editing} />
       <BulkProductDialog open={openBulk} onOpenChange={setOpenBulk} />

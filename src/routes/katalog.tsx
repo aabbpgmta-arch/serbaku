@@ -1,19 +1,23 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon } from "lucide-react";
+import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WishlistButton } from "@/components/site/WishlistButton";
+
+const PAGE_SIZE = 12;
 
 const searchSchema = z.object({
   cat: z.enum(["serba_35", "serba_75", "lainnya", "terlaris", "baru"]).optional(),
   q: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
 });
 
 export const Route = createFileRoute("/katalog")({
@@ -58,12 +62,15 @@ function KatalogPage() {
     if (typeof window !== "undefined") localStorage.setItem("katalog_view", view);
   }, [view]);
 
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ["products", search.cat, search.q],
+  const page = search.page ?? 1;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["products", search.cat, search.q, page],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, product_images(url, is_cover, sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))")
+        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, product_images(url, is_cover, sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))", { count: "exact" })
         .eq("is_active", true)
         .gt("stock", 0)
         .order("created_at", { ascending: false });
@@ -76,12 +83,17 @@ function KatalogPage() {
 
       if (search.q) query = query.ilike("name", `%${search.q}%`);
 
-      const { data, error } = await query;
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await query.range(from, to);
       if (error) { console.error("[katalog] gagal memuat", error); throw error; }
-      return data ?? [];
+      return { rows: data ?? [], total: count ?? 0 };
     },
   });
 
+  const products = data?.rows;
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const productIds = (products ?? []).map((p) => p.id);
   const { data: statsMap } = useSalesStats(productIds);
 
@@ -100,6 +112,7 @@ function KatalogPage() {
           e.preventDefault();
           const url = new URL(window.location.href);
           if (q) url.searchParams.set("q", q); else url.searchParams.delete("q");
+          url.searchParams.delete("page");
           window.history.replaceState({}, "", url.toString());
           window.location.search = url.search;
         }}
@@ -107,6 +120,7 @@ function KatalogPage() {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari produk..." className="pl-9" />
       </form>
+
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
@@ -116,7 +130,7 @@ function KatalogPage() {
               <Link
                 key={f.label}
                 to="/katalog"
-                search={{ ...search, cat: f.id }}
+                search={{ ...search, cat: f.id, page: undefined }}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                   active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"
                 }`}
@@ -249,6 +263,36 @@ function KatalogPage() {
           })}
         </div>
       )}
+
+      {!isLoading && !error && total > 0 && (
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Menampilkan <b>{(page - 1) * PAGE_SIZE + 1}</b>–<b>{Math.min(page * PAGE_SIZE, total)}</b> dari <b>{total}</b> produk
+          </p>
+          <div className="flex items-center gap-1">
+            <Button asChild={page > 1} variant="outline" size="sm" className="h-8 gap-1 px-2" disabled={page <= 1}>
+              {page > 1 ? (
+                <Link to="/katalog" search={{ ...search, page: page - 1 }}>
+                  <ChevronLeft className="h-3.5 w-3.5" /> Sebelumnya
+                </Link>
+              ) : (
+                <span><ChevronLeft className="h-3.5 w-3.5" /> Sebelumnya</span>
+              )}
+            </Button>
+            <span className="px-2 text-xs text-muted-foreground">Halaman {page} dari {totalPages}</span>
+            <Button asChild={page < totalPages} variant="outline" size="sm" className="h-8 gap-1 px-2" disabled={page >= totalPages}>
+              {page < totalPages ? (
+                <Link to="/katalog" search={{ ...search, page: page + 1 }}>
+                  Berikutnya <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              ) : (
+                <span>Berikutnya <ChevronRight className="h-3.5 w-3.5" /></span>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
