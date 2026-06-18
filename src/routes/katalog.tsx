@@ -1,19 +1,23 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon } from "lucide-react";
+import { Search, Package, Flame, LayoutGrid, Grid3x3, Grid2x2, List as ListIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatRupiah } from "@/lib/format";
 import { flashActive, productPromoUnit, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WishlistButton } from "@/components/site/WishlistButton";
+
+const PAGE_SIZE = 12;
 
 const searchSchema = z.object({
   cat: z.enum(["serba_35", "serba_75", "lainnya", "terlaris", "baru"]).optional(),
   q: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
 });
 
 export const Route = createFileRoute("/katalog")({
