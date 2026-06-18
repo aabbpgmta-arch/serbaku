@@ -62,12 +62,15 @@ function KatalogPage() {
     if (typeof window !== "undefined") localStorage.setItem("katalog_view", view);
   }, [view]);
 
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ["products", search.cat, search.q],
+  const page = search.page ?? 1;
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["products", search.cat, search.q, page],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       let query = supabase
         .from("products")
-        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, product_images(url, is_cover, sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))")
+        .select("id, name, slug, price, category, stock, is_bestseller, is_new, discount_type, discount_value, product_images(url, is_cover, sort_order), flash_sale_items(discount_type, discount_value, flash_sales(starts_at, ends_at, is_active))", { count: "exact" })
         .eq("is_active", true)
         .gt("stock", 0)
         .order("created_at", { ascending: false });
@@ -80,12 +83,17 @@ function KatalogPage() {
 
       if (search.q) query = query.ilike("name", `%${search.q}%`);
 
-      const { data, error } = await query;
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await query.range(from, to);
       if (error) { console.error("[katalog] gagal memuat", error); throw error; }
-      return data ?? [];
+      return { rows: data ?? [], total: count ?? 0 };
     },
   });
 
+  const products = data?.rows;
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const productIds = (products ?? []).map((p) => p.id);
   const { data: statsMap } = useSalesStats(productIds);
 
