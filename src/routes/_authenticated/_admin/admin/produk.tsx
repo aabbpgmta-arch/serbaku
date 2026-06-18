@@ -40,14 +40,51 @@ type ProductRow = {
 
 function AdminProduk() {
   const qc = useQueryClient();
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["admin_products"],
+
+  // Filters / pagination state
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState<"all" | "serba_35" | "serba_75" | "lainnya">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name_asc" | "price_asc" | "price_desc" | "stock_asc">("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 1 when any filter/sort/search changes
+  useEffect(() => { setPage(1); }, [debouncedSearch, filterCategory, filterStatus, sort, pageSize]);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin_products", { debouncedSearch, filterCategory, filterStatus, sort, page, pageSize }],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*, product_images(*)").order("created_at", { ascending: false });
+      let q = supabase.from("products").select("*, product_images(*)", { count: "exact" });
+      if (filterCategory !== "all") q = q.eq("category", filterCategory);
+      if (filterStatus === "active") q = q.eq("is_active", true);
+      else if (filterStatus === "inactive") q = q.eq("is_active", false);
+      if (debouncedSearch) q = q.ilike("name", `%${debouncedSearch}%`);
+      switch (sort) {
+        case "oldest": q = q.order("created_at", { ascending: true }); break;
+        case "name_asc": q = q.order("name", { ascending: true }); break;
+        case "price_asc": q = q.order("price", { ascending: true }); break;
+        case "price_desc": q = q.order("price", { ascending: false }); break;
+        case "stock_asc": q = q.order("stock", { ascending: true }); break;
+        default: q = q.order("created_at", { ascending: false });
+      }
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await q.range(from, to);
       if (error) { console.error("[admin produk] gagal memuat", error); throw error; }
-      return (data ?? []) as ProductRow[];
+      return { rows: (data ?? []) as ProductRow[], total: count ?? 0 };
     },
   });
+  const products = data?.rows;
+  const total = data?.total ?? 0;
 
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [openForm, setOpenForm] = useState(false);
