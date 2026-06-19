@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VoucherRouteImport } from './routes/voucher'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
 import { Route as FlashSaleRouteImport } from './routes/flash-sale'
@@ -44,6 +45,11 @@ const VoucherRoute = VoucherRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KeranjangRoute = KeranjangRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
   '/produk/$slug': typeof ProdukSlugRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
   '/produk/$slug': typeof ProdukSlugRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
     | '/produk/$slug'
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
     | '/produk/$slug'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
     | '/_authenticated/_admin'
@@ -352,6 +364,7 @@ export interface RootRouteChildren {
   FlashSaleRoute: typeof FlashSaleRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VoucherRoute: typeof VoucherRoute
   ProdukSlugRoute: typeof ProdukSlugRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/keranjang': {
@@ -610,6 +630,7 @@ const rootRouteChildren: RootRouteChildren = {
   FlashSaleRoute: FlashSaleRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VoucherRoute: VoucherRoute,
   ProdukSlugRoute: ProdukSlugRoute,
@@ -617,13 +638,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
