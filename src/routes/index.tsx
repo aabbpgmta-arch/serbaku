@@ -38,18 +38,22 @@ function HomePage() {
     queryKey: ["homepage_sections"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("homepage_sections").select("*").eq("is_active", true).order("sort_order");
+        .from("homepage_sections").select("id,title,description,icon,sort_order").eq("is_active", true).order("sort_order");
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   const { data: categories } = useQuery({
     queryKey: ["website_categories"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("website_categories").select("*").eq("is_active", true).order("sort_order");
+        .from("website_categories").select("id,name,description,link,image_url,sort_order").eq("is_active", true).order("sort_order");
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   const { data: bestsellers } = useQuery({
@@ -61,9 +65,11 @@ function HomePage() {
         .eq("is_active", true)
         .or("is_bestseller.eq.true,is_new.eq.true")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(64);
       return data ?? [];
     },
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
 
@@ -71,9 +77,11 @@ function HomePage() {
     queryKey: ["testimonials"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("testimonials").select("*").eq("is_active", true).order("sort_order").limit(6);
+        .from("testimonials").select("id,name,message,rating,avatar_url,city,role,verified,photos,sort_order").eq("is_active", true).order("sort_order").limit(6);
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   return (
