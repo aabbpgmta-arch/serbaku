@@ -13,6 +13,8 @@ import { formatSold } from "@/lib/sales-stats";
 import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 import { VoucherStripSection } from "@/components/site/VoucherStripSection";
 import { getIcon } from "@/lib/icon-map";
+import { BestsellerRotator } from "@/components/site/BestsellerRotator";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,17 +53,19 @@ function HomePage() {
   });
 
   const { data: bestsellers } = useQuery({
-    queryKey: ["home_bestsellers"],
+    queryKey: ["home_bestsellers_all"],
     queryFn: async () => {
       const { data } = await supabase
         .from("products")
         .select("id, name, slug, price, category, is_bestseller, is_new, manual_badge, product_images(url, is_cover, sort_order)")
         .eq("is_active", true)
         .or("is_bestseller.eq.true,is_new.eq.true")
-        .limit(8);
+        .order("created_at", { ascending: false })
+        .limit(200);
       return data ?? [];
     },
   });
+
 
   const { data: testimonials } = useQuery({
     queryKey: ["testimonials"],
@@ -183,40 +187,8 @@ function HomePage() {
             Semua produk →
           </Link>
         </div>
-        {bestsellers && bestsellers.length > 0 ? (
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {bestsellers.map((p) => {
-              const cover =
-                p.product_images?.find((i) => i.is_cover)?.url ??
-                p.product_images?.[0]?.url ??
-                null;
-              return (
-                <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
-                  <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
-                    {cover ? (
-                      <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" />
-                    ) : (
-                      <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
-                        <Package className="h-10 w-10" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {p.category === "serba_35" && <Badge variant="secondary" className="bg-primary-soft/60 text-foreground">Serba 35</Badge>}
-                    {p.category === "serba_75" && <Badge variant="secondary" className="bg-accent text-foreground">Serba 75</Badge>}
-                    {badgeFor(p) && <Badge className="bg-primary text-primary-foreground">{badgeFor(p)}</Badge>}
-                  </div>
-                  <h3 className="mt-2 line-clamp-2 text-sm font-medium">{p.name}</h3>
-                  <p className="mt-1 font-display text-lg font-bold text-primary">{formatRupiah(p.price)}</p>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-8 rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            Belum ada produk. Admin dapat menambahkan produk melalui dashboard.
-          </div>
-        )}
+        <BestsellerRotator products={bestsellers ?? []} />
+
       </section>
 
       {/* TERLARIS MINGGU & BULAN INI */}
