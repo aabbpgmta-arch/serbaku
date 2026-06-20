@@ -38,18 +38,22 @@ function HomePage() {
     queryKey: ["homepage_sections"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("homepage_sections").select("*").eq("is_active", true).order("sort_order");
+        .from("homepage_sections").select("id,title,description,icon,sort_order").eq("is_active", true).order("sort_order");
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   const { data: categories } = useQuery({
     queryKey: ["website_categories"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("website_categories").select("*").eq("is_active", true).order("sort_order");
+        .from("website_categories").select("id,name,description,link,image_url,sort_order").eq("is_active", true).order("sort_order");
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   const { data: bestsellers } = useQuery({
@@ -61,9 +65,11 @@ function HomePage() {
         .eq("is_active", true)
         .or("is_bestseller.eq.true,is_new.eq.true")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(64);
       return data ?? [];
     },
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
 
@@ -71,9 +77,11 @@ function HomePage() {
     queryKey: ["testimonials"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("testimonials").select("*").eq("is_active", true).order("sort_order").limit(6);
+        .from("testimonials").select("id,name,message,rating,avatar_url,city,role,verified,photos,sort_order").eq("is_active", true).order("sort_order").limit(6);
       return data ?? [];
     },
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
   });
 
   return (
@@ -168,7 +176,7 @@ function HomePage() {
                   </span>
                 </div>
                 {c.image_url && (
-                  <img src={c.image_url} alt={c.name} className="absolute -right-6 -bottom-6 h-44 w-44 rounded-2xl object-cover opacity-80" />
+                  <img src={c.image_url} alt={c.name} className="absolute -right-6 -bottom-6 h-44 w-44 rounded-2xl object-cover opacity-80"  loading="lazy" decoding="async" />
                 )}
               </Link>
             ))}
@@ -324,7 +332,7 @@ function TopProductCard({ p }: { p: ProductCard }) {
     <Link to="/produk/$slug" params={{ slug: p.slug }} className="group">
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
         {cover ? (
-          <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+          <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105"  loading="lazy" decoding="async" />
         ) : (
           <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
             <Package className="h-10 w-10" />
@@ -383,7 +391,7 @@ function HeroSlider({ images }: { images: string[] }) {
         <div className="flex h-full">
           {images.map((src, i) => (
             <div key={i} className="relative h-full min-w-0 flex-[0_0_100%]">
-              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover" />
+              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover" loading={i===0?"eager":"lazy"} decoding="async" fetchPriority={i===0?"high":"auto"} />
             </div>
           ))}
         </div>
@@ -434,13 +442,13 @@ function TestimonialSlider({ items }: { items: TestimonialItem[] }) {
                 {photos.length > 0 && (
                   <div className="mt-3 flex gap-2">
                     {photos.map((p, i) => (
-                      <img key={i} src={p} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                      <img key={i} src={p} alt="" className="h-14 w-14 rounded-lg object-cover"  loading="lazy" decoding="async" />
                     ))}
                   </div>
                 )}
                 <div className="mt-4 flex items-center gap-3">
                   {t.avatar_url ? (
-                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover" />
+                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover"  loading="lazy" decoding="async" />
                   ) : (
                     <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary font-bold">
                       {t.name.charAt(0)}
