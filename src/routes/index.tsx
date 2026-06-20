@@ -391,7 +391,7 @@ function HeroSlider({ images }: { images: string[] }) {
         <div className="flex h-full">
           {images.map((src, i) => (
             <div key={i} className="relative h-full min-w-0 flex-[0_0_100%]">
-              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
+              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover" loading={i===0?"eager":"lazy"} decoding="async" fetchPriority={i===0?"high":"auto"} />
             </div>
           ))}
         </div>
