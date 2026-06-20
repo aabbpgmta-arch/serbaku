@@ -126,7 +126,7 @@ export function BestsellerRotator({ products }: { products: Product[] }) {
   );
 }
 
-function ProductCardLink({ p, className = "" }: { p: Product; className?: string }) {
+const ProductCardLink = memo(function ProductCardLink({ p, className = "" }: { p: Product; className?: string }) {
   const cover =
     p.product_images?.find((i) => i.is_cover)?.url ??
     p.product_images?.[0]?.url ??
@@ -135,7 +135,7 @@ function ProductCardLink({ p, className = "" }: { p: Product; className?: string
     <Link to="/produk/$slug" params={{ slug: p.slug }} className={`group ${className}`}>
       <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
         {cover ? (
-          <img src={cover} alt={p.name} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
+          <img src={cover} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition group-hover:scale-105" />
         ) : (
           <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
             <Package className="h-10 w-10" />
@@ -151,4 +151,4 @@ function ProductCardLink({ p, className = "" }: { p: Product; className?: string
       <p className="mt-1 font-display text-lg font-bold text-primary">{formatRupiah(p.price)}</p>
     </Link>
   );
-}
+});
