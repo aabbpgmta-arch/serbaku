@@ -13,6 +13,8 @@ import { formatSold } from "@/lib/sales-stats";
 import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 import { VoucherStripSection } from "@/components/site/VoucherStripSection";
 import { getIcon } from "@/lib/icon-map";
+import { BestsellerRotator } from "@/components/site/BestsellerRotator";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
