@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WishlistButton } from "@/components/site/WishlistButton";
+import { SmartImage } from "@/components/site/SmartImage";
 
 const PAGE_SIZE = 12;
 
@@ -192,7 +193,7 @@ function KatalogPage() {
             return (
               <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="flex items-center gap-4 p-3 hover:bg-accent/50">
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
+                  {cover ? <SmartImage src={cover} alt={p.name} size="thumb" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
                   {isFlash && <span className="absolute left-1 top-1 rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white"><Flame className="inline h-2.5 w-2.5" /></span>}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -224,7 +225,7 @@ function KatalogPage() {
                 <Link to="/produk/$slug" params={{ slug: p.slug }}>
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                   {cover ? (
-                    <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
+                    <SmartImage src={cover} alt={p.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" />
                   ) : (
                     <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
                       <Package className="h-10 w-10" />

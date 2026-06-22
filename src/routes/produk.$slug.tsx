@@ -11,6 +11,7 @@ import { useCart } from "@/lib/cart";
 import { flashActive, productPromoUnit, formatCountdown, resolveFlashFromItems, type FlashSaleItemJoin } from "@/lib/promo";
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { WishlistButton } from "@/components/site/WishlistButton";
+import { SmartImage } from "@/components/site/SmartImage";
 
 export const Route = createFileRoute("/produk/$slug")({
   loader: async ({ params }) => {
@@ -93,7 +94,7 @@ function ProductPage() {
         <div>
           <div className="relative aspect-square overflow-hidden rounded-3xl bg-muted">
             {cover ? (
-              <img src={cover} alt={product.name} className="h-full w-full object-cover" />
+              <SmartImage src={cover} alt={product.name} size="detail" responsiveWidth={900} loading="eager" fetchPriority="high" className="h-full w-full object-cover" />
             ) : (
               <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
                 <Package className="h-16 w-16" />
@@ -115,7 +116,7 @@ function ProductPage() {
                     i === active ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  <SmartImage src={img.url} alt="" size="thumb" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -228,7 +229,7 @@ function ProductPage() {
               return (
                 <Link key={r.id} to="/produk/$slug" params={{ slug: r.slug }} className="group">
                   <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
-                    {c ? <img src={c} alt={r.name} className="h-full w-full object-cover transition group-hover:scale-105" /> :
+                    {c ? <SmartImage src={c} alt={r.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" /> :
                       <div className="grid h-full place-items-center text-primary"><Package className="h-8 w-8" /></div>}
                   </div>
                   <h3 className="mt-2 line-clamp-2 text-sm font-medium">{r.name}</h3>

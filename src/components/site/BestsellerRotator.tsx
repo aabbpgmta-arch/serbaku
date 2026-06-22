@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRupiah } from "@/lib/format";
 import { badgeFor } from "@/lib/homepage-stats";
+import { SmartImage } from "@/components/site/SmartImage";
 
 type Product = {
   id: string;
@@ -135,7 +136,7 @@ const ProductCardLink = memo(function ProductCardLink({ p, className = "" }: { p
     <Link to="/produk/$slug" params={{ slug: p.slug }} className={`group ${className}`}>
       <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
         {cover ? (
-          <img src={cover} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition group-hover:scale-105" />
+          <SmartImage src={cover} alt={p.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" />
         ) : (
           <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
             <Package className="h-10 w-10" />

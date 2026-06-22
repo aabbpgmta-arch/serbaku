@@ -8,6 +8,7 @@ import { tierMeta, nextTier } from "@/lib/membership";
 import { bestUnitPrice, flashActive, formatCountdown } from "@/lib/promo";
 import { formatRupiah, roundToSix } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { SmartImage } from "@/components/site/SmartImage";
 
 export const Route = createFileRoute("/keranjang")({
   head: () => ({ meta: [{ title: "Keranjang — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -116,7 +117,7 @@ function CartPage() {
             return (
               <div key={i.productId} className={`flex gap-4 rounded-2xl border bg-card p-4 ${overSold || inactive ? "border-destructive/60 bg-destructive/5" : "border-border/60"}`}>
                 <Link to="/produk/$slug" params={{ slug: i.slug }} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  {i.image && <img src={i.image} alt={i.name} className="h-full w-full object-cover" />}
+                  {i.image && <SmartImage src={i.image} alt={i.name} size="thumb" className="h-full w-full object-cover" />}
                 </Link>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>

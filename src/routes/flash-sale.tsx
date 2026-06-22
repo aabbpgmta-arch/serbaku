@@ -7,6 +7,7 @@ import { formatRupiah } from "@/lib/format";
 import { resolveFlashFromItems, productPromoUnit, countdownParts, type FlashSaleItemJoin } from "@/lib/promo";
 import { useSalesStats, formatSold } from "@/lib/sales-stats";
 import { Badge } from "@/components/ui/badge";
+import { SmartImage } from "@/components/site/SmartImage";
 
 export const Route = createFileRoute("/flash-sale")({
   head: () => ({
@@ -100,7 +101,7 @@ function FlashSalePage() {
               return (
                 <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="flex items-center gap-4 p-3 hover:bg-accent/50">
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
+                    {cover ? <SmartImage src={cover} alt={p.name} size="thumb" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-6 w-6" /></div>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-1 text-sm font-medium">{p.name}</h3>
@@ -127,7 +128,7 @@ function FlashSalePage() {
               return (
                 <Link key={p.id} to="/produk/$slug" params={{ slug: p.slug }} className="group">
                   <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
-                    {cover ? <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>}
+                    {cover ? <SmartImage src={cover} alt={p.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" /> : <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>}
                     <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"><Flame className="h-3 w-3" /> Flash</span>
                     {p.price > unit && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-rose-900 shadow">Hemat {Math.round(((p.price - unit) / p.price) * 100)}%</span>}
                     {cd && (
