@@ -14,6 +14,7 @@ import { SocialProofTicker } from "@/components/site/SocialProofTicker";
 import { VoucherStripSection } from "@/components/site/VoucherStripSection";
 import { getIcon } from "@/lib/icon-map";
 import { BestsellerRotator } from "@/components/site/BestsellerRotator";
+import { SmartImage } from "@/components/site/SmartImage";
 
 
 export const Route = createFileRoute("/")({
@@ -176,7 +177,7 @@ function HomePage() {
                   </span>
                 </div>
                 {c.image_url && (
-                  <img src={c.image_url} alt={c.name} className="absolute -right-6 -bottom-6 h-44 w-44 rounded-2xl object-cover opacity-80"  loading="lazy" decoding="async" />
+                  <SmartImage src={c.image_url} alt={c.name} size="card" responsiveWidth={400} className="absolute -right-6 -bottom-6 h-44 w-44 rounded-2xl object-cover opacity-80" />
                 )}
               </Link>
             ))}
@@ -332,7 +333,7 @@ function TopProductCard({ p }: { p: ProductCard }) {
     <Link to="/produk/$slug" params={{ slug: p.slug }} className="group">
       <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
         {cover ? (
-          <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105"  loading="lazy" decoding="async" />
+          <SmartImage src={cover} alt={p.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" />
         ) : (
           <div className="grid h-full place-items-center bg-gradient-to-br from-primary-soft/40 to-accent text-primary">
             <Package className="h-10 w-10" />
@@ -391,7 +392,7 @@ function HeroSlider({ images }: { images: string[] }) {
         <div className="flex h-full">
           {images.map((src, i) => (
             <div key={i} className="relative h-full min-w-0 flex-[0_0_100%]">
-              <img src={src} alt={`Toko Serba ${i + 1}`} className="h-full w-full object-cover" loading={i===0?"eager":"lazy"} decoding="async" fetchPriority={i===0?"high":"auto"} />
+              <SmartImage src={src} alt={`Toko Serba ${i + 1}`} size="hero" responsiveWidth={1200} className="h-full w-full object-cover" loading={i===0?"eager":"lazy"} fetchPriority={i===0?"high":"auto"} />
             </div>
           ))}
         </div>
@@ -442,13 +443,13 @@ function TestimonialSlider({ items }: { items: TestimonialItem[] }) {
                 {photos.length > 0 && (
                   <div className="mt-3 flex gap-2">
                     {photos.map((p, i) => (
-                      <img key={i} src={p} alt="" className="h-14 w-14 rounded-lg object-cover"  loading="lazy" decoding="async" />
+                      <SmartImage key={i} src={p} alt="" size="thumb" className="h-14 w-14 rounded-lg object-cover" />
                     ))}
                   </div>
                 )}
                 <div className="mt-4 flex items-center gap-3">
                   {t.avatar_url ? (
-                    <img src={t.avatar_url} alt={t.name} className="h-10 w-10 rounded-full object-cover"  loading="lazy" decoding="async" />
+                    <SmartImage src={t.avatar_url} alt={t.name} size="thumb" className="h-10 w-10 rounded-full object-cover" />
                   ) : (
                     <div className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary font-bold">
                       {t.name.charAt(0)}

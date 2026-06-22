@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatRupiah } from "@/lib/format";
 import { WishlistButton } from "@/components/site/WishlistButton";
+import { SmartImage } from "@/components/site/SmartImage";
 
 export const Route = createFileRoute("/_authenticated/akun/wishlist")({
   head: () => ({ meta: [{ title: "Wishlist Saya — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -77,7 +78,7 @@ function WishlistPage() {
                 <Link to="/produk/$slug" params={{ slug: p.slug }}>
                   <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
                     {cover ? (
-                      <img src={cover} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
+                      <SmartImage src={cover} alt={p.name} size="card" responsiveWidth={400} className="h-full w-full object-cover transition group-hover:scale-105" />
                     ) : (
                       <div className="grid h-full place-items-center text-primary"><Package className="h-10 w-10" /></div>
                     )}
