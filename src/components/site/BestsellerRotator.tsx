@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatRupiah } from "@/lib/format";
 import { badgeFor } from "@/lib/homepage-stats";
+import { SmartImage } from "@/components/site/SmartImage";
 
 type Product = {
   id: string;
