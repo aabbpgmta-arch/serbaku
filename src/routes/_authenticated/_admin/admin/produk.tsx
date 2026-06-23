@@ -396,8 +396,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const qc = useQueryClient();
   const isCreate = !product;
   const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(product?.price ?? 0);
-  const [stock, setStock] = useState(product?.stock ?? 0);
+  const [price, setPrice] = useState(normalizeNonNegativeInt(product?.price));
+  const [stock, setStock] = useState(normalizeNonNegativeInt(product?.stock));
   const [category, setCategory] = useState<"serba_35" | "serba_75" | "lainnya">(product?.category ?? "serba_35");
   const [description, setDescription] = useState(product?.description ?? "");
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
