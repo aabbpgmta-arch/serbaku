@@ -188,7 +188,7 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
     for (const r of valid) {
       const slug = `${slugify(r.name)}-${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(-3)}`;
       const { data: prod, error } = await supabase.from("products").insert({
-        name: r.name.trim(), slug, price: r.price, stock: r.stock,
+        name: r.name.trim(), slug, price: normalizeNonNegativeInt(r.price), stock: normalizeNonNegativeInt(r.stock),
         category: r.category, description: r.description || null,
         is_active: r.isActive, is_bestseller: r.label === "terlaris", is_new: r.label === "baru",
       }).select("id").single();
