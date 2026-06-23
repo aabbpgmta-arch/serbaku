@@ -20,6 +20,7 @@ import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
 import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
 import { TablePagination } from "@/components/admin/TablePagination";
 import { logAction } from "@/lib/audit";
+import { normalizeNonNegativeInt, blockNonNumericKeys } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
