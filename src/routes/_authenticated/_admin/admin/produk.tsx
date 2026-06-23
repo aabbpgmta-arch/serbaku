@@ -790,7 +790,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
               </div>
               <div className="md:col-span-2">
                 <Label>Nilai Diskon</Label>
-                <Input type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value) || 0)} disabled={discountType === "none"} />
+                <Input type="number" min={0} step={1} inputMode="numeric" value={discountValue} onKeyDown={blockNonNumericKeys} onChange={(e) => setDiscountValue(normalizeNonNegativeInt(e.target.value))} disabled={discountType === "none"} />
                 <p className="mt-1 text-[11px] text-muted-foreground">Tampil sebagai harga coret di kartu produk & halaman detail.</p>
               </div>
             </div>
