@@ -725,8 +725,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <div><Label>Harga (Rp)</Label><Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div>
-            <div><Label>Stok</Label><Input type="number" value={stock} onChange={(e) => setStock(Number(e.target.value))} /></div>
+            <div><Label>Harga (Rp)</Label><Input type="number" min={0} step={1} inputMode="numeric" value={price} onKeyDown={blockNonNumericKeys} onChange={(e) => setPrice(normalizeNonNegativeInt(e.target.value))} /></div>
+            <div><Label>Stok</Label><Input type="number" min={0} step={1} inputMode="numeric" value={stock} onKeyDown={blockNonNumericKeys} onChange={(e) => setStock(normalizeNonNegativeInt(e.target.value))} /></div>
             <div>
               <Label>Kategori</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
