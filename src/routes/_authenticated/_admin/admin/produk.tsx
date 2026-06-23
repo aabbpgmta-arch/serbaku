@@ -584,13 +584,16 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
     setSaving(true);
     let slug = slugify(name);
+    const safePrice = normalizeNonNegativeInt(price);
+    const safeStock = normalizeNonNegativeInt(stock);
+    const safeDiscount = normalizeNonNegativeInt(discountValue);
     const payload = {
-      name, price, stock, category, description,
+      name, price: safePrice, stock: safeStock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive,
       manual_badge: manualBadge.trim() || null,
       sku: sku.trim().toUpperCase() || null,
       discount_type: discountType,
-      discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
+      discount_value: discountType === "none" ? 0 : safeDiscount,
     };
 
     if (product) {
