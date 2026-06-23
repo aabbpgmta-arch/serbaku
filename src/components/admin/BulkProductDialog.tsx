@@ -292,11 +292,11 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Harga</Label>
-                    <Input type="number" value={r.price} onChange={(e) => update(i, { price: Number(e.target.value) })} className="h-9" />
+                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.price} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { price: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Stok</Label>
-                    <Input type="number" value={r.stock} onChange={(e) => update(i, { stock: Number(e.target.value) })} className="h-9" />
+                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.stock} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { stock: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-1 flex items-end justify-end">
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(i)} title="Hapus baris">
