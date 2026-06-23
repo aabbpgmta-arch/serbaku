@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { normalizeNonNegativeInt, blockNonNumericKeys } from "@/lib/number-input";
 
 type Category = "serba_35" | "serba_75" | "lainnya";
 type Label = "baru" | "terlaris" | "promo" | "none";
@@ -140,8 +141,8 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
         ...emptyRow(),
         name: (r[iName] ?? "").trim(),
         category: normCategory(r[idx("kategori")] ?? ""),
-        price: Number((r[idx("harga")] ?? "0").trim()) || 0,
-        stock: Number((r[idx("stok")] ?? "0").trim()) || 0,
+        price: normalizeNonNegativeInt(r[idx("harga")] ?? "0"),
+        stock: normalizeNonNegativeInt(r[idx("stok")] ?? "0"),
         description: (r[idx("deskripsi")] ?? "").trim(),
         isActive: normBool(r[idx("aktif")] ?? "true"),
         label: normLabel(r[idx("label")] ?? ""),
@@ -187,7 +188,7 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
     for (const r of valid) {
       const slug = `${slugify(r.name)}-${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(-3)}`;
       const { data: prod, error } = await supabase.from("products").insert({
-        name: r.name.trim(), slug, price: r.price, stock: r.stock,
+        name: r.name.trim(), slug, price: normalizeNonNegativeInt(r.price), stock: normalizeNonNegativeInt(r.stock),
         category: r.category, description: r.description || null,
         is_active: r.isActive, is_bestseller: r.label === "terlaris", is_new: r.label === "baru",
       }).select("id").single();
@@ -291,11 +292,11 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Harga</Label>
-                    <Input type="number" value={r.price} onChange={(e) => update(i, { price: Number(e.target.value) })} className="h-9" />
+                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.price} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { price: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Stok</Label>
-                    <Input type="number" value={r.stock} onChange={(e) => update(i, { stock: Number(e.target.value) })} className="h-9" />
+                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.stock} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { stock: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-1 flex items-end justify-end">
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(i)} title="Hapus baris">

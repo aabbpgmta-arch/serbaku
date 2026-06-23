@@ -20,6 +20,7 @@ import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
 import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
 import { TablePagination } from "@/components/admin/TablePagination";
 import { logAction } from "@/lib/audit";
+import { normalizeNonNegativeInt, blockNonNumericKeys } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -395,8 +396,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const qc = useQueryClient();
   const isCreate = !product;
   const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(product?.price ?? 0);
-  const [stock, setStock] = useState(product?.stock ?? 0);
+  const [price, setPrice] = useState(normalizeNonNegativeInt(product?.price));
+  const [stock, setStock] = useState(normalizeNonNegativeInt(product?.stock));
   const [category, setCategory] = useState<"serba_35" | "serba_75" | "lainnya">(product?.category ?? "serba_35");
   const [description, setDescription] = useState(product?.description ?? "");
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
@@ -583,13 +584,16 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
     setSaving(true);
     let slug = slugify(name);
+    const safePrice = normalizeNonNegativeInt(price);
+    const safeStock = normalizeNonNegativeInt(stock);
+    const safeDiscount = normalizeNonNegativeInt(discountValue);
     const payload = {
-      name, price, stock, category, description,
+      name, price: safePrice, stock: safeStock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive,
       manual_badge: manualBadge.trim() || null,
       sku: sku.trim().toUpperCase() || null,
       discount_type: discountType,
-      discount_value: discountType === "none" ? 0 : Number(discountValue) || 0,
+      discount_value: discountType === "none" ? 0 : safeDiscount,
     };
 
     if (product) {
@@ -724,8 +728,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <div><Label>Harga (Rp)</Label><Input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div>
-            <div><Label>Stok</Label><Input type="number" value={stock} onChange={(e) => setStock(Number(e.target.value))} /></div>
+            <div><Label>Harga (Rp)</Label><Input type="number" min={0} step={1} inputMode="numeric" value={price} onKeyDown={blockNonNumericKeys} onChange={(e) => setPrice(normalizeNonNegativeInt(e.target.value))} /></div>
+            <div><Label>Stok</Label><Input type="number" min={0} step={1} inputMode="numeric" value={stock} onKeyDown={blockNonNumericKeys} onChange={(e) => setStock(normalizeNonNegativeInt(e.target.value))} /></div>
             <div>
               <Label>Kategori</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
@@ -789,7 +793,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
               </div>
               <div className="md:col-span-2">
                 <Label>Nilai Diskon</Label>
-                <Input type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value) || 0)} disabled={discountType === "none"} />
+                <Input type="number" min={0} step={1} inputMode="numeric" value={discountValue} onKeyDown={blockNonNumericKeys} onChange={(e) => setDiscountValue(normalizeNonNegativeInt(e.target.value))} disabled={discountType === "none"} />
                 <p className="mt-1 text-[11px] text-muted-foreground">Tampil sebagai harga coret di kartu produk & halaman detail.</p>
               </div>
             </div>
