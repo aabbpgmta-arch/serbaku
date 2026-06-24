@@ -92,13 +92,16 @@ function ResellerPage() {
               <Sparkles className="mr-1 h-3.5 w-3.5" /> Supplier Resmi Reseller
             </Badge>
             <h1 className="font-display text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
-              Kulakan Baju Mulai{" "}
-              <span className="text-primary">25 Ribuan</span>, Cocok Untuk Toko{" "}
-              <span className="whitespace-nowrap">Serba 35</span>
+              Supplier Baju Wanita Harga Mulai{" "}
+              <span className="text-primary">Rp25.000</span>
+              <span className="mt-2 block text-2xl sm:text-3xl">
+                Cocok untuk Reseller dan Toko{" "}
+                <span className="whitespace-nowrap">Serba 35</span>
+              </span>
             </h1>
             <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-              Banyak model, stok ready, kirim setiap hari. Cocok untuk reseller online
-              maupun toko offline.
+              Banyak model ready stock, bebas pilih model, minimal order 6 pcs per
+              model, dan pengiriman setiap hari ke seluruh Indonesia.
             </p>
             <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
               <Link
