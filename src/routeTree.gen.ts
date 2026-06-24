@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VoucherRouteImport } from './routes/voucher'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ResellerRouteImport } from './routes/reseller'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KatalogRouteImport } from './routes/katalog'
 import { Route as FlashSaleRouteImport } from './routes/flash-sale'
@@ -50,6 +51,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResellerRoute = ResellerRouteImport.update({
+  id: '/reseller',
+  path: '/reseller',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KeranjangRoute = KeranjangRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/flash-sale': typeof FlashSaleRoute
   '/katalog': typeof KatalogRoute
   '/keranjang': typeof KeranjangRoute
+  '/reseller': typeof ResellerRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/voucher': typeof VoucherRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reseller'
     | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reseller'
     | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/flash-sale'
     | '/katalog'
     | '/keranjang'
+    | '/reseller'
     | '/reset-password'
     | '/sitemap.xml'
     | '/voucher'
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   FlashSaleRoute: typeof FlashSaleRoute
   KatalogRoute: typeof KatalogRoute
   KeranjangRoute: typeof KeranjangRoute
+  ResellerRoute: typeof ResellerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VoucherRoute: typeof VoucherRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reseller': {
+      id: '/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof ResellerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/keranjang': {
@@ -630,6 +650,7 @@ const rootRouteChildren: RootRouteChildren = {
   FlashSaleRoute: FlashSaleRoute,
   KatalogRoute: KatalogRoute,
   KeranjangRoute: KeranjangRoute,
+  ResellerRoute: ResellerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VoucherRoute: VoucherRoute,
