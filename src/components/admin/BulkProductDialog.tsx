@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { normalizeNonNegativeInt, blockNonNumericKeys } from "@/lib/number-input";
+import { normalizeNonNegativeInt, blockNonNumericKeys, sanitizeIntInput } from "@/lib/number-input";
 
 type Category = "serba_35" | "serba_75" | "lainnya";
 type Label = "baru" | "terlaris" | "promo" | "none";
@@ -21,8 +21,8 @@ type Label = "baru" | "terlaris" | "promo" | "none";
 type Row = {
   name: string;
   category: Category;
-  price: number;
-  stock: number;
+  price: string;
+  stock: string;
   description: string;
   isActive: boolean;
   label: Label;
@@ -33,7 +33,7 @@ type Row = {
 };
 
 const emptyRow = (): Row => ({
-  name: "", category: "serba_35", price: 0, stock: 0, description: "",
+  name: "", category: "serba_35", price: "", stock: "", description: "",
   isActive: true, label: "none", file: null, imageUrl: "", preview: "",
   aiStatus: "idle",
 });
@@ -141,8 +141,8 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
         ...emptyRow(),
         name: (r[iName] ?? "").trim(),
         category: normCategory(r[idx("kategori")] ?? ""),
-        price: normalizeNonNegativeInt(r[idx("harga")] ?? "0"),
-        stock: normalizeNonNegativeInt(r[idx("stok")] ?? "0"),
+        price: sanitizeIntInput(r[idx("harga")] ?? ""),
+        stock: sanitizeIntInput(r[idx("stok")] ?? ""),
         description: (r[idx("deskripsi")] ?? "").trim(),
         isActive: normBool(r[idx("aktif")] ?? "true"),
         label: normLabel(r[idx("label")] ?? ""),
@@ -173,7 +173,7 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
     valid.forEach((r, idx) => {
       const errs: string[] = [];
       if (!r.name.trim()) errs.push("nama");
-      if (!r.price || r.price <= 0) errs.push("harga");
+      if (normalizeNonNegativeInt(r.price) <= 0) errs.push("harga harus > 0");
       if (!r.category) errs.push("kategori");
       if (!r.file && !r.imageUrl.trim()) errs.push("gambar");
       if (errs.length) invalid.push(`Baris ${idx + 1} (${r.name || "tanpa nama"}): ${errs.join(", ")}`);
@@ -292,11 +292,11 @@ export function BulkProductDialog({ open, onOpenChange }: { open: boolean; onOpe
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Harga</Label>
-                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.price} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { price: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
+                    <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={r.price} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { price: sanitizeIntInput(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-[11px]">Stok</Label>
-                    <Input type="number" min={0} step={1} inputMode="numeric" value={r.stock} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { stock: normalizeNonNegativeInt(e.target.value) })} className="h-9" />
+                    <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={r.stock} onKeyDown={blockNonNumericKeys} onChange={(e) => update(i, { stock: sanitizeIntInput(e.target.value) })} className="h-9" />
                   </div>
                   <div className="md:col-span-1 flex items-end justify-end">
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeRow(i)} title="Hapus baris">
