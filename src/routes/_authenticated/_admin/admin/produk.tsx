@@ -20,7 +20,7 @@ import { BulkProductDialog } from "@/components/admin/BulkProductDialog";
 import { PriceHistoryDialog } from "@/components/admin/PriceHistoryDialog";
 import { TablePagination } from "@/components/admin/TablePagination";
 import { logAction } from "@/lib/audit";
-import { normalizeNonNegativeInt, blockNonNumericKeys } from "@/lib/number-input";
+import { normalizeNonNegativeInt, blockNonNumericKeys, sanitizeIntInput, toIntInputValue } from "@/lib/number-input";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/produk")({
   head: () => ({ meta: [{ title: "Admin Produk — Toko Serba" }, { name: "robots", content: "noindex" }] }),
@@ -396,8 +396,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const qc = useQueryClient();
   const isCreate = !product;
   const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(normalizeNonNegativeInt(product?.price));
-  const [stock, setStock] = useState(normalizeNonNegativeInt(product?.stock));
+  const [price, setPrice] = useState<string>(toIntInputValue(product?.price));
+  const [stock, setStock] = useState<string>(toIntInputValue(product?.stock));
   const [category, setCategory] = useState<"serba_35" | "serba_75" | "lainnya">(product?.category ?? "serba_35");
   const [description, setDescription] = useState(product?.description ?? "");
   const [isBestseller, setIsBestseller] = useState(product?.is_bestseller ?? false);
@@ -408,7 +408,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
   const [images, setImages] = useState(product?.product_images ?? []);
   const [videoUrl, setVideoUrl] = useState<string | null>(product?.video_url ?? null);
   const [discountType, setDiscountType] = useState<"none" | "percent" | "nominal">((product?.discount_type as "none"|"percent"|"nominal") ?? "none");
-  const [discountValue, setDiscountValue] = useState<number>(Number(product?.discount_value ?? 0));
+  const [discountValue, setDiscountValue] = useState<string>(toIntInputValue(product?.discount_value));
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -582,11 +582,12 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
 
   async function save() {
     if (!name.trim()) { toast.error("Nama wajib diisi"); return; }
-    setSaving(true);
-    let slug = slugify(name);
     const safePrice = normalizeNonNegativeInt(price);
     const safeStock = normalizeNonNegativeInt(stock);
     const safeDiscount = normalizeNonNegativeInt(discountValue);
+    if (safePrice <= 0) { toast.error("Harga harus lebih dari 0"); return; }
+    setSaving(true);
+    let slug = slugify(name);
     const payload = {
       name, price: safePrice, stock: safeStock, category, description,
       is_bestseller: isBestseller, is_new: isNew, is_active: isActive,
@@ -728,8 +729,8 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <div><Label>Harga (Rp)</Label><Input type="number" min={0} step={1} inputMode="numeric" value={price} onKeyDown={blockNonNumericKeys} onChange={(e) => setPrice(normalizeNonNegativeInt(e.target.value))} /></div>
-            <div><Label>Stok</Label><Input type="number" min={0} step={1} inputMode="numeric" value={stock} onKeyDown={blockNonNumericKeys} onChange={(e) => setStock(normalizeNonNegativeInt(e.target.value))} /></div>
+            <div><Label>Harga (Rp)</Label><Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={price} onKeyDown={blockNonNumericKeys} onChange={(e) => setPrice(sanitizeIntInput(e.target.value))} /></div>
+            <div><Label>Stok</Label><Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={stock} onKeyDown={blockNonNumericKeys} onChange={(e) => setStock(sanitizeIntInput(e.target.value))} /></div>
             <div>
               <Label>Kategori</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
@@ -793,7 +794,7 @@ function ProductFormDialog({ open, onOpenChange, product }: { open: boolean; onO
               </div>
               <div className="md:col-span-2">
                 <Label>Nilai Diskon</Label>
-                <Input type="number" min={0} step={1} inputMode="numeric" value={discountValue} onKeyDown={blockNonNumericKeys} onChange={(e) => setDiscountValue(normalizeNonNegativeInt(e.target.value))} disabled={discountType === "none"} />
+                <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="0" value={discountValue} onKeyDown={blockNonNumericKeys} onChange={(e) => setDiscountValue(sanitizeIntInput(e.target.value))} disabled={discountType === "none"} />
                 <p className="mt-1 text-[11px] text-muted-foreground">Tampil sebagai harga coret di kartu produk & halaman detail.</p>
               </div>
             </div>
