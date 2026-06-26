@@ -16,6 +16,8 @@ import { CartProvider } from "@/lib/cart";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
+import { SplashScreen } from "@/components/site/SplashScreen";
 import { Toaster } from "@/components/ui/sonner";
 import { AdsPixels } from "@/components/site/AdsPixels";
 import { AttributionCapture } from "@/components/site/AttributionCapture";
@@ -51,7 +53,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#D96C9F" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "SERBAKU" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { title: "Toko Serba — Supplier Grosir Serba 35 & Serba 75" },
       { name: "description", content: "Toko Serba adalah supplier grosir produk Serba 35 dan Serba 75 untuk reseller, toko serba harga, dan pedagang online di Indonesia." },
       { name: "keywords", content: "supplier serba 35, supplier serba 75, grosir produk murah, supplier reseller, toko serba harga, grosir fashion wanita" },
@@ -67,6 +74,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" },
@@ -98,13 +107,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col pb-16 md:pb-0">
             <Header />
             <main className="flex-1">
               <Outlet />
             </main>
             <Footer />
             <WhatsAppFloat />
+            <MobileBottomNav />
+            <SplashScreen />
           </div>
           <Toaster richColors position="top-center" />
           <AdsPixels />

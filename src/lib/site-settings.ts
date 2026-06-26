@@ -38,6 +38,16 @@ export type PaymentSettings = {
   account_number: string;
   bank_logo_url: string;
 };
+export type MobileSettings = {
+  app_name: string;
+  splash_logo_url: string | null;
+  theme_color: string;
+  background_color: string;
+  banner_1: string | null;
+  banner_2: string | null;
+  banner_3: string | null;
+  banner_4: string | null;
+};
 
 export type SiteSettings = {
   brand: BrandSettings;
@@ -46,6 +56,7 @@ export type SiteSettings = {
   footer: FooterSettings;
   theme: ThemeSettings;
   payment: PaymentSettings;
+  mobile: MobileSettings;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -83,6 +94,16 @@ const DEFAULTS: SiteSettings = {
     account_number: "5860498792",
     bank_logo_url: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg",
   },
+  mobile: {
+    app_name: "SERBAKU",
+    splash_logo_url: null,
+    theme_color: "#D96C9F",
+    background_color: "#FFF7F0",
+    banner_1: null,
+    banner_2: null,
+    banner_3: null,
+    banner_4: null,
+  },
 };
 
 export function useSiteSettings() {
@@ -98,6 +119,7 @@ export function useSiteSettings() {
         footer: { ...DEFAULTS.footer, ...(map.get("footer") as object | undefined) } as FooterSettings,
         theme: { ...DEFAULTS.theme, ...(map.get("theme") as object | undefined) } as ThemeSettings,
         payment: { ...DEFAULTS.payment, ...(map.get("payment") as object | undefined) } as PaymentSettings,
+        mobile: { ...DEFAULTS.mobile, ...(map.get("mobile") as object | undefined) } as MobileSettings,
       };
     },
     staleTime: 60_000,

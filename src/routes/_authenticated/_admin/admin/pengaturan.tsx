@@ -31,6 +31,11 @@ const IMAGE_FIELDS: Record<string, ImgFieldCfg> = {
   image_url_3: { preset: "hero", folder: "hero" },
   image_url_4: { preset: "hero", folder: "hero" },
   bank_logo_url: { preset: "logo", folder: "payment" },
+  splash_logo_url: { preset: "logo", folder: "mobile" },
+  banner_1: { preset: "hero", folder: "mobile" },
+  banner_2: { preset: "hero", folder: "mobile" },
+  banner_3: { preset: "hero", folder: "mobile" },
+  banner_4: { preset: "hero", folder: "mobile" },
 };
 
 function fieldLabel(name: string) {
@@ -51,6 +56,14 @@ function fieldLabel(name: string) {
     bank_name: "Nama Bank",
     account_holder: "Atas Nama",
     account_number: "Nomor Rekening",
+    app_name: "Nama Aplikasi",
+    splash_logo_url: "Logo Splash Screen",
+    theme_color: "Warna Tema (Hex)",
+    background_color: "Warna Background (Hex)",
+    banner_1: "Banner Mobile 1 (4:5)",
+    banner_2: "Banner Mobile 2 (4:5)",
+    banner_3: "Banner Mobile 3 (4:5)",
+    banner_4: "Banner Mobile 4 (4:5)",
   };
   return map[name] ?? name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -65,6 +78,7 @@ function AdminSettings() {
         <TabsList className="flex w-full flex-wrap">
           <TabsTrigger value="brand">Brand</TabsTrigger>
           <TabsTrigger value="hero">Hero</TabsTrigger>
+          <TabsTrigger value="mobile">Mobile App</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
           <TabsTrigger value="payment">Pembayaran</TabsTrigger>
           <TabsTrigger value="orders">Pesanan</TabsTrigger>
@@ -76,6 +90,7 @@ function AdminSettings() {
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
+        <TabsContent value="mobile"><SettingForm settingKey="mobile" fields={["app_name", "splash_logo_url", "theme_color", "background_color", "banner_1", "banner_2", "banner_3", "banner_4"]} /></TabsContent>
         <TabsContent value="contact"><ContactSettingsForm /></TabsContent>
         <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
         <TabsContent value="orders"><OrdersSettingsForm /></TabsContent>
