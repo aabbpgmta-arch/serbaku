@@ -53,7 +53,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#D96C9F" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "SERBAKU" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { title: "Toko Serba — Supplier Grosir Serba 35 & Serba 75" },
       { name: "description", content: "Toko Serba adalah supplier grosir produk Serba 35 dan Serba 75 untuk reseller, toko serba harga, dan pedagang online di Indonesia." },
       { name: "keywords", content: "supplier serba 35, supplier serba 75, grosir produk murah, supplier reseller, toko serba harga, grosir fashion wanita" },
