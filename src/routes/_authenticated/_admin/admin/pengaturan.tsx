@@ -78,6 +78,7 @@ function AdminSettings() {
         <TabsList className="flex w-full flex-wrap">
           <TabsTrigger value="brand">Brand</TabsTrigger>
           <TabsTrigger value="hero">Hero</TabsTrigger>
+          <TabsTrigger value="mobile">Mobile App</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
           <TabsTrigger value="payment">Pembayaran</TabsTrigger>
           <TabsTrigger value="orders">Pesanan</TabsTrigger>
@@ -89,6 +90,7 @@ function AdminSettings() {
         </TabsList>
         <TabsContent value="brand"><SettingForm settingKey="brand" fields={["name", "logo_url", "favicon_url"]} /></TabsContent>
         <TabsContent value="hero"><SettingForm settingKey="hero" fields={["headline", "subheadline", "cta_text", "cta_link", "image_url", "image_url_2", "image_url_3", "image_url_4"]} multiline={["headline","subheadline"]} /></TabsContent>
+        <TabsContent value="mobile"><SettingForm settingKey="mobile" fields={["app_name", "splash_logo_url", "theme_color", "background_color", "banner_1", "banner_2", "banner_3", "banner_4"]} /></TabsContent>
         <TabsContent value="contact"><ContactSettingsForm /></TabsContent>
         <TabsContent value="payment"><SettingForm settingKey="payment" fields={["bank_name", "account_holder", "account_number", "bank_logo_url"]} /></TabsContent>
         <TabsContent value="orders"><OrdersSettingsForm /></TabsContent>
