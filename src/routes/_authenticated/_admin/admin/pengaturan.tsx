@@ -56,6 +56,14 @@ function fieldLabel(name: string) {
     bank_name: "Nama Bank",
     account_holder: "Atas Nama",
     account_number: "Nomor Rekening",
+    app_name: "Nama Aplikasi",
+    splash_logo_url: "Logo Splash Screen",
+    theme_color: "Warna Tema (Hex)",
+    background_color: "Warna Background (Hex)",
+    banner_1: "Banner Mobile 1 (4:5)",
+    banner_2: "Banner Mobile 2 (4:5)",
+    banner_3: "Banner Mobile 3 (4:5)",
+    banner_4: "Banner Mobile 4 (4:5)",
   };
   return map[name] ?? name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
