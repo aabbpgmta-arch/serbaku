@@ -16,6 +16,8 @@ import { CartProvider } from "@/lib/cart";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
+import { SplashScreen } from "@/components/site/SplashScreen";
 import { Toaster } from "@/components/ui/sonner";
 import { AdsPixels } from "@/components/site/AdsPixels";
 import { AttributionCapture } from "@/components/site/AttributionCapture";
