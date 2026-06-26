@@ -107,13 +107,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col pb-16 md:pb-0">
             <Header />
             <main className="flex-1">
               <Outlet />
             </main>
             <Footer />
             <WhatsAppFloat />
+            <MobileBottomNav />
+            <SplashScreen />
           </div>
           <Toaster richColors position="top-center" />
           <AdsPixels />
