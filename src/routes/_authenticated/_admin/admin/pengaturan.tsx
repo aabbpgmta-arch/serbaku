@@ -31,6 +31,11 @@ const IMAGE_FIELDS: Record<string, ImgFieldCfg> = {
   image_url_3: { preset: "hero", folder: "hero" },
   image_url_4: { preset: "hero", folder: "hero" },
   bank_logo_url: { preset: "logo", folder: "payment" },
+  splash_logo_url: { preset: "logo", folder: "mobile" },
+  banner_1: { preset: "hero", folder: "mobile" },
+  banner_2: { preset: "hero", folder: "mobile" },
+  banner_3: { preset: "hero", folder: "mobile" },
+  banner_4: { preset: "hero", folder: "mobile" },
 };
 
 function fieldLabel(name: string) {
