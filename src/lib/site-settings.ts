@@ -94,6 +94,16 @@ const DEFAULTS: SiteSettings = {
     account_number: "5860498792",
     bank_logo_url: "https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg",
   },
+  mobile: {
+    app_name: "SERBAKU",
+    splash_logo_url: null,
+    theme_color: "#D96C9F",
+    background_color: "#FFF7F0",
+    banner_1: null,
+    banner_2: null,
+    banner_3: null,
+    banner_4: null,
+  },
 };
 
 export function useSiteSettings() {
@@ -109,6 +119,7 @@ export function useSiteSettings() {
         footer: { ...DEFAULTS.footer, ...(map.get("footer") as object | undefined) } as FooterSettings,
         theme: { ...DEFAULTS.theme, ...(map.get("theme") as object | undefined) } as ThemeSettings,
         payment: { ...DEFAULTS.payment, ...(map.get("payment") as object | undefined) } as PaymentSettings,
+        mobile: { ...DEFAULTS.mobile, ...(map.get("mobile") as object | undefined) } as MobileSettings,
       };
     },
     staleTime: 60_000,
