@@ -38,6 +38,16 @@ export type PaymentSettings = {
   account_number: string;
   bank_logo_url: string;
 };
+export type MobileSettings = {
+  app_name: string;
+  splash_logo_url: string | null;
+  theme_color: string;
+  background_color: string;
+  banner_1: string | null;
+  banner_2: string | null;
+  banner_3: string | null;
+  banner_4: string | null;
+};
 
 export type SiteSettings = {
   brand: BrandSettings;
@@ -46,6 +56,7 @@ export type SiteSettings = {
   footer: FooterSettings;
   theme: ThemeSettings;
   payment: PaymentSettings;
+  mobile: MobileSettings;
 };
 
 const DEFAULTS: SiteSettings = {
